@@ -1,0 +1,71 @@
+package config
+
+import (
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/spf13/viper"
+)
+
+type Config struct {
+	Server   ServerConfig   `mapstructure:"server"`
+	Database DatabaseConfig `mapstructure:"database"`
+	Redis    RedisConfig    `mapstructure:"redis"`
+}
+
+type ServerConfig struct {
+	Host string `mapstructure:"host"` // 服务监听地址
+	Port int    `mapstructure:"port"` // 服务监听端口
+	Mode string `mapstructure:"mode"` // Gin 运行模式: debug / release / test
+}
+
+type DatabaseConfig struct {
+	Host            string        `mapstructure:"host"`
+	Port            int           `mapstructure:"port"`
+	User            string        `mapstructure:"user"`
+	Password        string        `mapstructure:"password"`
+	DBName          string        `mapstructure:"dbname"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`    // 连接池最大空闲连接数
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`    // 连接池最大打开连接数
+	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"` // 连接最大存活时间
+	QueryTimeout    time.Duration `mapstructure:"query_timeout"`     // 单次查询超时时间
+}
+
+type RedisConfig struct {
+	Host         string        `mapstructure:"host"`
+	Port         int           `mapstructure:"port"`
+	Password     string        `mapstructure:"password"`
+	DB           int           `mapstructure:"db"`            // Redis 数据库编号
+	PoolSize     int           `mapstructure:"pool_size"`     // 连接池大小
+	QueryTimeout time.Duration `mapstructure:"query_timeout"` // 单次操作超时时间
+}
+
+func Load(configPath string) (*Config, error) {
+	viper.SetConfigFile(configPath)
+	viper.SetConfigType("yaml")
+	// 支持环境变量覆盖: APP_SERVER_PORT -> server.port
+	viper.SetEnvPrefix("APP")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
+	viper.AutomaticEnv()
+	if err := viper.ReadInConfig(); err != nil {
+		return nil, fmt.Errorf("读取配置文件失败: %w", err)
+	}
+
+	var cfg Config
+	if err := viper.Unmarshal(&cfg); err != nil {
+		return nil, fmt.Errorf("解析配置文件失败: %w", err)
+	}
+
+	return &cfg, nil
+}
+
+func (s *ServerConfig) ServeAddr() string {
+	return fmt.Sprintf("%s:%d", s.Host, s.Port)
+}
+func (r *RedisConfig) RedisAddr() string {
+	return fmt.Sprintf("%s:%d", r.Host, r.Port)
+}
+func (d *DatabaseConfig) DatabaseAddr() string {
+	return fmt.Sprintf("%s:%d", d.Host, d.Port)
+}
