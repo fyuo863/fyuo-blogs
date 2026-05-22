@@ -21,15 +21,16 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host            string        `mapstructure:"host"`
-	Port            int           `mapstructure:"port"`
-	User            string        `mapstructure:"user"`
-	Password        string        `mapstructure:"password"`
-	DBName          string        `mapstructure:"dbname"`
-	MaxIdleConns    int           `mapstructure:"max_idle_conns"`    // 连接池最大空闲连接数
-	MaxOpenConns    int           `mapstructure:"max_open_conns"`    // 连接池最大打开连接数
-	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"` // 连接最大存活时间
-	QueryTimeout    time.Duration `mapstructure:"query_timeout"`     // 单次查询超时时间
+	Host            string `yaml:"host"`
+	Port            int    `yaml:"port"`
+	User            string `yaml:"user"`
+	Password        string `yaml:"password"`
+	DBName          string `yaml:"dbname"`
+	SSLMode         string `yaml:"sslmode"`
+	TimeZone        string `yaml:"timezone"`
+	MaxIdleConns    int    `yaml:"max_idle_conns"`
+	MaxOpenConns    int    `yaml:"max_open_conns"`
+	ConnMaxLifetime int    `yaml:"conn_max_lifetime"`
 }
 
 type RedisConfig struct {

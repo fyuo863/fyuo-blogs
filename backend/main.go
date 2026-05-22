@@ -4,17 +4,25 @@ import (
 	"myblog/internal/config"
 	"myblog/internal/database"
 	"myblog/internal/router"
+	"myblog/log"
 )
 
 func main() {
-	cfg, err := config.Load("config.yaml")
+	log.LogSetting()
+
+	cfg, err := config.Load("configs/config.yaml")
 	if err != nil {
+		log.Logger.Error("加载配置失败", "error", err)
 		panic(err)
 	}
-	database.InitRedis(&cfg.Redis)
+	err1 := database.InitRedis(&cfg.Redis)
+	if err1 != nil {
+		log.Logger.Error("Redis初始化失败", "error", err1)
+		panic(err1)
+	}
 	defer database.CloseRedis()
 
 	router := router.NewRouter()
 
-	router.Run("127.0.0.1:8090") // listens on 0.0.0.0:8090 by default
+	router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default
 }
