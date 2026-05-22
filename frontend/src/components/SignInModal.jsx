@@ -1,17 +1,39 @@
 import { useState } from "react";
 import { X, User, Lock, Eye, EyeOff } from "lucide-react";
+import { signIn } from "../api";
 
 function SignInModal({ open, onClose, onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   if (!open) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (username.trim() && password.trim()) {
-      onLogin(username.trim());
+    setError("");
+
+    if (!username.trim() || !password.trim()) {
+      setError("name and pass are required.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await signIn(username.trim(), password);
+      if (res.data) {
+        onLogin(username.trim());
+      }
+    } catch (err) {
+      const msg =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "sign-in failed, try again.";
+      setError(msg);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -40,18 +62,19 @@ function SignInModal({ open, onClose, onLogin }) {
 
         {/* Body */}
         <form onSubmit={handleSubmit} className="px-6 py-6 flex flex-col gap-5">
+          {/* Error */}
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 px-4 py-2.5">
+              <p className="text-xs text-red-400">{error}</p>
+            </div>
+          )}
+
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="username"
-              className="text-sm font-medium text-zinc-400"
-            >
+            <label htmlFor="username" className="text-sm font-medium text-zinc-400">
               name
             </label>
             <div className="relative">
-              <User
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
-              />
+              <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
               <input
                 id="username"
                 type="text"
@@ -64,17 +87,11 @@ function SignInModal({ open, onClose, onLogin }) {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-zinc-400"
-            >
+            <label htmlFor="password" className="text-sm font-medium text-zinc-400">
               pass
             </label>
             <div className="relative">
-              <Lock
-                size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
-              />
+              <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -95,16 +112,12 @@ function SignInModal({ open, onClose, onLogin }) {
 
           <button
             type="submit"
-            className="mt-1 w-full bg-white py-2.5 text-sm font-bold text-black hover:bg-zinc-200 active:bg-zinc-400 transition-colors"
+            disabled={loading}
+            className="mt-1 w-full bg-white py-2.5 text-sm font-bold text-black hover:bg-zinc-200 active:bg-zinc-400 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            booom.
+            {loading ? "wait..." : "booom."}
           </button>
         </form>
-
-        {/* Footer */}
-        {/* <div className="border-t border-zinc-800 px-6 py-4 text-center text-xs text-zinc-600">
-          没有账号？联系管理员获取权限
-        </div> */}
       </div>
     </div>
   );
