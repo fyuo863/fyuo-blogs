@@ -21,18 +21,18 @@ function SignInModal({ open, onClose, onLogin }) {
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4"
       onClick={handleOverlayClick}
     >
-      <div className="w-full max-w-md rounded-2xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-black/40">
+      <div className="w-full max-w-md bg-zinc-900/90 backdrop-blur-2xl shadow-2xl shadow-black/50">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-700/50 px-6 py-4">
-          <h2 className="text-lg font-semibold tracking-tight text-white">
-            log-in,
+        <div className="flex items-center justify-between border-b border-zinc-800 px-6 py-4">
+          <h2 className="text-lg font-bold tracking-tight text-white">
+            log-in.
           </h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="p-1.5 text-zinc-500 hover:text-white transition-colors"
           >
             <X size={18} />
           </button>
@@ -43,14 +43,14 @@ function SignInModal({ open, onClose, onLogin }) {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="username"
-              className="text-sm font-medium text-slate-300"
+              className="text-sm font-medium text-zinc-400"
             >
-              name,
+              name
             </label>
             <div className="relative">
               <User
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
               />
               <input
                 id="username"
@@ -58,7 +58,7 @@ function SignInModal({ open, onClose, onLogin }) {
                 placeholder="name-plz"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/50 bg-white/5 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-sky-500/50 focus:outline-none focus:ring-1 focus:ring-sky-500/30 transition-colors"
+                className="w-full bg-white/5 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-zinc-600 border border-zinc-800 focus:border-zinc-500 focus:outline-none transition-colors"
               />
             </div>
           </div>
@@ -66,14 +66,14 @@ function SignInModal({ open, onClose, onLogin }) {
           <div className="flex flex-col gap-1.5">
             <label
               htmlFor="password"
-              className="text-sm font-medium text-slate-300"
+              className="text-sm font-medium text-zinc-400"
             >
-              pass,
+              pass
             </label>
             <div className="relative">
               <Lock
                 size={16}
-                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
               />
               <input
                 id="password"
@@ -81,12 +81,12 @@ function SignInModal({ open, onClose, onLogin }) {
                 placeholder="and-psw"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-slate-700/50 bg-white/5 py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-sky-500/50 focus:outline-none focus:ring-1 focus:ring-sky-500/30 transition-colors"
+                className="w-full bg-white/5 py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-zinc-600 border border-zinc-800 focus:border-zinc-500 focus:outline-none transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -95,14 +95,14 @@ function SignInModal({ open, onClose, onLogin }) {
 
           <button
             type="submit"
-            className="mt-1 w-full rounded-xl bg-sky-500 py-2.5 text-lg font-semibold text-white hover:bg-sky-400 active:bg-sky-600 transition-colors"
+            className="mt-1 w-full bg-white py-2.5 text-sm font-bold text-black hover:bg-zinc-200 active:bg-zinc-400 transition-colors"
           >
             booom.
           </button>
         </form>
 
         {/* Footer */}
-        {/* <div className="border-t border-slate-700/50 px-6 py-4 text-center text-xs text-slate-500">
+        {/* <div className="border-t border-zinc-800 px-6 py-4 text-center text-xs text-zinc-600">
           没有账号？联系管理员获取权限
         </div> */}
       </div>

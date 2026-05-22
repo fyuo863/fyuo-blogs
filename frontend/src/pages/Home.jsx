@@ -37,7 +37,7 @@ const POSTS = [
 
 function Home({ username, onOpenSignIn, onLogout }) {
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-black">
       {/* ── Floating site title (top-left) ── */}
       <div className="fixed top-0 left-0 z-40 px-4 py-4 sm:px-6 lg:px-8">
         <span className="text-lg font-bold tracking-tight text-white">
@@ -54,7 +54,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
             </span>
             <button
               onClick={onLogout}
-              className="text-lg font-bold tracking-tight text-slate-500 hover:text-slate-300 transition-colors"
+              className="text-lg font-bold tracking-tight text-zinc-500 hover:text-zinc-300 transition-colors"
             >
               &middot; exit
             </button>
@@ -62,7 +62,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
         ) : (
           <button
             onClick={onOpenSignIn}
-            className="text-lg font-bold tracking-tight text-slate-500 hover:text-slate-300 transition-colors"
+            className="text-lg font-bold tracking-tight text-zinc-500 hover:text-white transition-colors"
           >
             log-in.
           </button>
@@ -74,28 +74,32 @@ function Home({ username, onOpenSignIn, onLogout }) {
         <h1 className="text-5xl font-extrabold tracking-tighter text-white">
           Latest Updates
         </h1>
-        <p className="mt-6 text-lg text-slate-300 leading-relaxed">
-          All the latest Tailwind CSS news, straight from the team.
+        <p className="mt-6 text-lg text-zinc-400 leading-relaxed">
+          All the latest blogs, straight from
         </p>
+
+        <span className="text-lg font-bold tracking-tight text-white">
+          fyuo.
+        </span>
       </header>
 
       {/* ── Newsletter ── */}
-      <div className="border-t border-b border-slate-800">
+      <div className="border-t border-b border-zinc-800">
         <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
-              <Mail
+              {/* <Mail
                 size={18}
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
-              />
+                className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none"
+              /> */}
               <input
                 type="email"
-                placeholder="Subscribe via email"
-                className="w-full rounded-full bg-white/5 py-3 pl-11 pr-5 text-sm text-white placeholder:text-slate-500 border border-slate-800 focus:border-sky-500/50 focus:outline-none focus:ring-1 focus:ring-sky-500/30 transition-colors"
+                placeholder="serch,"
+                className="w-full bg-white/5 py-3 pl-5 pr-5 text-sm text-white placeholder:text-zinc-500 border border-zinc-800 focus:border-zinc-600 focus:outline-none transition-colors"
               />
             </div>
-            <button className="rounded-full bg-slate-800 px-7 py-3 text-sm font-semibold text-white hover:bg-slate-700 active:bg-slate-600 transition-colors shrink-0">
-              Subscribe
+            <button className="bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/20 active:bg-white/5 transition-colors shrink-0">
+              search.
             </button>
           </div>
         </div>
@@ -103,21 +107,21 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
       {/* ── Blog Feed ── */}
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <div className="divide-y divide-slate-800">
+        <div className="divide-y divide-zinc-800">
           {POSTS.map((post) => (
             <article key={post.id} className="py-16">
-              <time className="font-mono text-sm tracking-widest text-slate-500 uppercase">
+              <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
                 {post.date}
               </time>
               <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
                 {post.title}
               </h2>
-              <p className="mt-4 text-slate-400 leading-relaxed">
+              <p className="mt-4 text-zinc-400 leading-relaxed">
                 {post.excerpt}
               </p>
               <a
                 href={`/posts/${post.slug}`}
-                className="mt-6 inline-block text-sky-400 font-semibold hover:text-sky-300 transition-colors"
+                className="mt-6 inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
               >
                 Read more &rarr;
               </a>
