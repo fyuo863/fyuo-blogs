@@ -397,7 +397,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
       </div>
 
       {/* ── Page Header ── */}
-      <header className="mx-auto max-w-3xl px-4 pt-28 pb-16 sm:px-6 lg:px-8">
+      <header className="px-[20%] pt-28 pb-16">
         <h1 className="text-5xl font-extrabold tracking-tighter text-white">
           Latest Updates
         </h1>
@@ -412,7 +412,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
       {/* ── Newsletter ── */}
       <div className="border-t border-b border-zinc-800">
-        <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="px-[20%] py-12">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1">
               {/* <Mail
@@ -433,7 +433,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
       </div>
 
       {/* ── Blog Feed ── */}
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div className="px-[20%]">
         <div className="divide-y divide-zinc-800">
           {POSTS.map((post) => (
             <article key={post.id} className="py-16">
@@ -463,7 +463,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
       {/* ── Article Overlay ── */}
       {selectedPost && (
         <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="px-[20%] py-16">
             <button
               onClick={() => setSelectedPost(null)}
               className="text-lg font-mono text-white hover:text-white transition-colors mb-16"
