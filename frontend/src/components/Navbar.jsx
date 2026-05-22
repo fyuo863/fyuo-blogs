@@ -2,82 +2,43 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 
 function Navbar() {
-  // 模拟用户状态：null 代表未登录，如果有字符串（如 "Admin"）则代表已登录
   const [username, setUsername] = useState(null);
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        justifyContent: "space-between", // 让内容分别靠左和靠右对齐
-        alignItems: "center",
-        padding: "15px 40px",
-        backgroundColor: "#282c34",
-        color: "white",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-      }}
-    >
-      <h2 style={{ margin: 0 }}>
-        <Link to="/" style={{ color: "white", textDecoration: "none" }}>
-          🚀 全栈博客
+    <nav className="fixed top-0 z-50 w-full border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+        <Link to="/" className="text-lg font-bold tracking-tight text-white hover:text-slate-200 transition-colors">
+          全栈博客
         </Link>
-      </h2>
 
-      <div>
-        {/* 根据 username 的状态决定右上角显示什么 */}
-        {username ? (
-          <>
-            <span style={{ fontWeight: "bold", marginRight: "15px" }}>
-              欢迎博主：{username}
-            </span>
-            {/* 点击退出，把状态重置为 null */}
-            <button
-              onClick={() => setUsername(null)}
-              style={{
-                cursor: "pointer",
-                padding: "5px 10px",
-                backgroundColor: "#ff4d4f",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-              }}
-            >
-              模拟退出
-            </button>
-          </>
-        ) : (
-          <>
-            {/* 点击登录，调用 setUsername 把状态改成 "Admin" */}
-            <button
-              onClick={() => setUsername("Admin")}
-              style={{
-                cursor: "pointer",
-                marginRight: "15px",
-                padding: "5px 10px",
-                backgroundColor: "#4CAF50",
-                color: "white",
-                border: "none",
-                borderRadius: "4px",
-              }}
-            >
-              模拟一键登录
-            </button>
-
-            <Link
-              to="/signin"
-              style={{
-                color: "#61dafb",
-                textDecoration: "none",
-                fontWeight: "bold",
-                border: "1px solid #61dafb",
-                padding: "5px 15px",
-                borderRadius: "4px",
-              }}
-            >
-              正式登录页
-            </Link>
-          </>
-        )}
+        <div className="flex items-center gap-4 text-sm">
+          {username ? (
+            <>
+              <span className="text-slate-400">欢迎，{username}</span>
+              <button
+                onClick={() => setUsername(null)}
+                className="rounded-md bg-red-600 px-3 py-1.5 font-medium text-white hover:bg-red-500 transition-colors"
+              >
+                退出
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => setUsername("Admin")}
+                className="rounded-md bg-slate-800 px-3 py-1.5 font-medium text-white hover:bg-slate-700 transition-colors"
+              >
+                一键登录
+              </button>
+              <Link
+                to="/signin"
+                className="rounded-md border border-sky-500 px-3 py-1.5 font-medium text-sky-400 hover:bg-sky-500/10 transition-colors"
+              >
+                登录页
+              </Link>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );
