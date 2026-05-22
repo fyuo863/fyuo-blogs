@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Navbar from "./components/Navbar_del";
 import Home from "./pages/Home";
-import SignIn from "./pages/SignIn";
 import SignInModal from "./components/SignInModal";
 
 function App() {
@@ -18,15 +16,17 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Navbar
-        username={username}
-        onOpenSignIn={() => setShowSignIn(true)}
-        onLogout={handleLogout}
-      />
-
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/signin" element={<SignIn />} />
+        <Route
+          path="/"
+          element={
+            <Home
+              username={username}
+              onOpenSignIn={() => setShowSignIn(true)}
+              onLogout={handleLogout}
+            />
+          }
+        />
       </Routes>
 
       <SignInModal
