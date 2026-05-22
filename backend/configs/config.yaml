@@ -6,8 +6,8 @@ Server:
 database:
   host: "127.0.0.1"
   port: 5432
-  user: "postgres"
-  password: "你的密码"
+  user: "root"
+  password: "97224224"
   dbname: "myblog"
   sslmode: "disable"
   timezone: "Asia/Shanghai"
@@ -18,7 +18,7 @@ database:
 
 redis:
   host: "127.0.0.1"
-  port: 6379
+  port: 6380
   password: ""
   db: 0
   pool_size: 100                   # 连接池大小

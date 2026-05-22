@@ -9,6 +9,7 @@ require (
 	github.com/lib/pq v1.12.3
 	github.com/redis/go-redis/v9 v9.19.0
 	github.com/spf13/viper v1.21.0
+	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )
 
@@ -77,5 +78,4 @@ require (
 	golang.org/x/sys v0.42.0 // indirect
 	golang.org/x/text v0.34.0 // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gorm.io/driver/postgres v1.6.0 // indirect
 )
