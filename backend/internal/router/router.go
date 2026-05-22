@@ -12,10 +12,28 @@ func NewRouter() *gin.Engine {
 		gin.Logger(),
 		gin.Recovery(),
 	)
-	test := r.Group("")
+	// test := r.Group("")
+	// {
+	// 	test.GET("/test", handler.Test)
+	// }
+	api := r.Group("/api/v1")
 	{
-		test.GET("/test", handler.Test)
-	}
+		// 用户认证相关接口 (返回 JSON 数据)
+		api.POST("/signin", handler.SignIn) // 处理登录逻辑
+		api.POST("/signup", handler.SignUp) // 处理注册逻辑
 
+		api.GET("/articles", handler.ListBlogs)   // 获取文章列表
+		api.GET("/articles/:id", handler.GetBlog) // 获取单篇文章
+	}
+	protected := api.Group("")
+	protected.Use(
+	//middleware.Auth(), //验证JWT
+	) // Auth 中间件只在当前 Group 生效
+	{
+		// 博客文章管理 (供前端后台管理系统调用)
+		protected.POST("/articles", handler.CreateBlog)       // 创建文章
+		protected.PUT("/articles/:id", handler.UpdateBlog)    // 更新文章
+		protected.DELETE("/articles/:id", handler.DeleteBlog) // 删除文章
+	}
 	return r
 }
