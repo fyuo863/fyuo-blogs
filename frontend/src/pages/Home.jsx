@@ -35,9 +35,40 @@ const POSTS = [
   },
 ];
 
-function Home() {
+function Home({ username, onOpenSignIn, onLogout }) {
   return (
     <div className="min-h-screen bg-slate-950">
+      {/* ── Floating site title (top-left) ── */}
+      <div className="fixed top-0 left-0 z-40 px-4 py-4 sm:px-6 lg:px-8">
+        <span className="text-lg font-bold tracking-tight text-white">
+          fyuo-blogs.
+        </span>
+      </div>
+
+      {/* ── Login / user pill (bottom-left) ── */}
+      <div className="fixed bottom-0 left-0 z-40 px-4 py-4 sm:px-6 lg:px-8">
+        {username ? (
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-bold tracking-tight text-white">
+              {username}
+            </span>
+            <button
+              onClick={onLogout}
+              className="text-lg font-bold tracking-tight text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              &middot; exit
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={onOpenSignIn}
+            className="text-lg font-bold tracking-tight text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            log-in.
+          </button>
+        )}
+      </div>
+
       {/* ── Page Header ── */}
       <header className="mx-auto max-w-3xl px-4 pt-28 pb-16 sm:px-6 lg:px-8">
         <h1 className="text-5xl font-extrabold tracking-tighter text-white">
