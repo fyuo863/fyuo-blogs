@@ -1,34 +1,57 @@
 import { useState } from "react";
-import { User, Lock, Eye, EyeOff } from "lucide-react";
+import { X, User, Lock, Eye, EyeOff } from "lucide-react";
 
-function SignIn() {
+function SignInModal({ open, onClose, onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  if (!open) return null;
+
   const handleSubmit = (e) => {
     e.preventDefault();
     if (username.trim() && password.trim()) {
-      alert(`登录成功，欢迎 ${username.trim()}！`);
+      onLogin(username.trim());
     }
   };
 
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) onClose();
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 pt-20">
-      <div className="w-full max-w-sm rounded-2xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-black/40">
-        <div className="border-b border-slate-700/50 px-6 py-4">
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
+      onClick={handleOverlayClick}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-slate-700/50 bg-slate-900/80 backdrop-blur-xl shadow-2xl shadow-black/40">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-slate-700/50 px-6 py-4">
           <h2 className="text-lg font-semibold tracking-tight text-white">
             登录
           </h2>
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+          >
+            <X size={18} />
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5 px-6 py-6">
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="px-6 py-6 flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="username" className="text-sm font-medium text-slate-300">
+            <label
+              htmlFor="username"
+              className="text-sm font-medium text-slate-300"
+            >
               用户名
             </label>
             <div className="relative">
-              <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <User
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+              />
               <input
                 id="username"
                 type="text"
@@ -41,11 +64,17 @@ function SignIn() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label htmlFor="password" className="text-sm font-medium text-slate-300">
+            <label
+              htmlFor="password"
+              className="text-sm font-medium text-slate-300"
+            >
               密码
             </label>
             <div className="relative">
-              <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none" />
+              <Lock
+                size={16}
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+              />
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
@@ -72,6 +101,7 @@ function SignIn() {
           </button>
         </form>
 
+        {/* Footer */}
         <div className="border-t border-slate-700/50 px-6 py-4 text-center text-xs text-slate-500">
           没有账号？联系管理员获取权限
         </div>
@@ -80,4 +110,4 @@ function SignIn() {
   );
 }
 
-export default SignIn;
+export default SignInModal;
