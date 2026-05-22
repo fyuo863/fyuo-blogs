@@ -35,7 +35,21 @@ const POSTS = [
   },
 ];
 
+import { useState } from "react";
+
+const MENU_ITEMS = [
+  { label: "creat.", action: "create" },
+  { label: "exit.", action: "logout" },
+];
+
 function Home({ username, onOpenSignIn, onLogout }) {
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const handleMenuAction = (action) => {
+    setMenuOpen(false);
+    if (action === "logout") onLogout();
+  };
+
   return (
     <div className="min-h-screen bg-black">
       {/* ── Floating site title (top-left) ── */}
@@ -45,18 +59,32 @@ function Home({ username, onOpenSignIn, onLogout }) {
         </span>
       </div>
 
-      {/* ── Login / user pill (bottom-left) ── */}
+      {/* ── Bottom-left menu ── */}
       <div className="fixed bottom-0 left-0 z-40 px-4 py-4 sm:px-6 lg:px-8">
         {username ? (
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-bold tracking-tight text-white">
-              {username}
-            </span>
-            <button
-              onClick={onLogout}
-              className="text-lg font-bold tracking-tight text-zinc-500 hover:text-zinc-300 transition-colors"
+          <div className="flex flex-col items-start">
+            {/* Slide-up menu */}
+            <div
+              className={`flex flex-col items-start overflow-hidden transition-all duration-300 ease-out ${
+                menuOpen ? "max-h-60 opacity-100 mb-2" : "max-h-0 opacity-0"
+              }`}
             >
-              &middot; exit
+              {MENU_ITEMS.map((item) => (
+                <button
+                  key={item.label}
+                  onClick={() => handleMenuAction(item.action)}
+                  className="text-lg font-bold tracking-tight text-zinc-500 hover:text-white transition-colors py-0.5"
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+            {/* Trigger */}
+            <button
+              onClick={() => setMenuOpen(!menuOpen)}
+              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors"
+            >
+              home.
             </button>
           </div>
         ) : (
