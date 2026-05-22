@@ -28,7 +28,7 @@ function SignInModal({ open, onClose, onLogin }) {
         {/* Header */}
         <div className="flex items-center justify-between border-b border-slate-700/50 px-6 py-4">
           <h2 className="text-lg font-semibold tracking-tight text-white">
-            登录
+            log-in,
           </h2>
           <button
             onClick={onClose}
@@ -45,7 +45,7 @@ function SignInModal({ open, onClose, onLogin }) {
               htmlFor="username"
               className="text-sm font-medium text-slate-300"
             >
-              用户名
+              name,
             </label>
             <div className="relative">
               <User
@@ -55,7 +55,7 @@ function SignInModal({ open, onClose, onLogin }) {
               <input
                 id="username"
                 type="text"
-                placeholder="请输入用户名"
+                placeholder="name-plz"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="w-full rounded-xl border border-slate-700/50 bg-white/5 py-2.5 pl-10 pr-3 text-sm text-white placeholder:text-slate-500 focus:border-sky-500/50 focus:outline-none focus:ring-1 focus:ring-sky-500/30 transition-colors"
@@ -68,7 +68,7 @@ function SignInModal({ open, onClose, onLogin }) {
               htmlFor="password"
               className="text-sm font-medium text-slate-300"
             >
-              密码
+              pass,
             </label>
             <div className="relative">
               <Lock
@@ -78,7 +78,7 @@ function SignInModal({ open, onClose, onLogin }) {
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
-                placeholder="请输入密码"
+                placeholder="and-psw"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-xl border border-slate-700/50 bg-white/5 py-2.5 pl-10 pr-10 text-sm text-white placeholder:text-slate-500 focus:border-sky-500/50 focus:outline-none focus:ring-1 focus:ring-sky-500/30 transition-colors"
@@ -95,16 +95,16 @@ function SignInModal({ open, onClose, onLogin }) {
 
           <button
             type="submit"
-            className="mt-1 w-full rounded-xl bg-sky-500 py-2.5 text-sm font-semibold text-white hover:bg-sky-400 active:bg-sky-600 transition-colors"
+            className="mt-1 w-full rounded-xl bg-sky-500 py-2.5 text-lg font-semibold text-white hover:bg-sky-400 active:bg-sky-600 transition-colors"
           >
-            登 录
+            booom.
           </button>
         </form>
 
         {/* Footer */}
-        <div className="border-t border-slate-700/50 px-6 py-4 text-center text-xs text-slate-500">
+        {/* <div className="border-t border-slate-700/50 px-6 py-4 text-center text-xs text-slate-500">
           没有账号？联系管理员获取权限
-        </div>
+        </div> */}
       </div>
     </div>
   );
