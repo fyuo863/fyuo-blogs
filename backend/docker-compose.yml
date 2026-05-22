@@ -1,4 +1,46 @@
-version: '3.8'
+
+
+# services:
+#   redis:
+#     image: redis:8-alpine
+#     container_name: blog_redis
+#     restart: unless-stopped
+#     ports:
+#       - "6379:6379"
+#     volumes:
+#       - redis_data:/var/lib/redis/data  # 【关键修复】将 Redis 数据持久化到宿主机
+#     healthcheck:
+#       test: ["CMD", "redis-cli", "ping"]
+#       interval: 5s
+#       timeout: 3s
+#       retries: 10
+
+#   postgres:
+#     image: postgres:alpine
+#     container_name: blog_postgres
+#     restart: unless-stopped
+#     environment:
+#       POSTGRES_USER: root
+#       POSTGRES_PASSWORD: ${DB_PASSWORD}
+#       POSTGRES_DB: ${DB_NAME}
+#       TZ: Asia/Shanghai
+#     ports:
+#       - "5432:5432"
+#     volumes:
+#       - postgres_data:/var/lib/postgresql/data # 【关键修复】将 PG 数据库文件持久化
+#     healthcheck:
+#       # 【关键修复】统一使用 ${DB_NAME} 变量，防止名字对不上报错
+#       test: ["CMD-SHELL", "pg_isready -U root -d ${DB_NAME}"]
+#       interval: 5s
+#       timeout: 3s
+#       retries: 10
+
+# # 【关键新增】在最外层声明需要使用的具名数据卷
+# volumes:
+#   redis_data:
+#   postgres_data:
+
+
 
 services:
   redis:
@@ -6,9 +48,7 @@ services:
     container_name: blog_redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data  # 【关键修复】将 Redis 数据持久化到宿主机
+      - "6380:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
@@ -16,7 +56,7 @@ services:
       retries: 10
 
   postgres:
-    image: postgres:alpine
+    image: postgres:16-alpine
     container_name: blog_postgres
     restart: unless-stopped
     environment:
@@ -26,16 +66,8 @@ services:
       TZ: Asia/Shanghai
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data # 【关键修复】将 PG 数据库文件持久化
     healthcheck:
-      # 【关键修复】统一使用 ${DB_NAME} 变量，防止名字对不上报错
       test: ["CMD-SHELL", "pg_isready -U root -d ${DB_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 10
-
-# 【关键新增】在最外层声明需要使用的具名数据卷
-volumes:
-  redis_data:
-  postgres_data:
