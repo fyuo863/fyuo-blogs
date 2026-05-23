@@ -351,14 +351,14 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* ── Floating site title (top-left) ── */}
+      {/* ── 首页左上角标题 ── */}
       <div className="fixed top-0 left-0 z-[60] px-4 py-4 sm:px-6 lg:px-8">
         <span className="text-lg font-bold tracking-tight text-white italic">
           fyuo-blogs.
         </span>
       </div>
 
-      {/* ── Bottom-left menu ── */}
+      {/* ── 首页左下角菜单 ── */}
       <div className="fixed bottom-0 left-0 z-[60] px-4 py-4 sm:px-6 lg:px-8">
         {username ? (
           <div className="flex flex-col items-start">
@@ -396,21 +396,37 @@ function Home({ username, onOpenSignIn, onLogout }) {
         )}
       </div>
 
-      {/* ── Page Header ── */}
-      <header className="px-[20%] pt-28 pb-16">
-        <h1 className="text-5xl font-extrabold tracking-tighter text-white">
-          Latest Updates
-        </h1>
-        <p className="mt-6 text-lg text-zinc-400 leading-relaxed">
-          All the latest blogs, straight from
-        </p>
+      {/* ── 头部区域 ── */}
+      <div className="relative w-full h-72 sm:h-80 md:h-96 border-t border-b border-zinc-800 group flex items-center overflow-hidden">
+        {/* 1. 底层图片：绝对定位铺满容器，使用 group-hover 响应整个区域的鼠标悬停 */}
+        <img
+          // 请替换为你实际的图片路径或 URL
+          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
+          alt="Blog Cover"
+          className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 z-0"
+        />
 
-        <span className="text-lg font-bold tracking-tight text-white">
-          fyuo.
-        </span>
-      </header>
+        {/* 2. (可选) 半透明遮罩层：防止图片恢复色彩后过亮导致文字看不清 */}
+        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-700 z-0"></div>
 
-      {/* ── Newsletter ── */}
+        {/* 3. 上层文字区：提升 z-index 保证在图片上方，同时保持 px-[20%] 的黄金阅读对齐线 */}
+        <header className="relative z-10 px-[20%] w-full">
+          {/* 使用 [-webkit-text-stroke:2px_black] 实现黑底白字描边，并加上文字阴影增加立体感 */}
+          <h1 className="text-5xl font-extrabold tracking-tighter text-white drop-shadow-xl">
+            Latest Updates
+          </h1>
+
+          {/* 引导语也改成了纯白色+1px黑色描边，防止在复杂图片背景中糊掉 */}
+          <p className="mt-6 text-lg font-bold text-white leading-relaxed drop-shadow-md">
+            All the latest blogs, straight from
+          </p>
+          <span className="text-lg font-extrabold tracking-tight text-white drop-shadow-md">
+            fyuo.
+          </span>
+        </header>
+      </div>
+
+      {/* ── 搜索栏 ── */}
       <div className="border-t border-b border-zinc-800">
         <div className="px-[20%] py-12">
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -432,7 +448,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
         </div>
       </div>
 
-      {/* ── Blog Feed ── */}
+      {/* ── 博客展示页 ── */}
       <div className="px-[20%]">
         <div className="divide-y divide-zinc-800">
           {POSTS.map((post) => (
@@ -457,10 +473,10 @@ function Home({ username, onOpenSignIn, onLogout }) {
         </div>
       </div>
 
-      {/* ── Footer spacer ── */}
+      {/* ── 底部留白 ── */}
       <div className="h-24" />
 
-      {/* ── Article Overlay ── */}
+      {/* ── 博客内容展示 ── */}
       {selectedPost && (
         <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
           <div className="px-[20%] py-16">
