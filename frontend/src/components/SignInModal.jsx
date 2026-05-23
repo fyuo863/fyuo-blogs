@@ -23,8 +23,8 @@ function SignInModal({ open, onClose, onLogin }) {
     setLoading(true);
     try {
       const res = await signIn(username.trim(), password);
-      if (res.data) {
-        onLogin(username.trim());
+      if (res.data?.data) {
+        onLogin(username.trim(), password);
       }
     } catch (err) {
       const msg =

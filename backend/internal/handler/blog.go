@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"myblog/internal/database"
 	"myblog/internal/model"
 	"myblog/log"
@@ -8,22 +9,38 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type CreateBlogRequest struct {
-	Title   string   `json:"title"`
-	Content string   `json:"content"`
-	Stage   string   `json:"stage"`
-	Vol     int      `json:"vol"`
-	Tags    []string `json:"tags"`
+	Name     string   `json:"name"`
+	Password string   `json:"password"`
+	Title    string   `json:"title"`
+	Content  string   `json:"content"`
+	Stage    string   `json:"stage"`
+	Vol      int      `json:"vol"`
+	Tags     []string `json:"tags"`
 }
 
 type UpdateBlogRequest struct {
-	Title   *string  `json:"title"`
-	Content *string  `json:"content"`
-	Stage   *string  `json:"stage"`
-	Vol     *int     `json:"vol"`
-	Tags    []string `json:"tags"`
+	Name     *string  `json:"name"`
+	Password *string  `json:"password"`
+	Title    *string  `json:"title"`
+	Content  *string  `json:"content"`
+	Stage    *string  `json:"stage"`
+	Vol      *int     `json:"vol"`
+	Tags     []string `json:"tags"`
+}
+
+func authenticateUser(name, password string) (model.User, error) {
+	var user model.User
+	if result := database.DB.Where("name = ?", name).First(&user); result.Error != nil {
+		return user, errors.New("用户不存在")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
+		return user, errors.New("密码错误")
+	}
+	return user, nil
 }
 
 func CreateBlog(c *gin.Context) {
@@ -33,14 +50,22 @@ func CreateBlog(c *gin.Context) {
 		return
 	}
 
-	article := model.Article{
-		Title:   req.Title,
-		Content: req.Content,
-		Stage:   req.Stage,
-		Vol:     req.Vol,
-		Tags:    req.Tags,
+	// 验证用户名和密码，获取作者 ID
+	author, err := authenticateUser(req.Name, req.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
+		return
 	}
-
+	log.Logger.Info("创建文章请求", "author", author.ID)
+	article := model.Article{
+		Title:    req.Title,
+		Content:  req.Content,
+		Stage:    req.Stage,
+		Vol:      req.Vol,
+		AuthorID: author.ID,
+		Tags:     req.Tags,
+	}
+	log.Logger.Info("创建文章请求", "article", article)
 	result := database.DB.Create(&article)
 	if result.Error != nil {
 		log.Logger.Error("创建文章失败", "error", result.Error)
@@ -96,6 +121,7 @@ func GetBlog(c *gin.Context) {
 }
 
 func UpdateBlog(c *gin.Context) {
+	
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
@@ -112,6 +138,14 @@ func UpdateBlog(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式"})
 		return
+	}
+
+	// 验证身份
+	if req.Name != nil && req.Password != nil {
+		if _, err := authenticateUser(*req.Name, *req.Password); err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
+			return
+		}
 	}
 
 	updates := map[string]interface{}{}
@@ -135,6 +169,7 @@ func UpdateBlog(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "没有需要更新的字段"})
 		return
 	}
+	log.Logger.Info("更新文章", "id", id, "updates", updates)
 
 	if result := database.DB.Model(&article).Updates(updates); result.Error != nil {
 		log.Logger.Error("更新文章失败", "id", id, "error", result.Error)

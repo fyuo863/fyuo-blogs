@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import BlogPost from "../components/BlogPost";
-import { createArticle } from "../api";
+import { createArticle, updateArticle } from "../api";
 
 function formatDate(iso) {
   return new Date(iso)
@@ -182,7 +182,7 @@ const MENU_ITEMS = [
   { label: "exit.", action: "logout" },
 ];
 
-function Home({ username, onOpenSignIn, onLogout }) {
+function Home({ user, onOpenSignIn, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -221,16 +221,21 @@ function Home({ username, onOpenSignIn, onLogout }) {
       const content = editRef.current?.getContent() ?? selectedPost.content;
       const title = editRef.current?.getTitle() ?? selectedPost.title;
       const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
+      const auth = { name: user?.name ?? "", password: user?.password ?? "" };
       if (isNewPost) {
-        createArticle({ title, content, stage: "published", vol: 1, tags })
+        createArticle({ ...auth, title, content, stage: "published", vol: 1, tags })
           .then(() => {
             setSelectedPost(null);
             setIsEditing(false);
           })
           .catch((err) => console.error("创建失败", err));
       } else {
-        setSelectedPost({ ...selectedPost, title, content, tags });
-        setIsEditing(false);
+        updateArticle(selectedPost.id, { ...auth, title, content, tags })
+          .then((res) => {
+            setSelectedPost(res.data.data);
+            setIsEditing(false);
+          })
+          .catch((err) => console.error("更新失败", err));
       }
     }
     if (action === "discard") {
@@ -267,7 +272,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
       {/* ── 首页左下角菜单 ── */}
       <div className="fixed bottom-0 left-0 z-[60] px-4 py-4 sm:px-6 lg:px-8">
-        {username ? (
+        {user ? (
           <div className="flex flex-col items-start">
             {/* Slide-up menu */}
             <div

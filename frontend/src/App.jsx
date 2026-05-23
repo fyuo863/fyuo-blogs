@@ -4,15 +4,23 @@ import Home from "./pages/Home";
 import SignInModal from "./components/SignInModal";
 
 function App() {
-  const [username, setUsername] = useState(null);
+  const [user, setUser] = useState(() => {
+    const saved = localStorage.getItem("user");
+    return saved ? JSON.parse(saved) : null;
+  });
   const [showSignIn, setShowSignIn] = useState(false);
 
-  const handleLogin = (name) => {
-    setUsername(name);
+  const handleLogin = (name, password) => {
+    const u = { name, password };
+    setUser(u);
+    localStorage.setItem("user", JSON.stringify(u));
     setShowSignIn(false);
   };
 
-  const handleLogout = () => setUsername(null);
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem("user");
+  };
 
   return (
     <BrowserRouter>
@@ -21,7 +29,7 @@ function App() {
           path="/"
           element={
             <Home
-              username={username}
+              user={user}
               onOpenSignIn={() => setShowSignIn(true)}
               onLogout={handleLogout}
             />
