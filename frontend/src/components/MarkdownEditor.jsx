@@ -1,210 +1,335 @@
-import { useEffect, useRef } from "react";
-import { RangeSetBuilder } from "@codemirror/state";
-import { EditorView, keymap, Decoration, ViewPlugin } from "@codemirror/view";
-import { defaultKeymap, history, historyKeymap } from "@codemirror/commands";
-import { markdown } from "@codemirror/lang-markdown";
-import { syntaxTree } from "@codemirror/language";
+import { useState, useRef, useEffect, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import parseBlocks from "../utils/parseBlocks";
+import Callout from "./Callout";
 
-// ── 隐藏标记符的 ViewPlugin（Live Preview 核心） ──
-const hiddenMarkup = ViewPlugin.fromClass(
-  class {
-    constructor(view) {
-      this.decorations = this.build(view);
-    }
-
-    update(update) {
-      if (update.docChanged || update.selectionSet || update.viewportChanged) {
-        this.decorations = this.build(update.view);
-      }
-    }
-
-    build(view) {
-      const builder = new RangeSetBuilder();
-      const cursorLine = view.state.doc.lineAt(
-        view.state.selection.main.head
-      ).number;
-
-      for (const { from, to } of view.visibleRanges) {
-        syntaxTree(view.state).iterate({
-          from,
-          to,
-          enter(node) {
-            const line = view.state.doc.lineAt(node.from).number;
-            const onCursorLine = line === cursorLine;
-
-            // 标题标记符 #
-            if (node.name === "HeadingMark" && !onCursorLine) {
-              builder.add(node.from, node.to, Decoration.replace({}));
-            }
-
-            // 粗体 / 斜体 / 删除线 / 行内代码 标记符
-            const inlineMarks = [
-              "EmphasisMark",
-              "StrongEmphasisMark",
-              "StrikethroughMark",
-              "CodeMark",
-            ];
-            if (inlineMarks.includes(node.name) && !onCursorLine) {
-              builder.add(node.from, node.to, Decoration.replace({}));
-            }
-
-            // 链接标记符 [ ] ( )
-            if (
-              (node.name === "LinkMark" || node.name === "LinkTitle") &&
-              !onCursorLine
-            ) {
-              builder.add(node.from, node.to, Decoration.replace({}));
-            }
-
-            // 链接 URL：隐藏 URL 部分
-            if (node.name === "URL" && !onCursorLine) {
-              const parent = node.node.parent;
-              if (parent?.name === "Link") {
-                builder.add(node.from, node.to, Decoration.replace({}));
-              }
-            }
-
-            // 图片语法
-            if (node.name === "ImageMark" && !onCursorLine) {
-              builder.add(node.from, node.to, Decoration.replace({}));
-            }
-
-            // 引用标记符 >
-            if (node.name === "QuoteMark" && !onCursorLine) {
-              builder.add(node.from, node.to, Decoration.replace({}));
-            }
-
-            // 列表标记符 - * 1.
-            if (node.name === "ListMark" && !onCursorLine) {
-              builder.add(node.from, node.to, Decoration.replace({}));
-            }
-          },
-        });
-      }
-
-      return builder.finish();
-    }
-  },
-  {
-    decorations: (v) => v.decorations,
+// ── 工具 ──
+function parseFrontmatter(raw) {
+  const lines = raw.split("\n").slice(1, -1);
+  const props = {};
+  for (const line of lines) {
+    const idx = line.indexOf(":");
+    if (idx === -1) continue;
+    props[line.slice(0, idx).trim()] = line.slice(idx + 1).trim();
   }
-);
+  return props;
+}
 
-// ── 暗色主题 ──
-const darkTheme = EditorView.theme(
-  {
-    "&": {
-      backgroundColor: "transparent",
-      color: "#d4d4d4",
-      fontSize: "15px",
-      lineHeight: "1.8",
-    },
-    ".cm-content": {
-      fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
-      padding: "0",
-      minHeight: "60vh",
-    },
-    ".cm-cursor": {
-      borderLeftColor: "#fff",
-    },
-    "&.cm-focused .cm-selectionBackground, .cm-selectionBackground": {
-      backgroundColor: "rgba(255,255,255,0.12)",
-    },
-    ".cm-activeLine": {
-      backgroundColor: "rgba(255,255,255,0.04)",
-    },
-    ".cm-gutters": {
-      backgroundColor: "transparent",
-      color: "#555",
-      border: "none",
-    },
-    ".cm-scroller": {
-      overflow: "hidden",
-    },
-    "&.cm-editor": {
-      outline: "none",
-    },
-  },
-  { dark: true }
-);
+function FrontmatterCard({ raw }) {
+  const props = parseFrontmatter(raw);
+  const keys = Object.keys(props);
+  if (!keys.length) return null;
+  return (
+    <div className="rounded-lg border border-zinc-800 bg-white/[0.02] px-5 py-4 font-mono text-sm">
+      {keys.map((k) => (
+        <div key={k} className="flex gap-4 py-0.5">
+          <span className="text-zinc-500 shrink-0">{k}</span>
+          <span className="text-zinc-300">{props[k]}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
-// ── 将 CodeMirror 主题样式中的 heading 等节点渲染为加权样式 ──
-const headingTheme = EditorView.baseTheme({
-  ".cm-heading": {
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  ".cm-heading1": {
-    fontSize: "2em",
-    marginTop: "1.2em",
-  },
-  ".cm-heading2": {
-    fontSize: "1.5em",
-    marginTop: "1em",
-  },
-  ".cm-heading3": {
-    fontSize: "1.17em",
-  },
-  ".cm-strong": {
-    fontWeight: "bold",
-    color: "#fff",
-  },
-  ".cm-emphasis": {
-    fontStyle: "italic",
-  },
-  ".cm-link": {
-    color: "#7ea6ff",
-    textDecoration: "underline",
-  },
-  ".cm-code": {
-    backgroundColor: "rgba(255,255,255,0.08)",
-    padding: "2px 4px",
-    borderRadius: "3px",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "0.9em",
-  },
-  ".cm-strikethrough": {
-    textDecoration: "line-through",
-  },
-  ".cm-blockquote": {
-    borderLeft: "2px solid #555",
-    paddingLeft: "1em",
-    color: "#999",
-  },
-});
+const inlineAllowed = [
+  "strong", "em", "del", "a", "code", "img", "br", "sub", "sup",
+];
 
-export default function MarkdownEditor({ value, onChange, editorRef }) {
-  const hostRef = useRef(null);
+function InlineMarkdown({ children }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      allowedElements={inlineAllowed}
+      unwrapDisallowed
+    >
+      {children}
+    </ReactMarkdown>
+  );
+}
+
+const CALLOUT_RE = /^\[!(\w+)\]\s*(.*)/;
+function parseCalloutMeta(firstLine) {
+  const text = firstLine.replace(/^>\s*/, "");
+  const match = text.match(CALLOUT_RE);
+  if (!match) return { type: "note", title: "Note" };
+  const t = match[1].toLowerCase();
+  return {
+    type: t,
+    title: match[2] || t.charAt(0).toUpperCase() + t.slice(1),
+  };
+}
+
+// ── 查看态 ──
+function BlockView({ block }) {
+  const { type, content } = block;
+
+  switch (type) {
+    case "frontmatter":
+      return <FrontmatterCard raw={content} />;
+
+    case "heading": {
+      const level = content.match(/^#+/)?.[0]?.length || 1;
+      const text = content.replace(/^#+\s*/, "");
+      const sizes = {
+        1: "text-3xl font-extrabold",
+        2: "text-2xl font-bold",
+        3: "text-xl font-semibold",
+        4: "text-lg font-semibold",
+        5: "text-base font-semibold",
+        6: "text-sm font-semibold",
+      };
+      return (
+        <div className={`${sizes[level] || sizes[1]} text-white leading-snug`}>
+          <InlineMarkdown>{text}</InlineMarkdown>
+        </div>
+      );
+    }
+
+    case "paragraph":
+      return (
+        <div className="text-zinc-300 leading-relaxed">
+          <InlineMarkdown>{content}</InlineMarkdown>
+        </div>
+      );
+
+    case "fenced-code": {
+      const lang = content.split("\n")[0].replace(/```\s*/, "");
+      const code = content.split("\n").slice(1, -1).join("\n");
+      return (
+        <pre className="bg-white/5 border border-zinc-800 rounded-lg p-5 overflow-x-auto">
+          {lang && (
+            <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wider">
+              {lang}
+            </div>
+          )}
+          <code className="text-sm text-zinc-300 font-mono leading-relaxed whitespace-pre">
+            {code}
+          </code>
+        </pre>
+      );
+    }
+
+    case "table":
+      return (
+        <div className="overflow-x-auto [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-zinc-700 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:text-sm [&_th]:font-semibold [&_th]:text-white [&_th]:bg-white/[0.04] [&_td]:border [&_td]:border-zinc-800 [&_td]:px-4 [&_td]:py-2 [&_td]:text-sm [&_td]:text-zinc-300 [&_tr:nth-child(even)]:bg-white/[0.02]">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {content}
+          </ReactMarkdown>
+        </div>
+      );
+
+    case "callout": {
+      const lines = content.split("\n");
+      const meta = parseCalloutMeta(lines[0]);
+      const inner = [
+        lines[0].replace(/^>\s*\[!\w+\]\s*/, ""),
+        ...lines.slice(1).map((l) => l.replace(/^>\s?/, "")),
+      ].join("\n");
+      return (
+        <Callout type={meta.type} title={meta.title}>
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {inner}
+          </ReactMarkdown>
+        </Callout>
+      );
+    }
+
+    case "blockquote":
+      return (
+        <blockquote className="border-l-2 border-zinc-600 pl-4 italic text-zinc-400 leading-relaxed">
+          <InlineMarkdown>
+            {content.split("\n").map((l) => l.replace(/^>\s?/, "")).join("\n")}
+          </InlineMarkdown>
+        </blockquote>
+      );
+
+    case "list":
+      return (
+        <div className="text-zinc-300 leading-relaxed">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            allowedElements={[
+              "ul", "ol", "li",
+              "strong", "em", "del", "a", "code", "img", "br", "sub", "sup",
+            ]}
+          >
+            {content}
+          </ReactMarkdown>
+        </div>
+      );
+
+    case "thematic-break":
+      return <hr className="border-zinc-800 my-2" />;
+
+    default:
+      return (
+        <div className="text-zinc-300 leading-relaxed">
+          <InlineMarkdown>{content}</InlineMarkdown>
+        </div>
+      );
+  }
+}
+
+// ── 单块编辑态：无边框 textarea ──
+function BlockEdit({ block, onBlur, onCtrlA }) {
+  const taRef = useRef(null);
+  const [value, setValue] = useState(block.content);
 
   useEffect(() => {
-    if (!hostRef.current) return;
-
-    const view = new EditorView({
-      doc: value,
-      parent: hostRef.current,
-      extensions: [
-        keymap.of([...defaultKeymap, ...historyKeymap]),
-        history(),
-        EditorView.updateListener.of((update) => {
-          if (update.docChanged) {
-            onChange(update.state.doc.toString());
-          }
-        }),
-        markdown(),
-        hiddenMarkup,
-        darkTheme,
-        headingTheme,
-        EditorView.lineWrapping,
-      ],
-    });
-
-    if (editorRef) editorRef.current = view;
-
-    return () => {
-      if (editorRef) editorRef.current = null;
-      view.destroy();
-    };
+    const ta = taRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = ta.scrollHeight + "px";
+    ta.focus();
+    ta.setSelectionRange(ta.value.length, ta.value.length);
   }, []);
 
-  return <div ref={hostRef} />;
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setValue(block.content);
+      e.currentTarget.blur();
+    }
+    // Ctrl+A → 切换到全文选中模式
+    if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      onCtrlA();
+    }
+  };
+
+  return (
+    <textarea
+      ref={taRef}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={() => onBlur(value)}
+      onKeyDown={handleKeyDown}
+      className="w-full resize-none bg-transparent text-zinc-300 leading-relaxed
+                 focus:outline-none border-none"
+      style={{ fontFamily: "inherit", fontSize: "inherit" }}
+    />
+  );
+}
+
+// ── 主组件 ──
+export default function MarkdownEditor({ value, onChange, editorRef }) {
+  const [blocks, setBlocks] = useState(() => parseBlocks(value));
+  const [focusedId, setFocusedId] = useState(null);
+  const [selectAll, setSelectAll] = useState(false);
+  const fullTaRef = useRef(null);
+
+  // 重建全文
+  const rebuild = useCallback((bs) => bs.map((b) => b.content).join("\n\n"), []);
+
+  const getContent = useCallback(() => rebuild(blocks), [blocks, rebuild]);
+
+  useEffect(() => {
+    if (editorRef) editorRef.current = { getContent };
+  }, [editorRef, getContent]);
+
+  useEffect(() => {
+    setBlocks(parseBlocks(value));
+  }, [value]);
+
+  // Ctrl+A 全文选中模式：显示统一 textarea 并选中全部
+  useEffect(() => {
+    if (selectAll && fullTaRef.current) {
+      fullTaRef.current.focus();
+      fullTaRef.current.select();
+    }
+  }, [selectAll]);
+
+  const handleBlockBlur = (id, newContent) => {
+    setFocusedId(null);
+    if (newContent === undefined || newContent.trim() === "") {
+      setBlocks((prev) => prev.filter((b) => b.id !== id));
+      return;
+    }
+    setBlocks((prev) => {
+      const firstLine = newContent.trimStart().split("\n")[0];
+      let newType = "paragraph";
+      if (/^#{1,6}\s/.test(firstLine)) newType = "heading";
+      else if (firstLine.startsWith("```")) newType = "fenced-code";
+      else if (/^\|.+\|/.test(firstLine)) newType = "table";
+      else if (/^> \[!\w+\]/.test(firstLine)) newType = "callout";
+      else if (/^>\s/.test(firstLine)) newType = "blockquote";
+      else if (/^(\s*)([-*+]|\d+[.)])\s/.test(firstLine)) newType = "list";
+      else if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(firstLine))
+        newType = "thematic-break";
+
+      const updated = prev.map((b) =>
+        b.id === id ? { ...b, content: newContent, type: newType } : b
+      );
+      if (onChange) onChange(rebuild(updated));
+      return updated;
+    });
+  };
+
+  // 从全文选中模式退出
+  const exitSelectAll = () => {
+    const fullText = fullTaRef.current?.value;
+    if (fullText !== undefined && fullText !== rebuild(blocks)) {
+      const newBlocks = parseBlocks(fullText);
+      setBlocks(newBlocks);
+      if (onChange) onChange(fullText);
+    }
+    setSelectAll(false);
+  };
+
+  if (selectAll) {
+    return (
+      <textarea
+        ref={fullTaRef}
+        defaultValue={rebuild(blocks)}
+        onBlur={exitSelectAll}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") exitSelectAll();
+        }}
+        className="w-full min-h-[60vh] resize-none bg-transparent text-zinc-300
+                   leading-relaxed focus:outline-none border-none"
+        style={{ fontFamily: "inherit", fontSize: "inherit" }}
+      />
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      {blocks.map((block) => {
+        const isFocused = focusedId === block.id;
+        return (
+          <div
+            key={block.id}
+            onClick={() => {
+              if (!isFocused) setFocusedId(block.id);
+            }}
+            className="cursor-text group"
+          >
+            {isFocused ? (
+              <BlockEdit
+                block={block}
+                onBlur={(v) => handleBlockBlur(block.id, v)}
+                onCtrlA={() => setSelectAll(true)}
+              />
+            ) : (
+              <BlockView block={block} />
+            )}
+          </div>
+        );
+      })}
+
+      {/* 点击空白新增段落 */}
+      <div
+        className="h-8 cursor-text rounded hover:bg-white/[0.02] transition-colors"
+        onClick={() => {
+          const id = String(Date.now());
+          setBlocks((prev) => [
+            ...prev,
+            { id, type: "paragraph", content: "" },
+          ]);
+          setTimeout(() => setFocusedId(id), 0);
+        }}
+      />
+    </div>
+  );
 }
