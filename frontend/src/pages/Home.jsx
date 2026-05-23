@@ -217,7 +217,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
     if (action === "save") {
       setSelectedPost({
         ...selectedPost,
-        content: editRef.current?.state.doc.toString() ?? "",
+        content: editRef.current?.getContent() ?? selectedPost.content,
       });
       setIsEditing(false);
     }
