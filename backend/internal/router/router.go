@@ -3,6 +3,7 @@ package router
 import (
 	"myblog/internal/handler"
 
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -12,6 +13,11 @@ func NewRouter() *gin.Engine {
 		gin.Logger(),
 		gin.Recovery(),
 	)
+	// 跨域中间件配置
+    config := cors.DefaultConfig()
+    config.AllowAllOrigins = true // 开发阶段，允许所有前端地址跨域访问
+    config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+    r.Use(cors.New(config))       // 挂载到全局路由上
 	// test := r.Group("")
 	// {
 	// 	test.GET("/test", handler.Test)
