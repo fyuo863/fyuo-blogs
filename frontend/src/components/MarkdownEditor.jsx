@@ -172,7 +172,7 @@ function BlockView({ block }) {
 }
 
 // ── 单块编辑态：无边框 textarea ──
-function BlockEdit({ block, onBlur, onCtrlA }) {
+function BlockEdit({ block, onBlur }) {
   const taRef = useRef(null);
   const [value, setValue] = useState(block.content);
 
@@ -191,11 +191,7 @@ function BlockEdit({ block, onBlur, onCtrlA }) {
       setValue(block.content);
       e.currentTarget.blur();
     }
-    // Ctrl+A → 切换到全文选中模式
-    if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      onCtrlA();
-    }
+    // Ctrl+A 默认行为选中 textarea 内全部文本
   };
 
   return (
@@ -216,10 +212,8 @@ function BlockEdit({ block, onBlur, onCtrlA }) {
 export default function MarkdownEditor({ value, onChange, editorRef }) {
   const [blocks, setBlocks] = useState(() => parseBlocks(value));
   const [focusedId, setFocusedId] = useState(null);
-  const [selectAll, setSelectAll] = useState(false);
-  const fullTaRef = useRef(null);
+  const containerRef = useRef(null);
 
-  // 重建全文
   const rebuild = useCallback((bs) => bs.map((b) => b.content).join("\n\n"), []);
 
   const getContent = useCallback(() => rebuild(blocks), [blocks, rebuild]);
@@ -232,13 +226,24 @@ export default function MarkdownEditor({ value, onChange, editorRef }) {
     setBlocks(parseBlocks(value));
   }, [value]);
 
-  // Ctrl+A 全文选中模式：显示统一 textarea 并选中全部
-  useEffect(() => {
-    if (selectAll && fullTaRef.current) {
-      fullTaRef.current.focus();
-      fullTaRef.current.select();
+  // 容器级 Ctrl+A：在原位选中全部渲染文本
+  const handleContainerKeyDown = (e) => {
+    if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      const range = document.createRange();
+      range.selectNodeContents(containerRef.current);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
     }
-  }, [selectAll]);
+  };
+
+  // Ctrl+C：替换为 markdown 原文
+  const handleCopy = (e) => {
+    e.preventDefault();
+    const raw = rebuild(blocks);
+    e.clipboardData.setData("text/plain", raw);
+  };
 
   const handleBlockBlur = (id, newContent) => {
     setFocusedId(null);
@@ -266,35 +271,14 @@ export default function MarkdownEditor({ value, onChange, editorRef }) {
     });
   };
 
-  // 从全文选中模式退出
-  const exitSelectAll = () => {
-    const fullText = fullTaRef.current?.value;
-    if (fullText !== undefined && fullText !== rebuild(blocks)) {
-      const newBlocks = parseBlocks(fullText);
-      setBlocks(newBlocks);
-      if (onChange) onChange(fullText);
-    }
-    setSelectAll(false);
-  };
-
-  if (selectAll) {
-    return (
-      <textarea
-        ref={fullTaRef}
-        defaultValue={rebuild(blocks)}
-        onBlur={exitSelectAll}
-        onKeyDown={(e) => {
-          if (e.key === "Escape") exitSelectAll();
-        }}
-        className="w-full min-h-[60vh] resize-none bg-transparent text-zinc-300
-                   leading-relaxed focus:outline-none border-none"
-        style={{ fontFamily: "inherit", fontSize: "inherit" }}
-      />
-    );
-  }
-
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      ref={containerRef}
+      tabIndex={0}
+      onKeyDown={handleContainerKeyDown}
+      className="flex flex-col gap-4 focus:outline-none"
+      onCopy={handleCopy}
+    >
       {blocks.map((block) => {
         const isFocused = focusedId === block.id;
         return (
@@ -309,7 +293,6 @@ export default function MarkdownEditor({ value, onChange, editorRef }) {
               <BlockEdit
                 block={block}
                 onBlur={(v) => handleBlockBlur(block.id, v)}
-                onCtrlA={() => setSelectAll(true)}
               />
             ) : (
               <BlockView block={block} />
