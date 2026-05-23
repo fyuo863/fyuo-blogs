@@ -1,4 +1,6 @@
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 function formatDate(iso) {
   return new Date(iso)
@@ -177,168 +179,168 @@ const MENU_ITEMS = [
   { label: "exit.", action: "logout" },
 ];
 
-function renderMarkdown(content) {
-  return content.split(/\n\n+/).map((block, i) => {
-    // code block
-    if (block.startsWith("```")) {
-      const lines = block.split("\n");
-      const lang = lines[0].replace("```", "").trim();
-      const code = lines.slice(1, -1).join("\n");
-      return (
-        <pre
-          key={i}
-          className="my-6 border border-zinc-800 bg-white/5 p-5 overflow-x-auto"
-        >
-          {lang && (
-            <div className="text-xs font-mono text-zinc-600 mb-2">{lang}</div>
-          )}
-          <code className="text-sm font-mono text-zinc-300 leading-relaxed whitespace-pre-wrap">
-            {code}
-          </code>
-        </pre>
-      );
-    }
+// function renderMarkdown(content) {
+//   return content.split(/\n\n+/).map((block, i) => {
+//     // code block
+//     if (block.startsWith("```")) {
+//       const lines = block.split("\n");
+//       const lang = lines[0].replace("```", "").trim();
+//       const code = lines.slice(1, -1).join("\n");
+//       return (
+//         <pre
+//           key={i}
+//           className="my-6 border border-zinc-800 bg-white/5 p-5 overflow-x-auto"
+//         >
+//           {lang && (
+//             <div className="text-xs font-mono text-zinc-600 mb-2">{lang}</div>
+//           )}
+//           <code className="text-sm font-mono text-zinc-300 leading-relaxed whitespace-pre-wrap">
+//             {code}
+//           </code>
+//         </pre>
+//       );
+//     }
 
-    // table
-    if (block.includes("|") && block.includes("---")) {
-      const rows = block
-        .trim()
-        .split("\n")
-        .filter((l) => l.includes("|"));
-      const header = rows[0];
-      const body = rows.slice(2);
-      const headers = header
-        .split("|")
-        .filter(Boolean)
-        .map((h) => h.trim());
-      const align = body.length > 0;
-      return (
-        <div key={i} className="my-6 overflow-x-auto">
-          <table className="w-full text-sm border-collapse border border-zinc-800">
-            <thead>
-              <tr className="border-b border-zinc-800">
-                {headers.map((h, j) => (
-                  <th
-                    key={j}
-                    className="px-4 py-2 text-left font-semibold text-white"
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            {align && (
-              <tbody>
-                {body.map((row, j) => {
-                  const cells = row
-                    .split("|")
-                    .filter(Boolean)
-                    .map((c) => c.trim());
-                  return (
-                    <tr key={j} className="border-b border-zinc-800/50">
-                      {cells.map((c, k) => (
-                        <td key={k} className="px-4 py-2 text-zinc-400">
-                          {c}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              </tbody>
-            )}
-          </table>
-        </div>
-      );
-    }
+//     // table
+//     if (block.includes("|") && block.includes("---")) {
+//       const rows = block
+//         .trim()
+//         .split("\n")
+//         .filter((l) => l.includes("|"));
+//       const header = rows[0];
+//       const body = rows.slice(2);
+//       const headers = header
+//         .split("|")
+//         .filter(Boolean)
+//         .map((h) => h.trim());
+//       const align = body.length > 0;
+//       return (
+//         <div key={i} className="my-6 overflow-x-auto">
+//           <table className="w-full text-sm border-collapse border border-zinc-800">
+//             <thead>
+//               <tr className="border-b border-zinc-800">
+//                 {headers.map((h, j) => (
+//                   <th
+//                     key={j}
+//                     className="px-4 py-2 text-left font-semibold text-white"
+//                   >
+//                     {h}
+//                   </th>
+//                 ))}
+//               </tr>
+//             </thead>
+//             {align && (
+//               <tbody>
+//                 {body.map((row, j) => {
+//                   const cells = row
+//                     .split("|")
+//                     .filter(Boolean)
+//                     .map((c) => c.trim());
+//                   return (
+//                     <tr key={j} className="border-b border-zinc-800/50">
+//                       {cells.map((c, k) => (
+//                         <td key={k} className="px-4 py-2 text-zinc-400">
+//                           {c}
+//                         </td>
+//                       ))}
+//                     </tr>
+//                   );
+//                 })}
+//               </tbody>
+//             )}
+//           </table>
+//         </div>
+//       );
+//     }
 
-    // h2
-    if (block.startsWith("## ")) {
-      return (
-        <h2
-          key={i}
-          className="mt-10 mb-4 text-2xl font-bold tracking-tight text-white"
-        >
-          {block.replace("## ", "")}
-        </h2>
-      );
-    }
+//     // h2
+//     if (block.startsWith("## ")) {
+//       return (
+//         <h2
+//           key={i}
+//           className="mt-10 mb-4 text-2xl font-bold tracking-tight text-white"
+//         >
+//           {block.replace("## ", "")}
+//         </h2>
+//       );
+//     }
 
-    // h3
-    if (block.startsWith("### ")) {
-      return (
-        <h3
-          key={i}
-          className="mt-8 mb-3 text-xl font-semibold tracking-tight text-white"
-        >
-          {block.replace("### ", "")}
-        </h3>
-      );
-    }
+//     // h3
+//     if (block.startsWith("### ")) {
+//       return (
+//         <h3
+//           key={i}
+//           className="mt-8 mb-3 text-xl font-semibold tracking-tight text-white"
+//         >
+//           {block.replace("### ", "")}
+//         </h3>
+//       );
+//     }
 
-    // ul
-    if (block.startsWith("- ")) {
-      const items = block.split("\n").filter((l) => l.startsWith("- "));
-      return (
-        <ul key={i} className="my-4 space-y-1.5">
-          {items.map((item, j) => (
-            <li
-              key={j}
-              className="text-zinc-400 leading-relaxed flex items-start gap-2"
-            >
-              <span className="text-zinc-600 mt-0.5 shrink-0">&mdash;</span>
-              <span>{inlineMarkdown(item.replace("- ", ""))}</span>
-            </li>
-          ))}
-        </ul>
-      );
-    }
+//     // ul
+//     if (block.startsWith("- ")) {
+//       const items = block.split("\n").filter((l) => l.startsWith("- "));
+//       return (
+//         <ul key={i} className="my-4 space-y-1.5">
+//           {items.map((item, j) => (
+//             <li
+//               key={j}
+//               className="text-zinc-400 leading-relaxed flex items-start gap-2"
+//             >
+//               <span className="text-zinc-600 mt-0.5 shrink-0">&mdash;</span>
+//               <span>{inlineMarkdown(item.replace("- ", ""))}</span>
+//             </li>
+//           ))}
+//         </ul>
+//       );
+//     }
 
-    // ol
-    if (/^\d+\.\s/.test(block)) {
-      const items = block.split("\n").filter((l) => /^\d+\.\s/.test(l));
-      return (
-        <ol key={i} className="my-4 space-y-1.5 list-decimal list-inside">
-          {items.map((item, j) => (
-            <li key={j} className="text-zinc-400 leading-relaxed">
-              {inlineMarkdown(item.replace(/^\d+\.\s/, ""))}
-            </li>
-          ))}
-        </ol>
-      );
-    }
+//     // ol
+//     if (/^\d+\.\s/.test(block)) {
+//       const items = block.split("\n").filter((l) => /^\d+\.\s/.test(l));
+//       return (
+//         <ol key={i} className="my-4 space-y-1.5 list-decimal list-inside">
+//           {items.map((item, j) => (
+//             <li key={j} className="text-zinc-400 leading-relaxed">
+//               {inlineMarkdown(item.replace(/^\d+\.\s/, ""))}
+//             </li>
+//           ))}
+//         </ol>
+//       );
+//     }
 
-    // paragraph
-    return (
-      <p key={i} className="my-4 text-zinc-400 leading-relaxed">
-        {inlineMarkdown(block)}
-      </p>
-    );
-  });
-}
+//     // paragraph
+//     return (
+//       <p key={i} className="my-4 text-zinc-400 leading-relaxed">
+//         {inlineMarkdown(block)}
+//       </p>
+//     );
+//   });
+// }
 
-function inlineMarkdown(text) {
-  const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/);
-  return parts.map((part, i) => {
-    if (part.startsWith("`") && part.endsWith("`")) {
-      return (
-        <code
-          key={i}
-          className="bg-white/10 px-1.5 py-0.5 text-sm font-mono text-zinc-300"
-        >
-          {part.slice(1, -1)}
-        </code>
-      );
-    }
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return (
-        <strong key={i} className="font-semibold text-white">
-          {part.slice(2, -2)}
-        </strong>
-      );
-    }
-    return part;
-  });
-}
+// function inlineMarkdown(text) {
+//   const parts = text.split(/(`[^`]+`|\*\*[^*]+\*\*)/);
+//   return parts.map((part, i) => {
+//     if (part.startsWith("`") && part.endsWith("`")) {
+//       return (
+//         <code
+//           key={i}
+//           className="bg-white/10 px-1.5 py-0.5 text-sm font-mono text-zinc-300"
+//         >
+//           {part.slice(1, -1)}
+//         </code>
+//       );
+//     }
+//     if (part.startsWith("**") && part.endsWith("**")) {
+//       return (
+//         <strong key={i} className="font-semibold text-white">
+//           {part.slice(2, -2)}
+//         </strong>
+//       );
+//     }
+//     return part;
+//   });
+// }
 
 function Home({ username, onOpenSignIn, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -509,7 +511,18 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
             <div className="mt-10 border-t border-zinc-800" />
 
-            <div className="mt-10">{renderMarkdown(selectedPost.content)}</div>
+            {/* ── 真正的 Markdown 渲染区 ── */}
+            {/* <div className="mt-10 prose prose-invert prose-zinc max-w-none prose-pre:bg-white/5 prose-pre:border prose-pre:border-zinc-800">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {selectedPost.content}
+              </ReactMarkdown>
+            </div> */}
+            {/* ── 真正的 Markdown 渲染区 ── */}
+            <div className="mt-10 text-zinc-400 prose prose-invert prose-zinc max-w-none prose-pre:bg-white/5 prose-pre:border prose-pre:border-zinc-800">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                {selectedPost.content}
+              </ReactMarkdown>
+            </div>
 
             <div className="mt-20 border-t border-zinc-800 pt-8">
               <button

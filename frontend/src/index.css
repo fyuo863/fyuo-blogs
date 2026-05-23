@@ -1,3 +1,5 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* 注意：这里不需要写 @plugin，v3 是在配置文件里加载插件的 */
