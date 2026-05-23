@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import BlogPost from "../components/BlogPost";
-import { createArticle, updateArticle, listArticles, deleteArticle } from "../api";
+import { createArticle, updateArticle, listArticles, deleteArticle, searchArticles } from "../api";
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -27,7 +27,11 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const editRef = useRef(null);
+  const searchRef = useRef(null);
 
   // 首次进入 / 返回首页时拉取最新文章
   const fetchPosts = useCallback(() => {
@@ -38,8 +42,52 @@ function Home({ user, onOpenSignIn, onLogout }) {
 
   // 进入首页 / 从博客页返回首页时拉取文章列表
   useEffect(() => {
-    if (!selectedPost) fetchPosts();
+    if (!selectedPost) {
+      fetchPosts();
+      setSearchQuery("");
+    }
   }, [selectedPost, fetchPosts]);
+
+  // 点击外部关闭下拉栏
+  useEffect(() => {
+    const handler = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleSearch = () => {
+    const q = searchQuery.trim();
+    if (!q) {
+      setSearchResults([]);
+      setShowDropdown(false);
+      return;
+    }
+    searchArticles(q)
+      .then((res) => {
+        setSearchResults(res.data.data ?? []);
+        setShowDropdown(true);
+      })
+      .catch((err) => console.error("搜索失败", err));
+  };
+
+  const handleSearchInputChange = (e) => {
+    setSearchQuery(e.target.value);
+    if (e.target.value.trim() === "") {
+      setSearchResults([]);
+      setShowDropdown(false);
+    }
+  };
+
+  const handleSelectResult = (post) => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowDropdown(false);
+    setSelectedPost(post);
+  };
 
   const isBlogView = selectedPost !== null;
   const isNewPost = selectedPost?.id == null;
@@ -196,14 +244,43 @@ function Home({ user, onOpenSignIn, onLogout }) {
       <div className="border-t border-b border-zinc-800">
         <div className="px-[20%] py-12">
           <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
+            <div className="relative flex-1" ref={searchRef}>
               <input
-                type="email"
+                type="text"
                 placeholder="serch,"
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                onFocus={() => {
+                  if (searchResults.length > 0) setShowDropdown(true);
+                }}
                 className="w-full bg-white/5 py-3 pl-5 pr-5 text-sm text-white placeholder:text-zinc-500 border border-zinc-800 focus:border-zinc-600 focus:outline-none transition-colors"
               />
+
+              {/* 搜索结果下拉栏 */}
+              {showDropdown && searchResults.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-zinc-900 border border-zinc-700 shadow-2xl z-50 max-h-80 overflow-y-auto">
+                  {searchResults.map((post) => (
+                    <button
+                      key={post.id}
+                      onClick={() => handleSelectResult(post)}
+                      className="w-full text-left px-5 py-3 hover:bg-white/5 transition-colors border-b border-zinc-800 last:border-b-0"
+                    >
+                      <div className="text-sm font-semibold text-white truncate">
+                        {post.title}
+                      </div>
+                      <time className="text-xs font-mono text-zinc-500 mt-0.5 block">
+                        {formatDate(post.created_at)}
+                      </time>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-            <button className="bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/20 active:bg-white/5 transition-colors shrink-0">
+            <button
+              onClick={handleSearch}
+              className="bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/20 active:bg-white/5 transition-colors shrink-0"
+            >
               search.
             </button>
           </div>

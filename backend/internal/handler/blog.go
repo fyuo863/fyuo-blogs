@@ -189,6 +189,32 @@ func ListBlogs(c *gin.Context) {
 	c.JSON(http.StatusOK, responseData)
 }
 
+func SearchBlogs(c *gin.Context) {
+	query := c.Query("q")
+	if query == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "搜索关键词不能为空"})
+		return
+	}
+
+	var articles []model.Article
+	like := "%" + query + "%"
+
+	result := database.DB.Where("stage != ?", "hidden").
+		Where("title ILIKE ? OR content ILIKE ?", like, like).
+		Order("created_at DESC").
+		Limit(20).
+		Find(&articles)
+
+	if result.Error != nil {
+		log.Logger.Error("搜索文章失败", "query", query, "error", result.Error)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败"})
+		return
+	}
+
+	log.Logger.Info("搜索文章", "query", query, "results", len(articles))
+	c.JSON(http.StatusOK, gin.H{"data": articles, "total": len(articles), "query": query})
+}
+
 func GetBlog(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {

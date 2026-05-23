@@ -21,6 +21,10 @@ export const signUp = (name, password) =>
 /** GET /api/v1/articles — 获取文章列表 */
 export const listArticles = () => axios.get(`${BASE}/articles`);
 
+/** GET /api/v1/articles/search?q= — 搜索文章 */
+export const searchArticles = (query) =>
+  axios.get(`${BASE}/articles/search`, { params: { q: query } });
+
 /** GET /api/v1/articles/:id — 获取单篇文章 */
 export const getArticle = (id) => axios.get(`${BASE}/articles/${id}`);
 
