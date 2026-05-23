@@ -171,46 +171,12 @@ function BlockView({ block }) {
   }
 }
 
-// ── 单块编辑态 ──
-function BlockEdit({ block, onBlur }) {
-  const taRef = useRef(null);
-  const [val, setVal] = useState(block.content);
-
-  useEffect(() => {
-    const ta = taRef.current;
-    if (!ta) return;
-    ta.style.height = "auto";
-    ta.style.height = ta.scrollHeight + "px";
-    ta.focus();
-    ta.setSelectionRange(ta.value.length, ta.value.length);
-  }, []);
-
-  return (
-    <textarea
-      ref={taRef}
-      value={val}
-      onChange={(e) => setVal(e.target.value)}
-      onBlur={() => onBlur(val)}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          setVal(block.content);
-          e.currentTarget.blur();
-        }
-      }}
-      className="w-full resize-none bg-transparent text-zinc-300 leading-relaxed
-                 focus:outline-none border-none"
-      style={{ fontFamily: "inherit", fontSize: "inherit" }}
-    />
-  );
-}
-
 // ── 主组件 ──
 export default function MarkdownEditor({ value, onChange, editorRef, editing }) {
   const [blocks, setBlocks] = useState(() => parseBlocks(value));
-  const [focusedId, setFocusedId] = useState(null);
   const [fullEdit, setFullEdit] = useState(false);
   const [fullText, setFullText] = useState("");
+  const [editText, setEditText] = useState(value);
   const containerRef = useRef(null);
   const fullTaRef = useRef(null);
 
@@ -219,6 +185,10 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
 
   useEffect(() => {
     setBlocks(parseBlocks(value));
+  }, [value]);
+
+  useEffect(() => {
+    setEditText(value);
   }, [value]);
 
   useEffect(() => {
@@ -278,7 +248,7 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
     );
   }
 
-  // ── 全文编辑态 ──
+  // ── 全文编辑态（旧，保留兼容） ──
   if (fullEdit) {
     return (
       <textarea
@@ -300,91 +270,48 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
     );
   }
 
-  // ── 段落编辑态：块渲染 + 点选编辑 ──
-  const handleBlockBlur = (id, newContent) => {
-    setFocusedId(null);
-    if (newContent === undefined || newContent.trim() === "") {
-      setBlocks((prev) =>
-        prev.length <= 1
-          ? [{ id: prev[0]?.id || String(Date.now()), type: "paragraph", content: "" }]
-          : prev.filter((b) => b.id !== id)
-      );
-      return;
-    }
-    setBlocks((prev) => {
-      const firstLine = newContent.trimStart().split("\n")[0];
-      let newType = "paragraph";
-      if (/^#{1,6}\s/.test(firstLine)) newType = "heading";
-      else if (firstLine.startsWith("```")) newType = "fenced-code";
-      else if (/^\|.+\|/.test(firstLine)) newType = "table";
-      else if (/^> \[!\w+\]/.test(firstLine)) newType = "callout";
-      else if (/^>\s/.test(firstLine)) newType = "blockquote";
-      else if (/^(\s*)([-*+]|\d+[.)])\s/.test(firstLine)) newType = "list";
-      else if (/^(-{3,}|\*{3,}|_{3,})\s*$/.test(firstLine))
-        newType = "thematic-break";
-
-      const updated = prev.map((b) =>
-        b.id === id ? { ...b, content: newContent, type: newType } : b
-      );
-      if (onChange) onChange(rebuild(updated));
-      return updated;
-    });
-  };
-
-  const handleContainerKeyDown = (e) => {
-    if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      setFullText(rebuild(blocks));
-      setFullEdit(true);
-    }
-  };
-
-  const handleCopy = (e) => {
-    e.preventDefault();
-    e.clipboardData.setData("text/plain", rebuild(blocks));
+  // ── 编辑态：左侧渲染预览 + 右侧编辑框 ──
+  const handleEditChange = (text) => {
+    setEditText(text);
+    setBlocks(parseBlocks(text));
+    if (onChange) onChange(text);
   };
 
   return (
-    <div
-      ref={containerRef}
-      tabIndex={0}
-      onKeyDown={handleContainerKeyDown}
-      className="flex flex-col gap-4 focus:outline-none"
-      onCopy={handleCopy}
-    >
-      {blocks.map((block) => {
-        const isFocused = focusedId === block.id;
-        return (
-          <div
-            key={block.id}
-            onClick={() => {
-              if (!isFocused) setFocusedId(block.id);
-            }}
-            className="cursor-text group"
-          >
-            {isFocused ? (
-              <BlockEdit
-                block={block}
-                onBlur={(v) => handleBlockBlur(block.id, v)}
-              />
-            ) : (
-              <BlockView block={block} />
-            )}
-          </div>
-        );
-      })}
+    <div className="flex gap-6" style={{ minHeight: "60vh" }}>
+      {/* 左侧：渲染预览 */}
+      <div className="flex-1 min-w-0 border-r border-zinc-800 pr-6">
+        <div className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
+          Preview
+        </div>
+        <div
+          className="flex flex-col gap-4"
+          onCopy={(e) => {
+            e.preventDefault();
+            e.clipboardData.setData("text/plain", editText);
+          }}
+        >
+          {blocks.map((block) => (
+            <BlockView key={block.id} block={block} />
+          ))}
+        </div>
+      </div>
 
-      <div
-        className="h-8 cursor-text rounded hover:bg-white/[0.02] transition-colors"
-        onClick={() => {
-          const id = String(Date.now());
-          setBlocks((prev) => [
-            ...prev,
-            { id, type: "paragraph", content: "" },
-          ]);
-          setTimeout(() => setFocusedId(id), 0);
-        }}
-      />
+      {/* 右侧：编辑框 */}
+      <div className="flex-1 min-w-0 pl-6">
+        <div className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
+          Editor
+        </div>
+        <textarea
+          value={editText}
+          onChange={(e) => handleEditChange(e.target.value)}
+          className="w-full min-h-[60vh] resize-none bg-transparent
+                     text-zinc-300 leading-relaxed font-mono text-sm
+                     focus:outline-none border-none"
+          style={{ fontFamily: "inherit" }}
+          placeholder="Write your markdown here..."
+        />
+      </div>
     </div>
   );
 }
