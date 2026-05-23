@@ -1,6 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import MarkdownEditor from "../components/MarkdownEditor";
 
 function formatDate(iso) {
   return new Date(iso)
@@ -185,14 +186,6 @@ function Home({ username, onOpenSignIn, onLogout }) {
   const [isEditing, setIsEditing] = useState(false);
   const editRef = useRef(null);
 
-  // 进入编辑态时将原始内容写入 contentEditable，避免 React 重渲染覆盖 DOM 导致光标复位
-  useEffect(() => {
-    if (isEditing && editRef.current) {
-      editRef.current.textContent = selectedPost.content;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing]);
-
   const isBlogView = selectedPost !== null;
   const blogItems = isEditing
     ? [
@@ -217,7 +210,10 @@ function Home({ username, onOpenSignIn, onLogout }) {
       setIsEditing(true);
     }
     if (action === "save") {
-      setSelectedPost({ ...selectedPost, content: editRef.current?.textContent ?? "" });
+      setSelectedPost({
+        ...selectedPost,
+        content: editRef.current?.state.doc.toString() ?? "",
+      });
       setIsEditing(false);
     }
     if (action === "discard") {
@@ -385,14 +381,14 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
             <div className="mt-10 border-t border-zinc-800" />
 
-            {/* ── Markdown 渲染 / 编辑区 ── */}
+            {/* ── Live Preview 编辑 / 阅读模式 ── */}
             {isEditing ? (
-              <div
-                ref={editRef}
-                contentEditable
-                suppressContentEditableWarning
-                className="mt-10 text-zinc-300 leading-relaxed font-mono text-sm whitespace-pre-wrap focus:outline-none min-h-[60vh]"
-              />
+              <div className="mt-10">
+                <MarkdownEditor
+                  value={selectedPost.content}
+                  editorRef={editRef}
+                />
+              </div>
             ) : (
               <div className="mt-10 text-zinc-400 prose prose-invert prose-zinc max-w-none prose-pre:bg-white/5 prose-pre:border prose-pre:border-zinc-800">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
