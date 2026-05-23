@@ -27,7 +27,6 @@ func main() {
 		panic(err)
 	}
 	defer database.ClosePostgres()
-	// testUser := database.AuthorCreate("Muster")
 	// newArticle := model.Article{
 	// 	Title:   "我的第一篇 Postgres 博客",
 	// 	Content: "这是 Markdown 内容...",

@@ -1,10 +1,13 @@
 package handler
 
 import (
-	"fmt"
+	"myblog/internal/database"
+	"myblog/internal/model"
+	"myblog/log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type LoginRequest struct {
@@ -13,22 +16,40 @@ type LoginRequest struct {
 }
 
 func SignIn(c *gin.Context) {
-	var req LoginRequest
+    var req LoginRequest
 
-	// 1. 将请求体中的 JSON 数据绑定到 req 结构体
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式"})
-		return
-	}
+    // 1. 绑定前端传来的 JSON
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式或缺少字段"})
+        return
+    }
 
-	// 2. 在控制台打印接收到的内容
-	fmt.Printf("收到登录请求 - 用户名: %s, 密码: %s\n", req.Name, req.Password)
-
-	// 3. 返回响应（先返回成功，后续再写数据库逻辑）
-	c.JSON(http.StatusOK, gin.H{
-		"message": "接收成功",
-		"data":    req,
-	})
+    // 2. 去数据库中查询该用户名是否存在
+    var user model.User
+    // 注意：这里的 global.DB 需要换成你实际项目中初始化的 GORM 数据库实例
+    result := database.DB.Where("name = ?", req.Name).First(&user)
+    if result.Error != nil {
+        // 安全细节：不要明确告诉前端是“账号不存在”还是“密码错误”，防止黑客撞库
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+        return
+    }
+	log.Logger.Info("info", "用户名", user.Name, "psw", user.PasswordHash)
+    // 3. 校验密码 (比对前端传来的明文 req.Password 和数据库里的加密 user.Password)
+    err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+    if err != nil {
+		
+        c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+        return
+    }
+	log.Logger.Info("info", "用户名", user.Name, "ID", user.ID)
+    // 4. 验证通过！（后续这里将生成 JWT）
+    c.JSON(http.StatusOK, gin.H{
+        "message": "登录成功，欢迎回来！",
+        "data": gin.H{
+            "id":   user.ID,
+            "name": user.Name,
+        },
+    })
 }
 
 func SignUp(c *gin.Context) {
