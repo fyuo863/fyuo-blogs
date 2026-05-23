@@ -3,6 +3,7 @@ package main
 import (
 	"myblog/internal/config"
 	"myblog/internal/database"
+	"myblog/internal/router"
 	"myblog/log"
 )
 
@@ -38,8 +39,8 @@ func main() {
 	// }
 
 	// database.DBCreate(&newArticle)
+	//database.DBRead(4)
+	router := router.NewRouter()
 
-	// router := router.NewRouter()
-	database.DBRead(4)
-	// router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default
+	router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default
 }
