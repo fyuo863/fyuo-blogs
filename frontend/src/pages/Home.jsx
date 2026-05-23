@@ -3,13 +3,18 @@ import BlogPost from "../components/BlogPost";
 import { createArticle, updateArticle, listArticles } from "../api";
 
 function formatDate(iso) {
-  return new Date(iso)
-    .toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-    .toUpperCase();
+  const d = new Date(iso);
+  const date = d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+  const time = d.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  return `${date} ${time}`.toUpperCase();
 }
 
 const MENU_ITEMS = [
