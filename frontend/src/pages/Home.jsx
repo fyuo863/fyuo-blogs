@@ -1,9 +1,6 @@
 import { useState, useRef } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkCallout from "../utils/remarkCallout";
-import MarkdownEditor from "../components/MarkdownEditor";
-import Callout from "../components/Callout";
+import BlogPost from "../components/BlogPost";
+import { createArticle } from "../api";
 
 function formatDate(iso) {
   return new Date(iso)
@@ -192,16 +189,22 @@ function Home({ username, onOpenSignIn, onLogout }) {
   const editRef = useRef(null);
 
   const isBlogView = selectedPost !== null;
-  const blogItems = isEditing
+  const isNewPost = selectedPost?.id == null;
+  const blogItems = isNewPost
     ? [
         { label: "save,", action: "save" },
         { label: "discard,", action: "discard" },
-        { label: "back,", action: "back" },
       ]
-    : [
-        { label: "edit,", action: "edit" },
-        { label: "back,", action: "back" },
-      ];
+    : isEditing
+      ? [
+          { label: "save,", action: "save" },
+          { label: "discard,", action: "discard" },
+          { label: "back,", action: "back" },
+        ]
+      : [
+          { label: "edit,", action: "edit" },
+          { label: "back,", action: "back" },
+        ];
   const currentMenu = isBlogView ? blogItems : MENU_ITEMS;
 
   const handleMenuAction = (action) => {
@@ -215,16 +218,43 @@ function Home({ username, onOpenSignIn, onLogout }) {
       setIsEditing(true);
     }
     if (action === "save") {
-      setSelectedPost({
-        ...selectedPost,
-        content: editRef.current?.getContent() ?? selectedPost.content,
-      });
-      setIsEditing(false);
+      const content = editRef.current?.getContent() ?? selectedPost.content;
+      if (isNewPost) {
+        const lines = content.split("\n");
+        const title = lines[0]?.replace(/^#+\s*/, "").trim() || "Untitled";
+        createArticle({ title, content, stage: "published", vol: 1, tags: [] })
+          .then(() => {
+            setSelectedPost(null);
+            setIsEditing(false);
+          })
+          .catch((err) => console.error("创建失败", err));
+      } else {
+        setSelectedPost({ ...selectedPost, content });
+        setIsEditing(false);
+      }
     }
     if (action === "discard") {
+      if (isNewPost) {
+        setSelectedPost(null);
+      }
       setIsEditing(false);
     }
+    if (action === "create") {
+      setSelectedPost({
+        id: null,
+        title: "New Article",
+        content: "",
+        stage: "published",
+        vol: 1,
+        tags: [],
+        created_at: new Date().toISOString(),
+      });
+      setIsEditing(true);
+    }
   };
+
+  // 确定左下角触发器文案
+  const triggerLabel = isNewPost ? "home." : isBlogView ? "home." : "home.";
 
   return (
     <div className="min-h-screen bg-black">
@@ -260,7 +290,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
               onClick={() => setMenuOpen(!menuOpen)}
               className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors"
             >
-              home.
+              {triggerLabel}
             </button>
           </div>
         ) : (
@@ -353,80 +383,16 @@ function Home({ username, onOpenSignIn, onLogout }) {
       {/* ── 底部留白 ── */}
       <div className="h-24" />
 
-      {/* ── 博客内容展示 ── */}
       {selectedPost && (
-        <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
-          <div className="px-[20%] py-16">
-            <button
-              onClick={() => setSelectedPost(null)}
-              className="text-lg font-mono text-white hover:text-white transition-colors mb-16"
-            >
-              back.
-            </button>
-
-            <time className="ml-10 font-mono text-sm tracking-widest text-zinc-500 uppercase">
-              {formatDate(selectedPost.created_at)}
-            </time>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-              {selectedPost.title}
-            </h1>
-
-            {selectedPost.tags && selectedPost.tags.length > 0 && (
-              <div className="mt-6 flex flex-wrap gap-2">
-                {selectedPost.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-500 border border-zinc-800"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-10 border-t border-zinc-800" />
-
-            {/* ── Live Preview 编辑 / 阅读模式 ── */}
-            {isEditing ? (
-              <div className="mt-10">
-                <MarkdownEditor
-                  value={selectedPost.content}
-                  editorRef={editRef}
-                />
-              </div>
-            ) : (
-              <div className="mt-10 text-zinc-400 prose prose-invert prose-zinc max-w-none prose-pre:bg-white/5 prose-pre:border prose-pre:border-zinc-800">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm, remarkCallout]}
-                  components={{
-                    div({ className, 'data-callout-title': title, children, ...props }) {
-                      if (className?.startsWith('callout')) {
-                        const type = className.replace('callout callout-', '');
-                        return (
-                          <Callout type={type} title={title}>
-                            {children}
-                          </Callout>
-                        );
-                      }
-                      return <div className={className} {...props}>{children}</div>;
-                    },
-                  }}
-                >
-                  {selectedPost.content}
-                </ReactMarkdown>
-              </div>
-            )}
-
-            <div className="mt-20 border-t border-zinc-800 pt-8">
-              <button
-                onClick={() => setSelectedPost(null)}
-                className="text-lg font-mono text-white hover:text-white transition-colors"
-              >
-                back.
-              </button>
-            </div>
-          </div>
-        </div>
+        <BlogPost
+          post={selectedPost}
+          isEditing={isEditing}
+          editRef={editRef}
+          onBack={() => {
+            setSelectedPost(null);
+            setIsEditing(false);
+          }}
+        />
       )}
     </div>
   );
