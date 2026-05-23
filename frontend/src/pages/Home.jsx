@@ -36,11 +36,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
       .catch((err) => console.error("获取文章列表失败", err));
   }, []);
 
-  useEffect(() => {
-    fetchPosts();
-  }, [fetchPosts]);
-
-  // 从博客页返回首页时也刷新列表
+  // 进入首页 / 从博客页返回首页时拉取文章列表
   useEffect(() => {
     if (!selectedPost) fetchPosts();
   }, [selectedPost, fetchPosts]);
