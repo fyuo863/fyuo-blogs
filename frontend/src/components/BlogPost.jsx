@@ -1,8 +1,4 @@
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkCallout from "../utils/remarkCallout";
 import MarkdownEditor from "./MarkdownEditor";
-import Callout from "./Callout";
 
 function formatDate(iso) {
   return new Date(iso)
@@ -47,44 +43,13 @@ export default function BlogPost({ post, isEditing, editRef, onBack }) {
 
         <div className="mt-10 border-t border-zinc-800" />
 
-        {isEditing ? (
-          <div className="mt-10">
-            <MarkdownEditor
-              value={post.content}
-              editorRef={editRef}
-            />
-          </div>
-        ) : (
-          <div className="mt-10 text-zinc-400 prose prose-invert prose-zinc max-w-none prose-pre:bg-white/5 prose-pre:border prose-pre:border-zinc-800">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkCallout]}
-              components={{
-                div({
-                  className,
-                  "data-callout-title": title,
-                  children,
-                  ...props
-                }) {
-                  if (className?.startsWith("callout")) {
-                    const type = className.replace("callout callout-", "");
-                    return (
-                      <Callout type={type} title={title}>
-                        {children}
-                      </Callout>
-                    );
-                  }
-                  return (
-                    <div className={className} {...props}>
-                      {children}
-                    </div>
-                  );
-                },
-              }}
-            >
-              {post.content}
-            </ReactMarkdown>
-          </div>
-        )}
+        <div className="mt-10">
+          <MarkdownEditor
+            value={post.content}
+            editing={isEditing}
+            editorRef={editRef}
+          />
+        </div>
 
         <div className="mt-20 border-t border-zinc-800 pt-8">
           <button
