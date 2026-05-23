@@ -44,6 +44,7 @@ func authenticateUser(name, password string) (model.User, error) {
 }
 
 func CreateBlog(c *gin.Context) {
+	log.Logger.Info("创建文章请求")
 	var req CreateBlogRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式或缺少字段"})
@@ -121,7 +122,7 @@ func GetBlog(c *gin.Context) {
 }
 
 func UpdateBlog(c *gin.Context) {
-	
+	log.Logger.Info("更新文章请求")
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
