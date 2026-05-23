@@ -353,7 +353,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
     <div className="min-h-screen bg-black">
       {/* ── Floating site title (top-left) ── */}
       <div className="fixed top-0 left-0 z-[60] px-4 py-4 sm:px-6 lg:px-8">
-        <span className="text-lg font-bold tracking-tight text-white">
+        <span className="text-lg font-bold tracking-tight text-white italic">
           fyuo-blogs.
         </span>
       </div>
