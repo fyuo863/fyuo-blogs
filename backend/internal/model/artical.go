@@ -10,7 +10,7 @@ import (
 type User struct {
 	ID           uint      `gorm:"primaryKey" json:"id"`
 	Role         string    `gorm:"type:varchar(20);default:'visitor'" json:"role"` // admin 或 visitor
-	Name         string    `gorm:"type:varchar(100);not null" json:"name"`
+	Name string `gorm:"type:varchar(100);uniqueIndex;not null" json:"name"`
 	PasswordHash string    `gorm:"type:varchar(255);not null" json:"-"` // JSON 序列化时忽略密码
 	CreatedAt    time.Time `json:"created_at"`
 
