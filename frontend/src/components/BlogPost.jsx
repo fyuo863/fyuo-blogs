@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import MarkdownEditor from "./MarkdownEditor";
 
 function formatDate(iso) {
@@ -11,6 +12,29 @@ function formatDate(iso) {
 }
 
 export default function BlogPost({ post, isEditing, editRef, onBack }) {
+  const [editTitle, setEditTitle] = useState(post.title);
+  const [editTags, setEditTags] = useState((post.tags || []).join(", "));
+  const editorRef = useRef(null);
+  const titleRef = useRef(null);
+
+  useLayoutEffect(() => {
+    const ta = titleRef.current;
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
+    }
+  }, [editTitle, isEditing]);
+
+  useEffect(() => {
+    if (editRef) {
+      editRef.current = {
+        getContent: () => editorRef.current?.getContent() ?? post.content,
+        getTitle: () => editTitle,
+        getTags: () => editTags.split(",").map((t) => t.trim()).filter(Boolean),
+      };
+    }
+  }, [editRef, post.content, editTitle, editTags]);
+
   return (
     <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
       <div className="px-[20%] py-16">
@@ -24,21 +48,48 @@ export default function BlogPost({ post, isEditing, editRef, onBack }) {
         <time className="ml-10 font-mono text-sm tracking-widest text-zinc-500 uppercase">
           {formatDate(post.created_at)}
         </time>
-        <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-          {post.title}
-        </h1>
 
-        {post.tags && post.tags.length > 0 && (
-          <div className="mt-6 flex flex-wrap gap-2">
-            {post.tags.map((tag) => (
-              <span
-                key={tag}
-                className="bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-500 border border-zinc-800"
-              >
-                {tag}
-              </span>
-            ))}
+        {isEditing ? (
+          <textarea
+            ref={titleRef}
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            rows={1}
+            className="mt-4 w-full text-3xl font-bold tracking-tight text-white sm:text-4xl
+                       bg-transparent border-none focus:outline-none resize-none
+                       overflow-hidden placeholder:text-zinc-600"
+            placeholder="Article title..."
+          />
+        ) : (
+          <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+            {post.title}
+          </h1>
+        )}
+
+        {isEditing ? (
+          <div className="mt-6">
+            <input
+              value={editTags}
+              onChange={(e) => setEditTags(e.target.value)}
+              className="w-full bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-400
+                         border border-zinc-800 focus:border-zinc-600 focus:outline-none
+                         placeholder:text-zinc-600"
+              placeholder="tag1, tag2, tag3..."
+            />
           </div>
+        ) : (
+          post.tags && post.tags.length > 0 && (
+            <div className="mt-6 flex flex-wrap gap-2">
+              {post.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-500 border border-zinc-800"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )
         )}
 
         <div className="mt-10 border-t border-zinc-800" />
@@ -47,7 +98,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack }) {
           <MarkdownEditor
             value={post.content}
             editing={isEditing}
-            editorRef={editRef}
+            editorRef={editorRef}
           />
         </div>
 
