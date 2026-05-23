@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import BlogPost from "../components/BlogPost";
-import { createArticle, updateArticle, listArticles } from "../api";
+import { createArticle, updateArticle, listArticles, deleteArticle } from "../api";
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -60,6 +60,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
         ]
       : [
           { label: "edit,", action: "edit" },
+          { label: "delete,", action: "delete" },
           { label: "back,", action: "back" },
         ];
   const currentMenu = isBlogView ? blogItems : MENU_ITEMS;
@@ -94,6 +95,15 @@ function Home({ user, onOpenSignIn, onLogout }) {
           })
           .catch((err) => console.error("更新失败", err));
       }
+    }
+    if (action === "delete") {
+      const auth = { name: user?.name ?? "", password: user?.password ?? "" };
+      deleteArticle(selectedPost.id, auth)
+        .then(() => {
+          setSelectedPost(null);
+          setIsEditing(false);
+        })
+        .catch((err) => console.error("删除失败", err));
     }
     if (action === "discard") {
       if (isNewPost) {

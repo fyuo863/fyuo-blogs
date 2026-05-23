@@ -36,8 +36,6 @@ export const createArticle = (data) =>
 export const updateArticle = (id, data) =>
   axios.put(`${BASE}/articles/${id}`, data);
 
-/** DELETE /api/v1/articles/:id — 删除文章 */
-export const deleteArticle = (id, token) =>
-  axios.delete(`${BASE}/articles/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+/** DELETE /api/v1/articles/:id — 删除文章（name + password 验证） */
+export const deleteArticle = (id, data) =>
+  axios.delete(`${BASE}/articles/${id}`, { data });

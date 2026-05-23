@@ -38,6 +38,11 @@ type UpdateBlogRequest struct {
 	Tags     []string `json:"tags"`
 }
 
+type DeleteBlogRequest struct {
+	Name     string `json:"name"`
+	Password string `json:"password"`
+}
+
 func authenticateUser(name, password string) (model.User, error) {
 	var user model.User
 	if result := database.DB.Where("name = ?", name).First(&user); result.Error != nil {
@@ -234,6 +239,17 @@ func DeleteBlog(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		return
+	}
+
+	var req DeleteBlogRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式"})
+		return
+	}
+
+	if _, err := authenticateUser(req.Name, req.Password); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
 
