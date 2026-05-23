@@ -28,8 +28,9 @@ func NewRouter() *gin.Engine {
 		api.POST("/signin", handler.SignIn) // 处理登录逻辑
 		api.POST("/signup", handler.SignUp) // 处理注册逻辑
 
-		api.GET("/articles", handler.ListBlogs)   // 获取文章列表
-		api.GET("/articles/:id", handler.GetBlog) // 获取单篇文章
+		api.GET("/articles/search", handler.SearchBlogs) // 搜索文章
+		api.GET("/articles", handler.ListBlogs)
+		api.GET("/articles/:id", handler.GetBlog)
 	}
 	protected := api.Group("")
 	protected.Use(
