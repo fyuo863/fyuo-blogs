@@ -1,14 +1,19 @@
 package handler
 
 import (
+	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"myblog/internal/database"
 	"myblog/internal/model"
 	"myblog/log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -79,10 +84,33 @@ func CreateBlog(c *gin.Context) {
 }
 
 func ListBlogs(c *gin.Context) {
-	var articles []model.Article
-
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
+
+	// 1. 定义动态的 Redis 缓存 Key (例如: blogs:page:1:size:10)
+	cacheKey := fmt.Sprintf("blogs:page:%d:size:%d", page, pageSize)
+	ctx := context.Background()
+
+	// 2. 尝试从 Redis 中获取数据
+	// 注意：根据你实际项目初始化的 Redis 变量名修改 database.RDB
+	cachedData, err := database.RDB.Get(ctx, cacheKey).Result()
+	if err == nil {
+		log.Logger.Info("Redis 缓存命中！", "key", cacheKey)
+		
+		// 因为 Redis 存的是字符串，我们需要反序列化回 Go 的 map 结构
+		var responseData map[string]interface{}
+		json.Unmarshal([]byte(cachedData), &responseData)
+		
+		c.JSON(http.StatusOK, responseData)
+		return
+	} else if err != redis.Nil {
+		// 如果报错且不是因为“Key不存在”造成的，只打印警告，不中断流程，降级去查数据库
+		log.Logger.Warn("Redis 读取异常，降级到数据库查询", "error", err)
+	}
+
+	// 3. 缓存未命中 (Cache Miss)，去 PostgreSQL 数据库查询
+	log.Logger.Info("Redis 未命中，从 PostgreSQL 读取数据")
+	var articles []model.Article
 	offset := (page - 1) * pageSize
 
 	var total int64
@@ -95,12 +123,28 @@ func ListBlogs(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
+	// 构造原本要返回的数据
+	responseData := gin.H{
 		"data":      articles,
 		"total":     total,
 		"page":      page,
 		"page_size": pageSize,
-	})
+	}
+
+	// 4. 存入 Redis，并设置 1 小时 (time.Hour) 过期时间
+	jsonData, marshalErr := json.Marshal(responseData)
+	if marshalErr == nil {
+		// 将 JSON 字符串存入 Redis
+		setErr := database.RDB.Set(ctx, cacheKey, jsonData, time.Hour).Err()
+		if setErr != nil {
+			log.Logger.Warn("缓存写入 Redis 失败", "error", setErr)
+		} else {
+			log.Logger.Info("成功将文章列表缓存到 Redis", "expire", "1 hour")
+		}
+	}
+
+	// 5. 将数据推送给前端
+	c.JSON(http.StatusOK, responseData)
 }
 
 func GetBlog(c *gin.Context) {
