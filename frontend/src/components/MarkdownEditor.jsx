@@ -171,10 +171,10 @@ function BlockView({ block }) {
   }
 }
 
-// ── 单块编辑态：无边框 textarea ──
+// ── 单块编辑态 ──
 function BlockEdit({ block, onBlur }) {
   const taRef = useRef(null);
-  const [value, setValue] = useState(block.content);
+  const [val, setVal] = useState(block.content);
 
   useEffect(() => {
     const ta = taRef.current;
@@ -185,22 +185,19 @@ function BlockEdit({ block, onBlur }) {
     ta.setSelectionRange(ta.value.length, ta.value.length);
   }, []);
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Escape") {
-      e.preventDefault();
-      setValue(block.content);
-      e.currentTarget.blur();
-    }
-    // Ctrl+A 默认行为选中 textarea 内全部文本
-  };
-
   return (
     <textarea
       ref={taRef}
-      value={value}
-      onChange={(e) => setValue(e.target.value)}
-      onBlur={() => onBlur(value)}
-      onKeyDown={handleKeyDown}
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={() => onBlur(val)}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setVal(block.content);
+          e.currentTarget.blur();
+        }
+      }}
       className="w-full resize-none bg-transparent text-zinc-300 leading-relaxed
                  focus:outline-none border-none"
       style={{ fontFamily: "inherit", fontSize: "inherit" }}
@@ -209,46 +206,109 @@ function BlockEdit({ block, onBlur }) {
 }
 
 // ── 主组件 ──
-export default function MarkdownEditor({ value, onChange, editorRef }) {
+export default function MarkdownEditor({ value, onChange, editorRef, editing }) {
   const [blocks, setBlocks] = useState(() => parseBlocks(value));
   const [focusedId, setFocusedId] = useState(null);
+  const [fullEdit, setFullEdit] = useState(false);
+  const [fullText, setFullText] = useState("");
   const containerRef = useRef(null);
+  const fullTaRef = useRef(null);
 
   const rebuild = useCallback((bs) => bs.map((b) => b.content).join("\n\n"), []);
-
   const getContent = useCallback(() => rebuild(blocks), [blocks, rebuild]);
-
-  useEffect(() => {
-    if (editorRef) editorRef.current = { getContent };
-  }, [editorRef, getContent]);
 
   useEffect(() => {
     setBlocks(parseBlocks(value));
   }, [value]);
 
-  // 容器级 Ctrl+A：在原位选中全部渲染文本
-  const handleContainerKeyDown = (e) => {
-    if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
-      const range = document.createRange();
-      range.selectNodeContents(containerRef.current);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
+  useEffect(() => {
+    if (editorRef) editorRef.current = { getContent };
+  }, [editorRef, getContent]);
+
+  // Auto-resize fullEdit textarea
+  useEffect(() => {
+    const ta = fullTaRef.current;
+    if (ta && fullEdit) {
+      ta.style.height = "auto";
+      ta.style.height = ta.scrollHeight + "px";
     }
+  }, [fullText, fullEdit]);
+
+  // Focus + cursor at end when entering fullEdit
+  useEffect(() => {
+    if (fullEdit && fullTaRef.current) {
+      const ta = fullTaRef.current;
+      ta.focus();
+      ta.setSelectionRange(ta.value.length, ta.value.length);
+    }
+  }, [fullEdit]);
+
+  const commitFullEdit = (text) => {
+    setBlocks(parseBlocks(text));
+    setFullEdit(false);
+    if (onChange) onChange(text);
   };
 
-  // Ctrl+C：替换为 markdown 原文
-  const handleCopy = (e) => {
-    e.preventDefault();
-    const raw = rebuild(blocks);
-    e.clipboardData.setData("text/plain", raw);
-  };
+  // ── 查看态：纯渲染 ──
+  if (!editing) {
+    return (
+      <div
+        ref={containerRef}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+            e.preventDefault();
+            const range = document.createRange();
+            range.selectNodeContents(containerRef.current);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }}
+        className="flex flex-col gap-4 focus:outline-none"
+        onCopy={(e) => {
+          e.preventDefault();
+          e.clipboardData.setData("text/plain", rebuild(blocks));
+        }}
+      >
+        {blocks.map((block) => (
+          <BlockView key={block.id} block={block} />
+        ))}
+      </div>
+    );
+  }
 
+  // ── 全文编辑态 ──
+  if (fullEdit) {
+    return (
+      <textarea
+        ref={fullTaRef}
+        value={fullText}
+        onChange={(e) => setFullText(e.target.value)}
+        onBlur={(e) => commitFullEdit(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") {
+            e.preventDefault();
+            commitFullEdit(value);
+          }
+        }}
+        className="w-full min-h-[60vh] resize-none bg-transparent
+                   text-zinc-300 leading-relaxed
+                   focus:outline-none border-none"
+        style={{ fontFamily: "inherit", fontSize: "inherit" }}
+      />
+    );
+  }
+
+  // ── 段落编辑态：块渲染 + 点选编辑 ──
   const handleBlockBlur = (id, newContent) => {
     setFocusedId(null);
     if (newContent === undefined || newContent.trim() === "") {
-      setBlocks((prev) => prev.filter((b) => b.id !== id));
+      setBlocks((prev) =>
+        prev.length <= 1
+          ? [{ id: prev[0]?.id || String(Date.now()), type: "paragraph", content: "" }]
+          : prev.filter((b) => b.id !== id)
+      );
       return;
     }
     setBlocks((prev) => {
@@ -269,6 +329,19 @@ export default function MarkdownEditor({ value, onChange, editorRef }) {
       if (onChange) onChange(rebuild(updated));
       return updated;
     });
+  };
+
+  const handleContainerKeyDown = (e) => {
+    if (e.key === "a" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      setFullText(rebuild(blocks));
+      setFullEdit(true);
+    }
+  };
+
+  const handleCopy = (e) => {
+    e.preventDefault();
+    e.clipboardData.setData("text/plain", rebuild(blocks));
   };
 
   return (
@@ -301,7 +374,6 @@ export default function MarkdownEditor({ value, onChange, editorRef }) {
         );
       })}
 
-      {/* 点击空白新增段落 */}
       <div
         className="h-8 cursor-text rounded hover:bg-white/[0.02] transition-colors"
         onClick={() => {
