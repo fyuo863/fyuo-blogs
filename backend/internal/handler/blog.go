@@ -62,13 +62,12 @@ func CreateBlog(c *gin.Context) {
 		return
 	}
 
-	// 验证用户名和密码，获取作者 ID
 	author, err := authenticateUser(req.Name, req.Password)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
-	log.Logger.Info("创建文章请求", "author", author.ID)
+	
 	article := model.Article{
 		Title:    req.Title,
 		Content:  req.Content,
@@ -77,12 +76,41 @@ func CreateBlog(c *gin.Context) {
 		AuthorID: author.ID,
 		Tags:     req.Tags,
 	}
-	log.Logger.Info("创建文章请求", "article", article)
+	
+	// 1. 写入数据库
 	result := database.DB.Create(&article)
 	if result.Error != nil {
 		log.Logger.Error("创建文章失败", "error", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建文章失败"})
 		return
+	}
+
+	// ==========================================
+	// 2. 缓存一致性操作：清理旧分页，主动重建第一页缓存
+	// ==========================================
+	ctx := context.Background()
+	
+	// 先清理所有旧的分页缓存 (包括第一页和其他所有页)
+	invalidateBlogCache()
+
+	// 主动查出最新的 10 条数据（第一页）
+	var latestArticles []model.Article
+	var total int64
+	database.DB.Model(&model.Article{}).Where("stage != ?", "hidden").Count(&total)
+	database.DB.Where("stage != ?", "hidden").Order("created_at DESC").Limit(10).Find(&latestArticles)
+
+	firstPageData := gin.H{
+		"data":      latestArticles,
+		"total":     total,
+		"page":      1,
+		"page_size": 10,
+	}
+
+	jsonData, marshalErr := json.Marshal(firstPageData)
+	if marshalErr == nil {
+		// 注意这里最后的参数是 0，代表这前 10 条数据永不过期！
+		database.RDB.Set(ctx, "blogs:page:1:size:10", jsonData, 0)
+		log.Logger.Info("已主动将最新 10 条文章更新至 Redis (永不过期)")
 	}
 
 	log.Logger.Info("创建文章成功", "id", article.ID, "title", article.Title)
@@ -93,11 +121,10 @@ func ListBlogs(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 
-	// 1. 定义动态的 Redis 缓存 Key
 	cacheKey := fmt.Sprintf("blogs:page:%d:size:%d", page, pageSize)
 	ctx := context.Background()
 
-	// 2. 尝试从 Redis 中获取数据
+	// 1. 尝试从 Redis 读取
 	cachedData, err := database.RDB.Get(ctx, cacheKey).Result()
 	if err == nil {
 		log.Logger.Info("Redis 缓存命中！", "key", cacheKey)
@@ -109,16 +136,14 @@ func ListBlogs(c *gin.Context) {
 		log.Logger.Warn("Redis 读取异常，降级到数据库查询", "error", err)
 	}
 
-	// 3. 缓存未命中 (Cache Miss)，去 PostgreSQL 数据库查询
+	// 2. 缓存未命中，查库
 	log.Logger.Info("Redis 未命中，从 PostgreSQL 读取数据")
 	var articles []model.Article
 	offset := (page - 1) * pageSize
 
 	var total int64
-	
 	database.DB.Model(&model.Article{}).Where("stage != ?", "hidden").Count(&total)
 
-	// 获取列表数据时排除隐藏文章 (你原来这步写对了)
 	result := database.DB.Where("stage != ?", "hidden").
 		Order("created_at DESC").
 		Offset(offset).
@@ -138,18 +163,29 @@ func ListBlogs(c *gin.Context) {
 		"page_size": pageSize,
 	}
 
-	// 4. 存入 Redis，并设置 1 小时过期
+	// ==========================================
+	// 3. 动态设置过期时间（核心逻辑）
+	// ==========================================
 	jsonData, marshalErr := json.Marshal(responseData)
 	if marshalErr == nil {
-		setErr := database.RDB.Set(ctx, cacheKey, jsonData, time.Hour).Err()
+		var expiration time.Duration
+		
+		// 如果请求的是第一页（最新10条），设为永不过期 (0)
+		if page == 1 && pageSize == 10 {
+			expiration = 0 
+		} else {
+			// 其他页（包括被挤到第二页的数据，或搜索结果），存活 1 小时
+			expiration = time.Hour 
+		}
+
+		setErr := database.RDB.Set(ctx, cacheKey, jsonData, expiration).Err()
 		if setErr != nil {
 			log.Logger.Warn("缓存写入 Redis 失败", "error", setErr)
 		} else {
-			log.Logger.Info("成功将文章列表缓存到 Redis", "expire", "1 hour")
+			log.Logger.Info("文章列表已存入 Redis", "key", cacheKey, "expire", expiration)
 		}
 	}
 
-	// 5. 将数据推送给前端
 	c.JSON(http.StatusOK, responseData)
 }
 
@@ -232,7 +268,9 @@ func UpdateBlog(c *gin.Context) {
 
 	database.DB.First(&article, id)
 	log.Logger.Info("更新文章成功", "id", article.ID, "title", article.Title)
+	invalidateBlogCache()
 	c.JSON(http.StatusOK, gin.H{"data": article})
+	
 }
 
 func DeleteBlog(c *gin.Context) {
@@ -291,6 +329,7 @@ func DeleteBlog(c *gin.Context) {
 	// database.RDB.Del(ctx, fmt.Sprintf("blog:detail:%d", id))
 
 	log.Logger.Info("文章已标记为不显示", "id", id)
+	invalidateBlogCache()
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
