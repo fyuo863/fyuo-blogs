@@ -297,20 +297,22 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
         </div>
       </div>
 
-      {/* 右侧：编辑框 */}
+      {/* 右侧：编辑框（sticky 跟随滚动） */}
       <div className="flex-1 min-w-0 pl-6">
-        <div className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
-          Editor
+        <div className="sticky top-0 z-10 bg-black pb-4">
+          <div className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
+            Editor
+          </div>
+          <textarea
+            value={editText}
+            onChange={(e) => handleEditChange(e.target.value)}
+            className="w-full resize-none bg-transparent
+                       text-zinc-300 leading-relaxed font-mono text-sm
+                       focus:outline-none border-none"
+            style={{ fontFamily: "inherit", height: "calc(100vh - 4rem)" }}
+            placeholder="Write your markdown here..."
+          />
         </div>
-        <textarea
-          value={editText}
-          onChange={(e) => handleEditChange(e.target.value)}
-          className="w-full min-h-[60vh] resize-none bg-transparent
-                     text-zinc-300 leading-relaxed font-mono text-sm
-                     focus:outline-none border-none"
-          style={{ fontFamily: "inherit" }}
-          placeholder="Write your markdown here..."
-        />
       </div>
     </div>
   );
