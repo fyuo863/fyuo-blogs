@@ -219,17 +219,17 @@ function Home({ username, onOpenSignIn, onLogout }) {
     }
     if (action === "save") {
       const content = editRef.current?.getContent() ?? selectedPost.content;
+      const title = editRef.current?.getTitle() ?? selectedPost.title;
+      const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
       if (isNewPost) {
-        const lines = content.split("\n");
-        const title = lines[0]?.replace(/^#+\s*/, "").trim() || "Untitled";
-        createArticle({ title, content, stage: "published", vol: 1, tags: [] })
+        createArticle({ title, content, stage: "published", vol: 1, tags })
           .then(() => {
             setSelectedPost(null);
             setIsEditing(false);
           })
           .catch((err) => console.error("创建失败", err));
       } else {
-        setSelectedPost({ ...selectedPost, content });
+        setSelectedPost({ ...selectedPost, title, content, tags });
         setIsEditing(false);
       }
     }
@@ -385,6 +385,7 @@ function Home({ username, onOpenSignIn, onLogout }) {
 
       {selectedPost && (
         <BlogPost
+          key={selectedPost.id ?? "new"}
           post={selectedPost}
           isEditing={isEditing}
           editRef={editRef}
