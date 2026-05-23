@@ -1,7 +1,9 @@
 import { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkCallout from "../utils/remarkCallout";
 import MarkdownEditor from "../components/MarkdownEditor";
+import Callout from "../components/Callout";
 
 function formatDate(iso) {
   return new Date(iso)
@@ -39,6 +41,9 @@ The official Tailwind blog was my north star. Pure black background, zinc-toned 
 ## What's Next
 
 I'm wiring up the backend in Go with Gin and GORM. PostgreSQL for the database because I want the text array type for tags. Redis for session caching. The plan is to keep the API surface small — just CRUD on articles and a simple auth flow.
+
+> [!tip] 标准格式
+> 使用 \`> [!type]\` 语法创建提示框。支持 note、tip、info、warning、danger 等多种类型。
 
 The biggest lesson so far: don't overthink your blog. Ship it, write in it, and iterate. The content matters more than the stack.`,
     stage: "published",
@@ -391,7 +396,22 @@ function Home({ username, onOpenSignIn, onLogout }) {
               </div>
             ) : (
               <div className="mt-10 text-zinc-400 prose prose-invert prose-zinc max-w-none prose-pre:bg-white/5 prose-pre:border prose-pre:border-zinc-800">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm, remarkCallout]}
+                  components={{
+                    div({ className, 'data-callout-title': title, children, ...props }) {
+                      if (className?.startsWith('callout')) {
+                        const type = className.replace('callout callout-', '');
+                        return (
+                          <Callout type={type} title={title}>
+                            {children}
+                          </Callout>
+                        );
+                      }
+                      return <div className={className} {...props}>{children}</div>;
+                    },
+                  }}
+                >
                   {selectedPost.content}
                 </ReactMarkdown>
               </div>
