@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/lib/pq"
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -87,24 +88,19 @@ func ListBlogs(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 
-	// 1. 定义动态的 Redis 缓存 Key (例如: blogs:page:1:size:10)
+	// 1. 定义动态的 Redis 缓存 Key
 	cacheKey := fmt.Sprintf("blogs:page:%d:size:%d", page, pageSize)
 	ctx := context.Background()
 
 	// 2. 尝试从 Redis 中获取数据
-	// 注意：根据你实际项目初始化的 Redis 变量名修改 database.RDB
 	cachedData, err := database.RDB.Get(ctx, cacheKey).Result()
 	if err == nil {
 		log.Logger.Info("Redis 缓存命中！", "key", cacheKey)
-		
-		// 因为 Redis 存的是字符串，我们需要反序列化回 Go 的 map 结构
 		var responseData map[string]interface{}
 		json.Unmarshal([]byte(cachedData), &responseData)
-		
 		c.JSON(http.StatusOK, responseData)
 		return
 	} else if err != redis.Nil {
-		// 如果报错且不是因为“Key不存在”造成的，只打印警告，不中断流程，降级去查数据库
 		log.Logger.Warn("Redis 读取异常，降级到数据库查询", "error", err)
 	}
 
@@ -114,16 +110,22 @@ func ListBlogs(c *gin.Context) {
 	offset := (page - 1) * pageSize
 
 	var total int64
-	database.DB.Model(&model.Article{}).Count(&total)
+	
+	database.DB.Model(&model.Article{}).Where("stage != ?", "hidden").Count(&total)
 
-	result := database.DB.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&articles)
+	// 获取列表数据时排除隐藏文章 (你原来这步写对了)
+	result := database.DB.Where("stage != ?", "hidden").
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&articles)
+		
 	if result.Error != nil {
 		log.Logger.Error("查询文章列表失败", "error", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询文章列表失败"})
 		return
 	}
 
-	// 构造原本要返回的数据
 	responseData := gin.H{
 		"data":      articles,
 		"total":     total,
@@ -131,10 +133,9 @@ func ListBlogs(c *gin.Context) {
 		"page_size": pageSize,
 	}
 
-	// 4. 存入 Redis，并设置 1 小时 (time.Hour) 过期时间
+	// 4. 存入 Redis，并设置 1 小时过期
 	jsonData, marshalErr := json.Marshal(responseData)
 	if marshalErr == nil {
-		// 将 JSON 字符串存入 Redis
 		setErr := database.RDB.Set(ctx, cacheKey, jsonData, time.Hour).Err()
 		if setErr != nil {
 			log.Logger.Warn("缓存写入 Redis 失败", "error", setErr)
@@ -155,10 +156,12 @@ func GetBlog(c *gin.Context) {
 	}
 
 	var article model.Article
-	result := database.DB.First(&article, id)
+	
+	result := database.DB.Where("stage != ?", "hidden").First(&article, id)
+	
 	if result.Error != nil {
-		log.Logger.Error("查询文章失败", "id", id, "error", result.Error)
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		log.Logger.Error("查询文章失败或文章已被隐藏", "id", id, "error", result.Error)
+		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或已被隐藏"})
 		return
 	}
 
@@ -207,7 +210,7 @@ func UpdateBlog(c *gin.Context) {
 		updates["vol"] = *req.Vol
 	}
 	if req.Tags != nil {
-		updates["tags"] = req.Tags
+		updates["tags"] = pq.StringArray(req.Tags)
 	}
 
 	if len(updates) == 0 {
@@ -234,17 +237,55 @@ func DeleteBlog(c *gin.Context) {
 		return
 	}
 
-	result := database.DB.Delete(&model.Article{}, id)
+	// 1. 数据库操作：不执行物理删除，而是更新 stage 字段为 "hidden"
+	result := database.DB.Model(&model.Article{}).Where("id = ?", id).Update("stage", "hidden")
+	
 	if result.Error != nil {
-		log.Logger.Error("删除文章失败", "id", id, "error", result.Error)
+		log.Logger.Error("删除(隐藏)文章失败", "id", id, "error", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文章失败"})
 		return
 	}
+	
 	if result.RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
 		return
 	}
 
-	log.Logger.Info("删除文章成功", "id", id)
+	// 2. Redis 缓存清理操作
+	ctx := context.Background()
+	
+	// 查找所有以 "blogs:page:" 开头的缓存 Key
+	// 注意：对于个人博客这种体量的应用，使用 Keys 命令查找非常方便快捷。
+	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
+	if err != nil {
+		// 记录警告，但不中断给前端的成功响应，因为数据库已经更新成功了
+		log.Logger.Warn("获取文章列表缓存Keys失败", "error", err)
+	} else if len(keys) > 0 {
+		// 批量删除匹配到的所有缓存 Key
+		delErr := database.RDB.Del(ctx, keys...).Err()
+		if delErr != nil {
+			log.Logger.Warn("清理文章列表缓存失败", "error", delErr)
+		} else {
+			log.Logger.Info("清理文章列表缓存成功", "cleared_keys_count", len(keys))
+		}
+	}
+
+	// [可选] 如果你之后给单篇文章 GetBlog 也做了缓存，比如 Key 叫 "blog:detail:{id}"
+	// 你可以在这里顺手把它也删了：
+	// database.RDB.Del(ctx, fmt.Sprintf("blog:detail:%d", id))
+
+	log.Logger.Info("文章已标记为不显示", "id", id)
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
+}
+
+// 清除所有博客列表的分页缓存
+func invalidateBlogCache() {
+	ctx := context.Background()
+	// 找到所有以 blogs:page: 开头的 key
+	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
+	if err == nil && len(keys) > 0 {
+		// 删除这些过期的缓存
+		database.RDB.Del(ctx, keys...)
+		log.Logger.Info("已清理旧的博客列表 Redis 缓存", "keys_deleted", len(keys))
+	}
 }
