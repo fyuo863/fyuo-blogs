@@ -2,7 +2,13 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import BlogPost from "../components/BlogPost";
-import { createArticle, updateArticle, listArticles, deleteArticle, searchArticles } from "../api";
+import {
+  createArticle,
+  updateArticle,
+  listArticles,
+  deleteArticle,
+  searchArticles,
+} from "../api";
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -135,7 +141,14 @@ function Home({ user, onOpenSignIn, onLogout }) {
       const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
       const auth = { name: user?.name ?? "", password: user?.password ?? "" };
       if (isNewPost) {
-        createArticle({ ...auth, title, content, stage: "published", vol: 1, tags })
+        createArticle({
+          ...auth,
+          title,
+          content,
+          stage: "published",
+          vol: 1,
+          tags,
+        })
           .then(() => {
             setSelectedPost(null);
             setIsEditing(false);
@@ -188,7 +201,9 @@ function Home({ user, onOpenSignIn, onLogout }) {
       {splashPhase !== "done" && (
         <div
           className={`fixed inset-0 z-[100] bg-black transition-opacity duration-[1000ms] ease-out ${
-            splashPhase === "exiting" ? "opacity-0 pointer-events-none" : "opacity-100"
+            splashPhase === "exiting"
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100"
           }`}
           onTransitionEnd={(e) => {
             if (e.target === e.currentTarget) setSplashPhase("done");
@@ -221,7 +236,10 @@ function Home({ user, onOpenSignIn, onLogout }) {
               }
               style={
                 splashPhase === "visible"
-                  ? { animationDelay: `${i * 0.07}s` }
+                  ? {
+                      animationDelay: `${i * 0.07}s`,
+                      transform: "translateY(-25%)",
+                    }
                   : {}
               }
             >
