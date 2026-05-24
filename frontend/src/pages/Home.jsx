@@ -46,7 +46,6 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const splashStartRef = useRef(0);
   const editRef = useRef(null);
   const searchRef = useRef(null);
-  const viewsSentRef = useRef(false);
 
   const [likedPosts, setLikedPosts] = useState(() => {
     try {
@@ -66,24 +65,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
   // 首次进入 / 返回首页时拉取最新文章
   const fetchPosts = useCallback(() => {
     listArticles()
-      .then((res) => {
-        const data = res.data.data ?? [];
-        setPosts(data);
-        // 页面加载时上报一次浏览，然后乐观更新显示
-        if (!viewsSentRef.current && data.length > 0) {
-          viewsSentRef.current = true;
-          Promise.allSettled(data.map((post) => incrementView(post.id))).then(
-            () => {
-              setPosts((prev) =>
-                prev.map((p) => ({
-                  ...p,
-                  view_count: (p.view_count || 0) + 1,
-                }))
-              );
-            }
-          );
-        }
-      })
+      .then((res) => setPosts(res.data.data ?? []))
       .catch((err) => console.error("获取文章列表失败", err))
       .finally(() => setLoaded(true));
   }, []);
@@ -95,6 +77,21 @@ function Home({ user, onOpenSignIn, onLogout }) {
       setSearchQuery("");
     }
   }, [selectedPost, fetchPosts]);
+
+  // 点进文章详情（read-more）时上报浏览
+  useEffect(() => {
+    if (selectedPost?.id) {
+      incrementView(selectedPost.id).then(() => {
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === selectedPost.id
+              ? { ...p, view_count: (p.view_count || 0) + 1 }
+              : p
+          )
+        );
+      });
+    }
+  }, [selectedPost?.id]);
 
   // 文章加载完成且至少等待 3 秒后触发 splash 动画
   useEffect(() => {
