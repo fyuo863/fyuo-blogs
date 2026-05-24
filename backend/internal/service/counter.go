@@ -43,15 +43,17 @@ func IncrementView(ctx context.Context, articleID uint) error {
 	return nil
 }
 
-// IncrementLike 对指定文章点赞。ipHash 用于去重。
-// 返回 (true, nil) 表示点赞成功，(false, nil) 表示已点过赞。
-func IncrementLike(ctx context.Context, articleID uint, ipHash string) (bool, error) {
+// ToggleLike 对指定文章切换点赞状态。ipHash 用于去重。
+// 返回 (true, nil) 表示已点赞，(false, nil) 表示已取消点赞。
+func ToggleLike(ctx context.Context, articleID uint, ipHash string) (bool, error) {
 	dedupKey := fmt.Sprintf(likeDedupSetKey, articleID)
 	likeKey := fmt.Sprintf(likeDeltaKey, articleID)
 
-	// Lua 脚本：原子性地检查 + 记录 + 递增
+	// Lua 脚本：原子性 toggle
 	luaScript := `
 if redis.call('SISMEMBER', KEYS[1], ARGV[1]) == 1 then
+	redis.call('SREM', KEYS[1], ARGV[1])
+	redis.call('DECR', KEYS[2])
 	return 0
 end
 redis.call('SADD', KEYS[1], ARGV[1])
@@ -65,7 +67,7 @@ return 1
 	).Int()
 
 	if err != nil {
-		log.Logger.Error("点赞 Lua 脚本执行失败", "article_id", articleID, "error", err)
+		log.Logger.Error("点赞 toggle Lua 脚本执行失败", "article_id", articleID, "error", err)
 		return false, err
 	}
 	return result == 1, nil
