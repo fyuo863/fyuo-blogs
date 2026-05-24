@@ -39,6 +39,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [splashPhase, setSplashPhase] = useState("visible");
+  const [loaded, setLoaded] = useState(false);
   const editRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -46,7 +47,8 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const fetchPosts = useCallback(() => {
     listArticles()
       .then((res) => setPosts(res.data.data ?? []))
-      .catch((err) => console.error("获取文章列表失败", err));
+      .catch((err) => console.error("获取文章列表失败", err))
+      .finally(() => setLoaded(true));
   }, []);
 
   // 进入首页 / 从博客页返回首页时拉取文章列表
@@ -59,10 +61,10 @@ function Home({ user, onOpenSignIn, onLogout }) {
 
   // 文章加载完成后触发 splash 动画
   useEffect(() => {
-    if (posts.length > 0 && splashPhase === "visible") {
+    if (loaded && splashPhase === "visible") {
       setSplashPhase("exiting");
     }
-  }, [posts, splashPhase]);
+  }, [loaded, splashPhase]);
 
   // 点击外部关闭下拉栏
   useEffect(() => {
