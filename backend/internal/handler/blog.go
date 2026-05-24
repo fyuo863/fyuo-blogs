@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"myblog/internal/database"
 	"myblog/internal/model"
-	"myblog/internal/service"
 	"myblog/log"
 	"net/http"
 	"strconv"
@@ -159,9 +158,6 @@ func ListBlogs(c *gin.Context) {
 		return
 	}
 
-	// Redis enrich
-	articles = service.EnrichArticlesWithCounts(ctx, articles)
-
 	responseData := gin.H{
 		"data":      articles,
 		"total":     total,
@@ -237,9 +233,6 @@ func GetBlog(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或已被隐藏"})
 		return
 	}
-
-	article.ViewCount = service.GetViewCount(context.Background(), article.ID, article.ViewCount)
-	article.LikeCount = service.GetLikeCount(context.Background(), article.ID, article.LikeCount)
 
 	c.JSON(http.StatusOK, gin.H{"data": article})
 }
