@@ -18,10 +18,6 @@ func NewRouter() *gin.Engine {
 	config.AllowAllOrigins = true // 开发阶段，允许所有前端地址跨域访问
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	r.Use(cors.New(config))       // 挂载到全局路由上
-	// test := r.Group("")
-	// {
-	// 	test.GET("/test", handler.Test)
-	// }
 	api := r.Group("/api/v1")
 	{
 		// 用户认证相关接口 (返回 JSON 数据)
@@ -32,7 +28,7 @@ func NewRouter() *gin.Engine {
 		api.GET("/articles", handler.ListBlogs)
 		api.GET("/articles/:id", handler.GetBlog)
 		api.POST("/articles/:id/view", handler.IncrementView) // 浏览计数
-		api.POST("/articles/:id/like", handler.IncrementLike) // 点赞
+		api.POST("/articles/:id/like", handler.ToggleLike)    // 点赞/取消
 	}
 	protected := api.Group("")
 	protected.Use(

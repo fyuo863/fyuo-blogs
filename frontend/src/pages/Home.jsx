@@ -69,10 +69,19 @@ function Home({ user, onOpenSignIn, onLogout }) {
       .then((res) => {
         const data = res.data.data ?? [];
         setPosts(data);
-        // 页面加载时上报一次浏览
+        // 页面加载时上报一次浏览，然后乐观更新显示
         if (!viewsSentRef.current && data.length > 0) {
           viewsSentRef.current = true;
-          Promise.allSettled(data.map((post) => incrementView(post.id)));
+          Promise.allSettled(data.map((post) => incrementView(post.id))).then(
+            () => {
+              setPosts((prev) =>
+                prev.map((p) => ({
+                  ...p,
+                  view_count: (p.view_count || 0) + 1,
+                }))
+              );
+            }
+          );
         }
       })
       .catch((err) => console.error("获取文章列表失败", err))
@@ -226,24 +235,33 @@ function Home({ user, onOpenSignIn, onLogout }) {
   };
 
   const handleLike = async (postId) => {
-    if (likedPosts.includes(postId)) return;
+    const wasLiked = likedPosts.includes(postId);
+    // 乐观更新
+    const updated = wasLiked
+      ? likedPosts.filter((id) => id !== postId)
+      : [...likedPosts, postId];
+    setLikedPosts(updated);
+    localStorage.setItem("liked_articles", JSON.stringify(updated));
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? { ...p, like_count: (p.like_count || 0) + (wasLiked ? -1 : 1) }
+          : p
+      )
+    );
     try {
       await incrementLike(postId);
-      const updated = [...likedPosts, postId];
-      setLikedPosts(updated);
-      localStorage.setItem("liked_articles", JSON.stringify(updated));
+    } catch (err) {
+      // 失败时回滚
+      setLikedPosts(wasLiked ? [...updated, postId] : updated.filter((id) => id !== postId));
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p
+          p.id === postId
+            ? { ...p, like_count: (p.like_count || 0) + (wasLiked ? 1 : -1) }
+            : p
         )
       );
-    } catch (err) {
-      if (err.response?.status === 409) {
-        const updated = [...likedPosts, postId];
-        setLikedPosts(updated);
-        localStorage.setItem("liked_articles", JSON.stringify(updated));
-      }
-      console.error("点赞失败", err);
+      console.error("点赞操作失败", err);
     }
   };
 
@@ -442,13 +460,12 @@ function Home({ user, onOpenSignIn, onLogout }) {
                   </span>
                   <button
                     onClick={() => handleLike(post.id)}
-                    disabled={likedPosts.includes(post.id)}
                     className={`transition-colors ${
                       likedPosts.includes(post.id)
-                        ? "text-red-500 cursor-default"
-                        : "text-zinc-600 hover:text-red-400 cursor-pointer"
+                        ? "text-white"
+                        : "text-zinc-600 hover:text-zinc-400"
                     }`}
-                    title={likedPosts.includes(post.id) ? "已点赞" : "点赞"}
+                    title={likedPosts.includes(post.id) ? "取消点赞" : "点赞"}
                   >
                     <Heart
                       size={18}
