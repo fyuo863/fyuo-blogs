@@ -1,5 +1,5 @@
 # 前端构建镜像
-FROM node:18-alpine
+FROM node:20-alpine
 WORKDIR /app
 
 # 利用缓存加速安装依赖
