@@ -1,6 +1,9 @@
-##这是一个个人blog项目 #技术栈: -React Tailwind_CSS -go gin gorm jwt -Postgresql redis -nginx -docker k8s
+# 这是一个个人blog项目
 
-#数据库:
+## 技术栈: -React Tailwind_CSS -go gin gorm jwt -Postgresql redis -nginx -docker k8s
+
+### 数据库:
+
 1.PostgreSQL表:
 user: 管理员、访客(id,name,date,hash)
 articles: 文章(id,title,markdowncontent,stage,vol)
