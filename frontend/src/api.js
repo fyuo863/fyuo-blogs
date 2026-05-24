@@ -42,3 +42,13 @@ export const updateArticle = (id, data) =>
 /** DELETE /api/v1/articles/:id — 删除文章（name + password 验证） */
 export const deleteArticle = (id, data) =>
   axios.delete(`${BASE}/articles/${id}`, { data });
+
+// ============================================================
+//  Counters (public)
+// ============================================================
+
+/** POST /api/v1/articles/:id/view — 增加浏览次数 */
+export const incrementView = (id) => axios.post(`${BASE}/articles/${id}/view`);
+
+/** POST /api/v1/articles/:id/like — 增加点赞数（IP 限频） */
+export const incrementLike = (id) => axios.post(`${BASE}/articles/${id}/like`);
