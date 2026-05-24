@@ -77,3 +77,19 @@ jobs:
             # 重新启动服务并清理无用镜像
             docker compose up -d
             docker image prune -f
+      # 6. 新增：发送钉钉部署成功通知
+      - name: Send DingTalk Notification
+        # if: success() # 可选：显式声明只有前面的步骤都成功才执行（默认即是如此）
+        uses: northwang-lucky/chatbot-webhook-client@v1.1.1
+        with:
+          app: DingTalk
+          webhook: ${{ secrets.DINGTALK_WEBHOOK }}
+          secret: ${{ secrets.DINGTALK_SECRET }}
+          template: >-
+            {
+              "msgtype": "markdown",
+              "markdown": {
+                "title": "博客部署成功",
+                "text": "### 🚀 项目 [${{ github.event.repository.name }}] 部署成功\n\n**版本 / 分支**: ${{ github.ref_name }}\n**触发者**: ${{ github.actor }}\n\n[点击前往 GitHub 查看部署日志](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})"
+              }
+            }
