@@ -54,7 +54,7 @@ jobs:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           password: ${{ secrets.ECS_PASSWORD }}
-          source: "docker-compose.yml,nginx.conf" # 👈 确保 nginx.conf 也传过去
+          source: "docker-compose.yml,nginx/nginx.conf"
           target: "/data/blog/"
 
       # 5. SSH 登录服务器执行部署命令
