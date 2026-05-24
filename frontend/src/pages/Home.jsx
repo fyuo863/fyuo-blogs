@@ -40,8 +40,16 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [splashPhase, setSplashPhase] = useState("visible");
   const [loaded, setLoaded] = useState(false);
+  const splashStartRef = useRef(0);
   const editRef = useRef(null);
   const searchRef = useRef(null);
+
+  // 记录 splash 开始时间
+  useEffect(() => {
+    if (splashStartRef.current === 0) {
+      splashStartRef.current = Date.now();
+    }
+  }, []);
 
   // 首次进入 / 返回首页时拉取最新文章
   const fetchPosts = useCallback(() => {
@@ -59,10 +67,13 @@ function Home({ user, onOpenSignIn, onLogout }) {
     }
   }, [selectedPost, fetchPosts]);
 
-  // 文章加载完成后触发 splash 动画
+  // 文章加载完成且至少等待 3 秒后触发 splash 动画
   useEffect(() => {
     if (loaded && splashPhase === "visible") {
-      setSplashPhase("exiting");
+      const elapsed = Date.now() - splashStartRef.current;
+      const remaining = Math.max(0, 3000 - elapsed);
+      const timer = setTimeout(() => setSplashPhase("exiting"), remaining);
+      return () => clearTimeout(timer);
     }
   }, [loaded, splashPhase]);
 
