@@ -11,6 +11,7 @@ services:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       # 从前端容器的命名共享卷里读静态网页产物
       - frontend_dist:/usr/share/nginx/html:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro # 👈 把宿主机证书共享给 Nginx 容器
     depends_on:
       - frontend
       - backend
