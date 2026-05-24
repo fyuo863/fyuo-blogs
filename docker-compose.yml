@@ -1,6 +1,6 @@
 services:
   # 1. 全局网关代理
-  # 20:05
+  # 21:56
   nginx:
     image: nginx:alpine
     container_name: blog_nginx
@@ -80,4 +80,4 @@ services:
 volumes:
   redis_data:
   postgres_data:
-  frontend_dist:
+  # frontend_dist:
