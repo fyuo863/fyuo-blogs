@@ -1,5 +1,6 @@
 services:
   # 1. 全局网关代理
+  # 20:05
   nginx:
     image: nginx:alpine
     container_name: blog_nginx
