@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import BlogPost from "../components/BlogPost";
 import { createArticle, updateArticle, listArticles, deleteArticle, searchArticles } from "../api";
 
@@ -298,9 +300,11 @@ function Home({ user, onOpenSignIn, onLogout }) {
               <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
                 {post.title}
               </h2>
-              <p className="mt-4 text-zinc-400 leading-relaxed">
-                {post.content.slice(0, 200)}...
-              </p>
+              <div className="mt-4 text-zinc-400 leading-relaxed prose prose-invert prose-sm max-w-none line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {post.content}
+                </ReactMarkdown>
+              </div>
               <button
                 onClick={() => setSelectedPost(post)}
                 className="mt-6 inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
