@@ -118,6 +118,8 @@ func CreateBlog(c *gin.Context) {
 }
 
 func ListBlogs(c *gin.Context) {
+	//time.Sleep(5 * time.Second)// 模拟慢查询，测试缓存效果
+
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 
