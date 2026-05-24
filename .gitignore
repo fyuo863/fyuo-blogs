@@ -1,1 +1,5 @@
 /.claude
+docker-compose.local.yml
+*.env
+*.local
+.env.local

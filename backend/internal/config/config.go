@@ -45,7 +45,19 @@ type RedisConfig struct {
 func Load(configPath string) (*Config, error) {
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("yaml")
-	// 支持环境变量覆盖: APP_SERVER_PORT -> server.port
+	// 绑定 .env / .env.local 中的变量名到配置键
+	viper.BindEnv("server.port", "SERVER_PORT")
+	viper.BindEnv("server.mode", "GIN_MODE")
+	viper.BindEnv("database.host", "DB_HOST")
+	viper.BindEnv("database.port", "DB_PORT")
+	viper.BindEnv("database.user", "DB_USER")
+	viper.BindEnv("database.password", "DB_PASSWORD")
+	viper.BindEnv("database.dbname", "DB_NAME")
+	viper.BindEnv("redis.host", "REDIS_HOST")
+	viper.BindEnv("redis.port", "REDIS_PORT")
+	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+
+	// 同时保留 APP_ 前缀的自动绑定作为补充
 	viper.SetEnvPrefix("APP")
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 	viper.AutomaticEnv()
