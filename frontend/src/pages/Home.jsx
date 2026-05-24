@@ -32,6 +32,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [splashPhase, setSplashPhase] = useState("visible");
   const editRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -49,6 +50,13 @@ function Home({ user, onOpenSignIn, onLogout }) {
       setSearchQuery("");
     }
   }, [selectedPost, fetchPosts]);
+
+  // 文章加载完成后触发 splash 动画
+  useEffect(() => {
+    if (posts.length > 0 && splashPhase === "visible") {
+      setSplashPhase("exiting");
+    }
+  }, [posts, splashPhase]);
 
   // 点击外部关闭下拉栏
   useEffect(() => {
@@ -176,10 +184,50 @@ function Home({ user, onOpenSignIn, onLogout }) {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* ── 首页左上角标题 ── */}
-      <div className="fixed top-0 left-0 z-[60] px-4 py-4 sm:px-6 lg:px-8">
-        <span className="text-lg font-bold tracking-tight text-white italic">
-          fyuo-blogs.
+      {/* ── Splash 背景遮罩（加载/过渡期间显示）── */}
+      {splashPhase !== "done" && (
+        <div
+          className={`fixed inset-0 z-[100] bg-black transition-opacity duration-[1000ms] ease-out ${
+            splashPhase === "exiting" ? "opacity-0 pointer-events-none" : "opacity-100"
+          }`}
+          onTransitionEnd={(e) => {
+            if (e.target === e.currentTarget) setSplashPhase("done");
+          }}
+        />
+      )}
+
+      {/* ── 标题文字（从中心动画移动至左上角，始终为同一元素）── */}
+      <div
+        className={`fixed z-[110] italic transition-all duration-[1000ms] ease-out ${
+          splashPhase === "exiting" || splashPhase === "done"
+            ? "top-0 left-0 px-4 py-4 sm:px-6 lg:px-8"
+            : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        }`}
+      >
+        <span
+          className={`font-bold tracking-tight text-white select-none transition-all duration-[1000ms] ease-out ${
+            splashPhase === "exiting" || splashPhase === "done"
+              ? "text-lg"
+              : "text-7xl"
+          }`}
+        >
+          {"fyuo-blogs.".split("").map((char, i) => (
+            <span
+              key={i}
+              className={
+                splashPhase === "visible"
+                  ? "inline-block animate-bounce"
+                  : "inline-block"
+              }
+              style={
+                splashPhase === "visible"
+                  ? { animationDelay: `${i * 0.07}s` }
+                  : {}
+              }
+            >
+              {char}
+            </span>
+          ))}
         </span>
       </div>
 
