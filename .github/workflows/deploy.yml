@@ -47,14 +47,14 @@ jobs:
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:latest
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:${{ github.ref_name }}
 
-      # 4. 将根目录的 docker-compose.yml 传到服务器
-      - name: Copy docker-compose via scp
+      # 4. 【已修复】将 docker-compose 和 nginx 配置文件一同传到服务器
+      - name: Copy Files via scp
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           password: ${{ secrets.ECS_PASSWORD }}
-          source: "docker-compose.yml"
+          source: "docker-compose.yml,nginx/nginx.conf" # 👈 确保 nginx.conf 也传过去
           target: "/data/blog/"
 
       # 5. SSH 登录服务器执行部署命令
