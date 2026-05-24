@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"myblog/internal/database"
 	"myblog/internal/model"
+	"myblog/internal/service"
 	"myblog/log"
 	"net/http"
 	"strconv"
@@ -67,7 +68,7 @@ func CreateBlog(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
-	
+
 	article := model.Article{
 		Title:    req.Title,
 		Content:  req.Content,
@@ -76,7 +77,7 @@ func CreateBlog(c *gin.Context) {
 		AuthorID: author.ID,
 		Tags:     req.Tags,
 	}
-	
+
 	// 1. 写入数据库
 	result := database.DB.Create(&article)
 	if result.Error != nil {
@@ -89,9 +90,9 @@ func CreateBlog(c *gin.Context) {
 	// 2. 缓存一致性操作：清理旧分页，主动重建第一页缓存
 	// ==========================================
 	ctx := context.Background()
-	
+
 	// 先清理所有旧的分页缓存 (包括第一页和其他所有页)
-	invalidateBlogCache()
+	database.InvalidateBlogListCache()
 
 	// 主动查出最新的 10 条数据（第一页）
 	var latestArticles []model.Article
@@ -151,12 +152,15 @@ func ListBlogs(c *gin.Context) {
 		Offset(offset).
 		Limit(pageSize).
 		Find(&articles)
-		
+
 	if result.Error != nil {
 		log.Logger.Error("查询文章列表失败", "error", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询文章列表失败"})
 		return
 	}
+
+	// Redis enrich
+	articles = service.EnrichArticlesWithCounts(ctx, articles)
 
 	responseData := gin.H{
 		"data":      articles,
@@ -171,13 +175,13 @@ func ListBlogs(c *gin.Context) {
 	jsonData, marshalErr := json.Marshal(responseData)
 	if marshalErr == nil {
 		var expiration time.Duration
-		
+
 		// 如果请求的是第一页（最新10条），设为永不过期 (0)
 		if page == 1 && pageSize == 10 {
-			expiration = 0 
+			expiration = 0
 		} else {
 			// 其他页（包括被挤到第二页的数据，或搜索结果），存活 1 小时
-			expiration = time.Hour 
+			expiration = time.Hour
 		}
 
 		setErr := database.RDB.Set(ctx, cacheKey, jsonData, expiration).Err()
@@ -225,14 +229,17 @@ func GetBlog(c *gin.Context) {
 	}
 
 	var article model.Article
-	
+
 	result := database.DB.Where("stage != ?", "hidden").First(&article, id)
-	
+
 	if result.Error != nil {
 		log.Logger.Error("查询文章失败或文章已被隐藏", "id", id, "error", result.Error)
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或已被隐藏"})
 		return
 	}
+
+	article.ViewCount = service.GetViewCount(context.Background(), article.ID, article.ViewCount)
+	article.LikeCount = service.GetLikeCount(context.Background(), article.ID, article.LikeCount)
 
 	c.JSON(http.StatusOK, gin.H{"data": article})
 }
@@ -296,9 +303,9 @@ func UpdateBlog(c *gin.Context) {
 
 	database.DB.First(&article, id)
 	log.Logger.Info("更新文章成功", "id", article.ID, "title", article.Title)
-	invalidateBlogCache()
+	database.InvalidateBlogListCache()
 	c.JSON(http.StatusOK, gin.H{"data": article})
-	
+
 }
 
 func DeleteBlog(c *gin.Context) {
@@ -321,54 +328,21 @@ func DeleteBlog(c *gin.Context) {
 
 	// 1. 数据库操作：不执行物理删除，而是更新 stage 字段为 "hidden"
 	result := database.DB.Model(&model.Article{}).Where("id = ?", id).Update("stage", "hidden")
-	
+
 	if result.Error != nil {
 		log.Logger.Error("删除(隐藏)文章失败", "id", id, "error", result.Error)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文章失败"})
 		return
 	}
-	
+
 	if result.RowsAffected == 0 {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
 		return
 	}
 
-	// 2. Redis 缓存清理操作
-	ctx := context.Background()
-	
-	// 查找所有以 "blogs:page:" 开头的缓存 Key
-	// 注意：对于个人博客这种体量的应用，使用 Keys 命令查找非常方便快捷。
-	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
-	if err != nil {
-		// 记录警告，但不中断给前端的成功响应，因为数据库已经更新成功了
-		log.Logger.Warn("获取文章列表缓存Keys失败", "error", err)
-	} else if len(keys) > 0 {
-		// 批量删除匹配到的所有缓存 Key
-		delErr := database.RDB.Del(ctx, keys...).Err()
-		if delErr != nil {
-			log.Logger.Warn("清理文章列表缓存失败", "error", delErr)
-		} else {
-			log.Logger.Info("清理文章列表缓存成功", "cleared_keys_count", len(keys))
-		}
-	}
-
-	// [可选] 如果你之后给单篇文章 GetBlog 也做了缓存，比如 Key 叫 "blog:detail:{id}"
-	// 你可以在这里顺手把它也删了：
-	// database.RDB.Del(ctx, fmt.Sprintf("blog:detail:%d", id))
+	// 2. 清理缓存
+	database.InvalidateBlogListCache()
 
 	log.Logger.Info("文章已标记为不显示", "id", id)
-	invalidateBlogCache()
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
-}
-
-// 清除所有博客列表的分页缓存
-func invalidateBlogCache() {
-	ctx := context.Background()
-	// 找到所有以 blogs:page: 开头的 key
-	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
-	if err == nil && len(keys) > 0 {
-		// 删除这些过期的缓存
-		database.RDB.Del(ctx, keys...)
-		log.Logger.Info("已清理旧的博客列表 Redis 缓存", "keys_deleted", len(keys))
-	}
 }

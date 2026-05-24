@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"myblog/internal/config"
 	"myblog/internal/database"
 	"myblog/internal/router"
+	"myblog/internal/service"
 	"myblog/log"
 )
 
@@ -27,6 +29,10 @@ func main() {
 		panic(err)
 	}
 	defer database.ClosePostgres()
+
+	// 启动浏览/点赞计数定时同步（每 10 分钟 Redis → DB）
+	go service.StartSyncScheduler(context.Background())
+
 	// newArticle := model.Article{
 	// 	Title:   "我的第一篇 Postgres 博客",
 	// 	Content: "这是 Markdown 内容...",

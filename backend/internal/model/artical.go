@@ -45,4 +45,7 @@ type Article struct {
 	// 重点：直接使用 PostgreSQL 的文本数组类型
 	// 数据库中只会存成一个字段，例如：{"Golang", "后端开发", "Redis"}
 	Tags pq.StringArray `gorm:"type:text[]" json:"tags"`
+
+	ViewCount int `gorm:"default:0" json:"view_count"`
+	LikeCount int `gorm:"default:0" json:"like_count"`
 }

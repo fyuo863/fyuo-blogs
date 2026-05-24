@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Heart } from "lucide-react";
 import BlogPost from "../components/BlogPost";
 import {
   createArticle,
@@ -8,6 +9,8 @@ import {
   listArticles,
   deleteArticle,
   searchArticles,
+  incrementView,
+  incrementLike,
 } from "../api";
 
 function formatDate(iso) {
@@ -43,6 +46,15 @@ function Home({ user, onOpenSignIn, onLogout }) {
   const splashStartRef = useRef(0);
   const editRef = useRef(null);
   const searchRef = useRef(null);
+  const viewsSentRef = useRef(false);
+
+  const [likedPosts, setLikedPosts] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("liked_articles") || "[]");
+    } catch {
+      return [];
+    }
+  });
 
   // 记录 splash 开始时间
   useEffect(() => {
@@ -54,7 +66,15 @@ function Home({ user, onOpenSignIn, onLogout }) {
   // 首次进入 / 返回首页时拉取最新文章
   const fetchPosts = useCallback(() => {
     listArticles()
-      .then((res) => setPosts(res.data.data ?? []))
+      .then((res) => {
+        const data = res.data.data ?? [];
+        setPosts(data);
+        // 页面加载时上报一次浏览
+        if (!viewsSentRef.current && data.length > 0) {
+          viewsSentRef.current = true;
+          Promise.allSettled(data.map((post) => incrementView(post.id)));
+        }
+      })
       .catch((err) => console.error("获取文章列表失败", err))
       .finally(() => setLoaded(true));
   }, []);
@@ -202,6 +222,28 @@ function Home({ user, onOpenSignIn, onLogout }) {
         created_at: new Date().toISOString(),
       });
       setIsEditing(true);
+    }
+  };
+
+  const handleLike = async (postId) => {
+    if (likedPosts.includes(postId)) return;
+    try {
+      await incrementLike(postId);
+      const updated = [...likedPosts, postId];
+      setLikedPosts(updated);
+      localStorage.setItem("liked_articles", JSON.stringify(updated));
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId ? { ...p, like_count: (p.like_count || 0) + 1 } : p
+        )
+      );
+    } catch (err) {
+      if (err.response?.status === 409) {
+        const updated = [...likedPosts, postId];
+        setLikedPosts(updated);
+        localStorage.setItem("liked_articles", JSON.stringify(updated));
+      }
+      console.error("点赞失败", err);
     }
   };
 
@@ -384,12 +426,37 @@ function Home({ user, onOpenSignIn, onLogout }) {
                   {post.content}
                 </ReactMarkdown>
               </div>
-              <button
-                onClick={() => setSelectedPost(post)}
-                className="mt-6 inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
-              >
-                read-more,
-              </button>
+              <div className="mt-6 flex items-center justify-between">
+                <button
+                  onClick={() => setSelectedPost(post)}
+                  className="inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
+                >
+                  read-more,
+                </button>
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-mono text-zinc-500">
+                    {(post.view_count || 0).toLocaleString()} views
+                  </span>
+                  <span className="text-xs font-mono text-zinc-500">
+                    {(post.like_count || 0).toLocaleString()} likes
+                  </span>
+                  <button
+                    onClick={() => handleLike(post.id)}
+                    disabled={likedPosts.includes(post.id)}
+                    className={`transition-colors ${
+                      likedPosts.includes(post.id)
+                        ? "text-red-500 cursor-default"
+                        : "text-zinc-600 hover:text-red-400 cursor-pointer"
+                    }`}
+                    title={likedPosts.includes(post.id) ? "已点赞" : "点赞"}
+                  >
+                    <Heart
+                      size={18}
+                      fill={likedPosts.includes(post.id) ? "currentColor" : "none"}
+                    />
+                  </button>
+                </div>
+              </div>
             </article>
           ))}
         </div>

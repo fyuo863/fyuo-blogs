@@ -14,10 +14,10 @@ func NewRouter() *gin.Engine {
 		gin.Recovery(),
 	)
 	// 跨域中间件配置
-    config := cors.DefaultConfig()
-    config.AllowAllOrigins = true // 开发阶段，允许所有前端地址跨域访问
-    config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
-    r.Use(cors.New(config))       // 挂载到全局路由上
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true // 开发阶段，允许所有前端地址跨域访问
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	r.Use(cors.New(config))       // 挂载到全局路由上
 	// test := r.Group("")
 	// {
 	// 	test.GET("/test", handler.Test)
@@ -31,6 +31,8 @@ func NewRouter() *gin.Engine {
 		api.GET("/articles/search", handler.SearchBlogs) // 搜索文章
 		api.GET("/articles", handler.ListBlogs)
 		api.GET("/articles/:id", handler.GetBlog)
+		api.POST("/articles/:id/view", handler.IncrementView) // 浏览计数
+		api.POST("/articles/:id/like", handler.IncrementLike) // 点赞
 	}
 	protected := api.Group("")
 	protected.Use(
