@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const BASE = "http://localhost:8090/api/v1";
+const BASE = "/api/v1";
 
 // ============================================================
 //  Auth
@@ -33,8 +33,7 @@ export const getArticle = (id) => axios.get(`${BASE}/articles/${id}`);
 // ============================================================
 
 /** POST /api/v1/articles — 创建文章（name + password 验证） */
-export const createArticle = (data) =>
-  axios.post(`${BASE}/articles`, data);
+export const createArticle = (data) => axios.post(`${BASE}/articles`, data);
 
 /** PUT /api/v1/articles/:id — 更新文章（name + password 验证） */
 export const updateArticle = (id, data) =>
