@@ -11,6 +11,7 @@ function App() {
   const [showSignIn, setShowSignIn] = useState(false);
 
   const handleLogin = (name, password) => {
+    console.log("登录按钮被点击了！");
     const u = { name, password };
     setUser(u);
     localStorage.setItem("user", JSON.stringify(u));

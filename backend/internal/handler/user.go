@@ -53,4 +53,25 @@ func SignIn(c *gin.Context) {
 }
 
 func SignUp(c *gin.Context) {
+	var req LoginRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式或缺少字段"})
+		return
+	}
+
+	user := database.AuthorCreate(req.Name, req.Password)
+	if user.ID == 0 {
+		c.JSON(http.StatusConflict, gin.H{"error": "用户名已存在或创建失败"})
+		return
+	}
+
+	log.Logger.Info("新用户注册成功", "name", user.Name, "role", user.Role)
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "注册成功",
+		"data": gin.H{
+			"id":   user.ID,
+			"name": user.Name,
+			"role": user.Role,
+		},
+	})
 }
