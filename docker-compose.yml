@@ -11,6 +11,7 @@ services:
       # 用相对路径挂载你刚改好的 nginx.conf
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
       # 从前端容器的命名共享卷里读静态网页产物
+      - frontend_dist:/usr/share/nginx/html:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro # 👈 把宿主机证书共享给 Nginx 容器
     depends_on:
       - frontend
@@ -21,6 +22,8 @@ services:
     image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-frontend:latest
     container_name: blog-frontend
     restart: always
+    volumes:
+      - frontend_dist:/app/dist
 
   # 3. 后端 Go-Gin 服务
   backend:
@@ -77,3 +80,4 @@ services:
 volumes:
   redis_data:
   postgres_data:
+  frontend_dist:
