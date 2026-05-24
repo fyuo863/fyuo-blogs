@@ -1,0 +1,60 @@
+name: Full-Stack Code Quality Check (CI)
+
+on:
+  # 🎯 平时无论是推送到 main 分支，还是提 Pull Request，都会立刻触发检查
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch: # 允许手动点击触发
+
+jobs:
+  # 1. 后端 Go 代码质量检查
+  backend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26" # 换成你实际的 Go 版本
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          go mod download
+
+      # 检查是否有基本的语法错误或编译问题
+      - name: Test backend compilation
+        run: |
+          cd backend
+          go build -v ./...
+
+      # 如果你写了单元测试，解开下面这行的注释即可自动跑测试
+      # - name: Run Backend Tests
+      #   run: cd backend && go test ./...
+
+  # 2. 前端 React 代码质量检查
+  frontend-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci # 相比 npm install，ci 速度更快且更适合自动化环境
+
+      # 核心：检查代码是否能成功打包（能揪出绝大多数未定义的变量、类型错误等）
+      - name: Test frontend compilation
+        run: |
+          cd frontend
+          npm run build
