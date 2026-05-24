@@ -22,7 +22,7 @@ func NewRouter() *gin.Engine {
 	{
 		// 用户认证相关接口 (返回 JSON 数据)
 		api.POST("/signin", handler.SignIn) // 处理登录逻辑
-		api.POST("/signup", handler.SignUp) // 处理注册逻辑
+		//api.POST("/signup", handler.SignUp) // 处理注册逻辑
 
 		api.GET("/articles/search", handler.SearchBlogs) // 搜索文章
 		api.GET("/articles", handler.ListBlogs)
