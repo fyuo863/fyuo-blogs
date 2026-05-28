@@ -23,7 +23,7 @@ services:
     container_name: blog-frontend
     restart: always
     volumes:
-      - frontend_dist:/app/dist
+      - frontend_dist:/share_dist
 
   # 3. 后端 Go-Gin 服务
   backend:
