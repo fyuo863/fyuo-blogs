@@ -1,9 +1,12 @@
 import { useRef, useState, useEffect, useMemo } from "react";
 
 function randomClip() {
-  const topX = 70 + Math.random() * 25;
-  const bottomX = 45 + Math.random() * 25;
-  return `polygon(0 0, ${topX}% 0, ${bottomX}% 100%, 0 100%)`;
+  const topX = 75 + Math.random() * 20;
+  const bottomX = 65 + Math.random() * 20;
+  return {
+    path: `polygon(0 0, ${topX}% 0, ${bottomX}% 100%, 0 100%)`,
+    bottomX,
+  };
 }
 
 function randomWhiteWidth() {
@@ -13,8 +16,10 @@ function randomWhiteWidth() {
 function ProjectCard({ image, title, description, linkUrl }) {
   const cardRef = useRef(null);
   const [isWide, setIsWide] = useState(false);
-  const clipPath = useMemo(() => randomClip(), []);
+  const clip = useMemo(() => randomClip(), []);
   const whiteWidth = useMemo(() => randomWhiteWidth(), []);
+
+  const safePr = ((100 - clip.bottomX) * whiteWidth / 100).toFixed(1);
 
   useEffect(() => {
     const el = cardRef.current;
@@ -46,7 +51,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
           <div
             className="relative h-full bg-white flex flex-col justify-center px-6"
-            style={{ width: `${whiteWidth}%`, clipPath }}
+            style={{ width: `${whiteWidth}%`, clipPath: clip.path, paddingRight: `${safePr}%` }}
           >
             <h3 className="text-3xl font-extrabold tracking-tight text-black text-left">
               {title}

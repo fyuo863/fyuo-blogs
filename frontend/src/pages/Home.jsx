@@ -18,7 +18,7 @@ const PROJECTS = [
   {
     image: "/fyuo-bot.svg",
     title: "fyuo-bot",
-    linkUrl: "https://github.com/fyuo863/fyuo-bot",
+    linkUrl: "https://github.com/fyuo863/fyuo_bot",
     description: "一个轻量化的 Agent 框架.",
   },
 ];
