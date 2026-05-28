@@ -1,5 +1,21 @@
 import { useState } from "react";
 import FeatureCard from "../module/FeatureCard";
+import ProjectGrid from "../module/ProjectGrid";
+
+const PROJECTS = [
+  {
+    image: "/fyuo-blogs.svg",
+    title: "fyuo-blogs",
+    githubUrl: "https://github.com/fyuo863/fyuo-blogs",
+    description: "A personal blog built with React and Node.js.",
+  },
+  {
+    image: "/go-file-fetch.svg",
+    title: "go-file-fetch",
+    githubUrl: "https://github.com/fyuo863/go-file-fetch",
+    description: "Fetch files with Go, fast and simple.",
+  },
+];
 
 function Home({ user, onOpenSignIn, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -12,15 +28,17 @@ function Home({ user, onOpenSignIn, onLogout }) {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center">
+    <div className="min-h-screen bg-black flex flex-col items-center">
       {/* 主内容区 */}
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-24">
+      <div className="w-full px-[10%] py-24 flex flex-col items-center gap-32">
         <FeatureCard
           image="/fyuo-bot.svg"
-          title="fyuo-blogs"
+          title="fyuo-bot      一个轻量化的 Agent 框架"
           githubUrl="https://github.com/fyuo863"
-          description="thoughts, code, and everything in between."
+          description="思考、计划、编码、记忆."
         />
+
+        <ProjectGrid projects={PROJECTS} />
       </div>
 
       {/* 左下角菜单 */}

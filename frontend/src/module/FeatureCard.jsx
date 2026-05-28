@@ -1,7 +1,7 @@
 import GithubIcon from "./GithubIcon";
 
-function FeatureCard({ image, title, githubUrl, description }) {
-  return (
+function FeatureCard({ image, title, githubUrl, description, linkUrl }) {
+  const cardContent = (
     <div className="flex flex-col items-center">
       <div className="w-full max-w-3xl overflow-hidden border border-zinc-800">
         <img
@@ -21,6 +21,7 @@ function FeatureCard({ image, title, githubUrl, description }) {
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="inline-block text-zinc-500 hover:text-white mt-4 transition-colors"
           >
             <GithubIcon size={24} />
@@ -35,6 +36,21 @@ function FeatureCard({ image, title, githubUrl, description }) {
       </div>
     </div>
   );
+
+  if (linkUrl) {
+    return (
+      <a
+        href={linkUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block cursor-pointer"
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return cardContent;
 }
 
 export default FeatureCard;

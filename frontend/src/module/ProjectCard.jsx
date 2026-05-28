@@ -1,7 +1,7 @@
 import GithubIcon from "./GithubIcon";
 
-function ProjectCard({ image, title, githubUrl, description }) {
-  return (
+function ProjectCard({ image, title, githubUrl, description, linkUrl }) {
+  const cardContent = (
     <div className="relative group overflow-hidden border border-zinc-800">
       <img
         src={image}
@@ -19,6 +19,7 @@ function ProjectCard({ image, title, githubUrl, description }) {
             href={githubUrl}
             target="_blank"
             rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="text-zinc-400 hover:text-white mt-2 transition-colors"
           >
             <GithubIcon size={18} />
@@ -33,6 +34,21 @@ function ProjectCard({ image, title, githubUrl, description }) {
       </div>
     </div>
   );
+
+  if (linkUrl) {
+    return (
+      <a
+        href={linkUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block cursor-pointer"
+      >
+        {cardContent}
+      </a>
+    );
+  }
+
+  return cardContent;
 }
 
 export default ProjectCard;
