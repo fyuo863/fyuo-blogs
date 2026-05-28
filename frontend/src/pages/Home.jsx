@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import FeatureCard from "../module/FeatureCard";
 
 function Home({ user, onOpenSignIn, onLogout }) {
-  const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
 
   const MENU_ITEMS = [{ label: "exit.", action: "logout" }];
@@ -15,16 +14,13 @@ function Home({ user, onOpenSignIn, onLogout }) {
   return (
     <div className="min-h-screen bg-black flex items-center justify-center">
       {/* 主内容区 */}
-      <div className="text-center">
-        <p className="text-zinc-500 text-lg font-bold tracking-tight mb-8">
-          thoughts, code, and everything in between.
-        </p>
-        <button
-          onClick={() => navigate("/blog")}
-          className="px-8 py-3 text-lg font-bold tracking-tight text-white border border-zinc-700 hover:bg-white hover:text-black hover:border-white transition-all duration-300"
-        >
-          enter.
-        </button>
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-24">
+        <FeatureCard
+          image="/fyuo-bot.svg"
+          title="fyuo-blogs"
+          githubUrl="https://github.com/fyuo863"
+          description="thoughts, code, and everything in between."
+        />
       </div>
 
       {/* 左下角菜单 */}
