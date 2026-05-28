@@ -20,8 +20,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
     const el = cardRef.current;
     if (!el) return;
     const observer = new ResizeObserver(([entry]) => {
-      const { width, height } = entry.contentRect;
-      setIsWide(width / height > 1.6);
+      setIsWide(entry.contentRect.width > 400);
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -30,7 +29,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
   const cardContent = (
     <div
       ref={cardRef}
-      className="relative group overflow-hidden border border-zinc-800 h-[28vw] min-h-[260px] max-h-[420px] cursor-pointer
+      className="relative group overflow-hidden border border-zinc-800 cursor-pointer
         transition-transform duration-300
         hover:-translate-y-3 hover:duration-200 hover:ease-out"
       style={{
@@ -38,7 +37,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
       }}
     >
       {isWide ? (
-        <>
+        <div className="relative h-56">
           <img
             src={image}
             alt={title}
@@ -57,10 +56,10 @@ function ProjectCard({ image, title, description, linkUrl }) {
               </p>
             )}
           </div>
-        </>
+        </div>
       ) : (
         <>
-          <div className="h-2/3 overflow-hidden relative">
+          <div className="h-52 overflow-hidden relative">
             <img
               src={image}
               alt={title}
@@ -68,7 +67,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           </div>
-          <div className="h-1/3 bg-white px-6 flex flex-col justify-center">
+          <div className="bg-white px-6 pt-10 pb-6">
             {description && (
               <p className="text-zinc-600 text-sm leading-relaxed line-clamp-2">
                 {description}
@@ -76,8 +75,10 @@ function ProjectCard({ image, title, description, linkUrl }) {
             )}
           </div>
           <h3
-            className="absolute left-6 bottom-1/3 translate-y-1/2 text-4xl italic font-extrabold tracking-tight text-black pointer-events-none select-none"
+            className="absolute left-6 text-4xl italic font-extrabold tracking-tight text-black pointer-events-none select-none"
             style={{
+              top: "13rem",
+              transform: "translateY(-50%)",
               WebkitTextStroke: "10px white",
               paintOrder: "stroke fill",
             }}
