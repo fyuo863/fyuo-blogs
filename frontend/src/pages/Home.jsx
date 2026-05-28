@@ -36,7 +36,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
   return (
     <div className="min-h-screen bg-black flex flex-col items-center">
       {/* 主内容区 */}
-      <div className="w-full px-[10%] py-24 flex flex-col items-center gap-32">
+      <div className="w-full px-[10%] py-24 flex flex-col gap-32">
         <FeatureCard
           image="/fyuo-bot.svg"
           title="fyuo-bot      一个轻量化的 Agent 框架"

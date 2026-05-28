@@ -293,7 +293,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
           className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 z-0"
         />
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-700 z-0"></div>
-        <header className="relative z-10 px-[20%] w-full">
+        <header className="relative z-10 px-[10%] w-full">
           <h1 className="text-5xl font-extrabold tracking-tighter text-white drop-shadow-xl">
             Latest Updates
           </h1>
@@ -308,7 +308,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
 
       {/* 搜索栏 */}
       <div className="border-t border-b border-zinc-800">
-        <div className="px-[20%] py-12">
+        <div className="px-[10%] py-12">
           <div className="flex flex-col gap-3 sm:flex-row">
             <div className="relative flex-1" ref={searchRef}>
               <input
@@ -352,7 +352,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       </div>
 
       {/* 博客列表 */}
-      <div className="px-[20%]">
+      <div className="px-[10%]">
         <div className="divide-y divide-zinc-800">
           {posts.map((post) => (
             <article key={post.id} className="py-16">

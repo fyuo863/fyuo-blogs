@@ -42,7 +42,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
-      <div className="px-[20%] py-16">
+      <div className="px-[10%] py-16">
         <button
           onClick={onBack}
           className="text-lg font-mono text-white hover:text-white transition-colors mb-16"
