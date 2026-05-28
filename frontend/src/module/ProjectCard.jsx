@@ -7,7 +7,7 @@ function randomClip() {
 }
 
 function randomWhiteWidth() {
-  return 40 + Math.random() * 15;
+  return 55 + Math.random() * 15;
 }
 
 function ProjectCard({ image, title, description, linkUrl }) {
@@ -43,6 +43,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
             alt={title}
             className="absolute inset-0 w-full h-full object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent" />
           <div
             className="relative h-full bg-white flex flex-col justify-center px-6"
             style={{ width: `${whiteWidth}%`, clipPath }}
