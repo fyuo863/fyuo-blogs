@@ -288,7 +288,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       {/* 头部区域 */}
       <div className="relative w-full h-72 sm:h-80 md:h-96 border-t border-b border-zinc-800 group flex items-center overflow-hidden">
         <img
-          src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
+          src="/fyuo-blogs.svg"
           alt="Blog Cover"
           className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 z-0"
         />

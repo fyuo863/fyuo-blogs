@@ -1,18 +1,49 @@
+import { useMemo } from "react";
 import ProjectCard from "./ProjectCard";
 
-function ProjectGrid({ projects = [] }) {
+function ProjectGrid({ title, projects = [] }) {
+  const rows = useMemo(() => {
+    const result = [];
+    for (let i = 0; i < projects.length; i += 2) {
+      const pair = projects.slice(i, i + 2);
+      // 每行第一个卡片的宽度在 35% ~ 65% 之间随机
+      const firstWidth = 35 + Math.random() * 30;
+      result.push({ pair, firstWidth });
+    }
+    return result;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projects.length]);
+
   if (!projects.length) return null;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      {projects.map((project, i) => (
-        <ProjectCard
-          key={i}
-          image={project.image}
-          title={project.title}
-          githubUrl={project.githubUrl}
-          description={project.description}
-        />
+    <div className="flex flex-col gap-6">
+      {title && (
+        <h2 className="text-3xl font-extrabold tracking-tighter text-white text-left">
+          {title}
+        </h2>
+      )}
+      {rows.map((row, ri) => (
+        <div key={ri} className="flex gap-6">
+          <div style={{ flexBasis: `${row.firstWidth}%`, flexShrink: 0 }}>
+            <ProjectCard
+              image={row.pair[0].image}
+              title={row.pair[0].title}
+              description={row.pair[0].description}
+              linkUrl={row.pair[0].linkUrl}
+            />
+          </div>
+          {row.pair[1] && (
+            <div className="flex-1 min-w-0">
+              <ProjectCard
+                image={row.pair[1].image}
+                title={row.pair[1].title}
+                description={row.pair[1].description}
+                linkUrl={row.pair[1].linkUrl}
+              />
+            </div>
+          )}
+        </div>
       ))}
     </div>
   );

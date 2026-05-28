@@ -21,7 +21,7 @@ function ProjectCard({ image, title, description, linkUrl }) {
       {/* 下半部分：白色区域（占 1/3 高度） */}
       <div className="h-1/3 bg-white px-6 flex flex-col justify-center">
         {description && (
-          <p className="text-zinc-600 text-xs leading-relaxed line-clamp-2">
+          <p className="text-zinc-600 text-sm leading-relaxed line-clamp-2">
             {description}
           </p>
         )}

@@ -5,15 +5,21 @@ import ProjectGrid from "../module/ProjectGrid";
 const PROJECTS = [
   {
     image: "/fyuo-blogs.svg",
-    title: "fyuo-blogs",
-    githubUrl: "https://github.com/fyuo863/fyuo-blogs",
-    description: "A personal blog built with React and Node.js.",
+    title: "fyuo-blogs.",
+    linkUrl: "https://github.com/fyuo863/fyuo-blogs",
+    description: "个人博客项目(即本网站)",
   },
   {
     image: "/go-file-fetch.svg",
     title: "go-file-fetch",
-    githubUrl: "https://github.com/fyuo863/go-file-fetch",
+    linkUrl: "https://github.com/fyuo863/go-file-fetch",
     description: "Fetch files with Go, fast and simple.",
+  },
+  {
+    image: "/fyuo-bot.svg",
+    title: "fyuo-bot",
+    linkUrl: "https://github.com/fyuo863/fyuo-bot",
+    description: "一个轻量化的 Agent 框架.",
   },
 ];
 
@@ -38,7 +44,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
           description="思考、计划、编码、记忆."
         />
 
-        <ProjectGrid projects={PROJECTS} />
+        <ProjectGrid title="projects." projects={PROJECTS} />
       </div>
 
       {/* 左下角菜单 */}
