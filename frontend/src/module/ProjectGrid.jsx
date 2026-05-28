@@ -1,18 +1,21 @@
 import { useMemo } from "react";
 import ProjectCard from "./ProjectCard";
 
+function randomFirstWidth() {
+  return 35 + Math.random() * 30;
+}
+
 function ProjectGrid({ title, projects = [] }) {
   const rows = useMemo(() => {
     const result = [];
     for (let i = 0; i < projects.length; i += 2) {
-      const pair = projects.slice(i, i + 2);
-      // 每行第一个卡片的宽度在 35% ~ 65% 之间随机
-      const firstWidth = 35 + Math.random() * 30;
-      result.push({ pair, firstWidth });
+      result.push({
+        pair: projects.slice(i, i + 2),
+        firstWidth: randomFirstWidth(),
+      });
     }
     return result;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projects.length]);
+  }, [projects]);
 
   if (!projects.length) return null;
 
@@ -24,7 +27,7 @@ function ProjectGrid({ title, projects = [] }) {
         </h2>
       )}
       {rows.map((row, ri) => (
-        <div key={ri} className="flex gap-6">
+        <div key={ri} className="flex flex-col md:flex-row gap-6">
           <div style={{ flexBasis: `${row.firstWidth}%`, flexShrink: 0 }}>
             <ProjectCard
               image={row.pair[0].image}
