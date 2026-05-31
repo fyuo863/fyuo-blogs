@@ -295,7 +295,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
         <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-700 z-0"></div>
         <header className="relative z-10 px-[10%] w-full">
           <h1 className="text-5xl font-extrabold tracking-tighter text-white drop-shadow-xl">
-            Latest Updates
+            <span className="italic">Latest Updates</span>
           </h1>
           <p className="mt-6 text-lg font-bold text-white leading-relaxed drop-shadow-md">
             All the latest blogs, straight from

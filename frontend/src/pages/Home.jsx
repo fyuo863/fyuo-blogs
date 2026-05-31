@@ -13,7 +13,7 @@ const PROJECTS = [
     image: "/go-file-fetch.svg",
     title: "go-file-fetch",
     linkUrl: "https://github.com/fyuo863/go-file-fetch",
-    description: "Fetch files with Go, fast and simple.",
+    description: "简单的多线程文件下载器",
   },
   {
     image: "/fyuo-bot.svg",
