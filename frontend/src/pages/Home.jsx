@@ -39,7 +39,7 @@ function Home({ user, onOpenSignIn, onLogout }) {
       <div className="w-full px-[10%] py-24 flex flex-col gap-32">
         <FeatureCard
           image="/fyuo-bot.svg"
-          title="fyuo-bot      一个轻量化的 Agent 框架"
+          title="fyuo-bot 一个轻量化的 Agent 框架"
           githubUrl="https://github.com/fyuo863"
           description="思考、计划、编码、记忆."
         />
