@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import Home from "./pages/Home";
 import Blog from "./pages/Blog";
 import Navbar from "./module/Navbar";
+import Footer from "./module/Footer";
 import SignInModal from "./components/SignInModal";
 
 function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onLogout }) {
@@ -110,6 +111,8 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
           }
         />
       </Routes>
+
+      <Footer />
 
       <SignInModal
         open={showSignIn}
