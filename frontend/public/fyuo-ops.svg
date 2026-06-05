@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <rect width="1920" height="1080" fill="#ffffff" />
+  <text
+    x="960"
+    y="540"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="'Franklin Gothic Medium', 'Franklin Gothic Heavy', 'Impact', 'Arial Black', sans-serif"
+    font-size="210"
+    fill="#111111"
+    letter-spacing="2"
+  >
+    fyuo-ops
+  </text>
+</svg>

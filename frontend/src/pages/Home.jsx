@@ -7,19 +7,37 @@ const PROJECTS = [
     image: "/fyuo-blogs.svg",
     title: "fyuo-blogs.",
     linkUrl: "https://github.com/fyuo863/fyuo-blogs",
-    description: "个人博客项目(即本网站)",
+    description: "个人博客项目(即本网站).",
   },
   {
     image: "/go-file-fetch.svg",
     title: "go-file-fetch",
     linkUrl: "https://github.com/fyuo863/go-file-fetch",
-    description: "简单的多线程文件下载器",
+    description: "简单的多线程文件下载器.",
   },
   {
     image: "/fyuo-bot.svg",
     title: "fyuo-bot",
     linkUrl: "https://github.com/fyuo863/fyuo_bot",
     description: "一个轻量化的 Agent 框架.",
+  },
+  {
+    image: "/fyuo-ops.svg",
+    title: "fyuo-ops",
+    linkUrl: "https://github.com/fyuo863/fyuo-ops",
+    description: "运维特化 Agent.",
+  },
+  {
+    image: "/fyuobot-ts.svg",
+    title: "fyuobot-ts",
+    linkUrl: "https://github.com/fyuo863/fyuobot-ts",
+    description: "TypeScript 版本的模块化 Agent 框架.",
+  },
+  {
+    image: "/fyuobot-ts-tools.svg",
+    title: "fyuobot-ts-tools",
+    linkUrl: "https://github.com/fyuo863/fyuobot-ts-tools",
+    description: "fyuobot-ts 使用的工具集.",
   },
 ];
 
