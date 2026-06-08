@@ -1,22 +1,21 @@
 package handler
 
 import (
-	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
-	"myblog/internal/database"
+	"myblog/internal/middleware"
 	"myblog/internal/model"
+	"myblog/internal/service"
 	"myblog/log"
 	"net/http"
 	"strconv"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/lib/pq"
-	"github.com/redis/go-redis/v9"
-	"golang.org/x/crypto/bcrypt"
 )
+
+type ArticleHandler struct {
+	articles *service.ArticleService
+	auth     *service.AuthService
+}
 
 type CreateBlogRequest struct {
 	Name     string   `json:"name"`
@@ -43,211 +42,93 @@ type DeleteBlogRequest struct {
 	Password string `json:"password"`
 }
 
-func authenticateUser(name, password string) (model.User, error) {
-	var user model.User
-	if result := database.DB.Where("name = ?", name).First(&user); result.Error != nil {
-		return user, errors.New("用户不存在")
-	}
-	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		return user, errors.New("密码错误")
-	}
-	return user, nil
+func NewArticleHandler(articles *service.ArticleService, auth *service.AuthService) *ArticleHandler {
+	return &ArticleHandler{articles: articles, auth: auth}
 }
 
-func CreateBlog(c *gin.Context) {
-	log.Logger.Info("创建文章请求")
+func (h *ArticleHandler) CreateBlog(c *gin.Context) {
 	var req CreateBlogRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式或缺少字段"})
 		return
 	}
 
-	author, err := authenticateUser(req.Name, req.Password)
+	author, err := h.currentUser(c, stringPtr(req.Name), stringPtr(req.Password))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
 
-	article := model.Article{
-		Title:    req.Title,
-		Content:  req.Content,
-		Stage:    req.Stage,
-		Vol:      req.Vol,
-		AuthorID: author.ID,
-		Tags:     req.Tags,
-	}
-
-	// 1. 写入数据库
-	result := database.DB.Create(&article)
-	if result.Error != nil {
-		log.Logger.Error("创建文章失败", "error", result.Error)
+	article, err := h.articles.Create(c.Request.Context(), author, service.ArticleInput{
+		Title:   req.Title,
+		Content: req.Content,
+		Stage:   req.Stage,
+		Vol:     req.Vol,
+		Tags:    req.Tags,
+	})
+	if err != nil {
+		log.Logger.Error("创建文章失败", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建文章失败"})
 		return
 	}
 
-	// ==========================================
-	// 2. 缓存一致性操作：清理旧分页，主动重建第一页缓存
-	// ==========================================
-	ctx := context.Background()
-
-	// 先清理所有旧的分页缓存 (包括第一页和其他所有页)
-	database.InvalidateBlogListCache()
-
-	// 主动查出最新的 10 条数据（第一页）
-	var latestArticles []model.Article
-	var total int64
-	database.DB.Model(&model.Article{}).Where("stage != ?", "hidden").Count(&total)
-	database.DB.Where("stage != ?", "hidden").Order("created_at DESC").Limit(10).Find(&latestArticles)
-
-	firstPageData := gin.H{
-		"data":      latestArticles,
-		"total":     total,
-		"page":      1,
-		"page_size": 10,
-	}
-
-	jsonData, marshalErr := json.Marshal(firstPageData)
-	if marshalErr == nil {
-		// 注意这里最后的参数是 0，代表这前 10 条数据永不过期！
-		database.RDB.Set(ctx, "blogs:page:1:size:10", jsonData, 0)
-		log.Logger.Info("已主动将最新 10 条文章更新至 Redis (永不过期)")
-	}
-
-	log.Logger.Info("创建文章成功", "id", article.ID, "title", article.Title)
 	c.JSON(http.StatusCreated, gin.H{"data": article})
 }
 
-func ListBlogs(c *gin.Context) {
-	//time.Sleep(5 * time.Second)// 模拟慢查询，测试缓存效果
-
+func (h *ArticleHandler) ListBlogs(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "10"))
 
-	cacheKey := fmt.Sprintf("blogs:page:%d:size:%d", page, pageSize)
-	ctx := context.Background()
-
-	// 1. 尝试从 Redis 读取
-	cachedData, err := database.RDB.Get(ctx, cacheKey).Result()
-	if err == nil {
-		log.Logger.Info("Redis 缓存命中！", "key", cacheKey)
-		var responseData map[string]interface{}
-		json.Unmarshal([]byte(cachedData), &responseData)
-		c.JSON(http.StatusOK, responseData)
-		return
-	} else if err != redis.Nil {
-		log.Logger.Warn("Redis 读取异常，降级到数据库查询", "error", err)
-	}
-
-	// 2. 缓存未命中，查库
-	log.Logger.Info("Redis 未命中，从 PostgreSQL 读取数据")
-	var articles []model.Article
-	offset := (page - 1) * pageSize
-
-	var total int64
-	database.DB.Model(&model.Article{}).Where("stage != ?", "hidden").Count(&total)
-
-	result := database.DB.Where("stage != ?", "hidden").
-		Order("created_at DESC").
-		Offset(offset).
-		Limit(pageSize).
-		Find(&articles)
-
-	if result.Error != nil {
-		log.Logger.Error("查询文章列表失败", "error", result.Error)
+	result, err := h.articles.List(c.Request.Context(), page, pageSize)
+	if err != nil {
+		log.Logger.Error("查询文章列表失败", "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询文章列表失败"})
 		return
 	}
 
-	responseData := gin.H{
-		"data":      articles,
-		"total":     total,
-		"page":      page,
-		"page_size": pageSize,
-	}
-
-	// ==========================================
-	// 3. 动态设置过期时间（核心逻辑）
-	// ==========================================
-	jsonData, marshalErr := json.Marshal(responseData)
-	if marshalErr == nil {
-		var expiration time.Duration
-
-		// 如果请求的是第一页（最新10条），设为永不过期 (0)
-		if page == 1 && pageSize == 10 {
-			expiration = 0
-		} else {
-			// 其他页（包括被挤到第二页的数据，或搜索结果），存活 1 小时
-			expiration = time.Hour
-		}
-
-		setErr := database.RDB.Set(ctx, cacheKey, jsonData, expiration).Err()
-		if setErr != nil {
-			log.Logger.Warn("缓存写入 Redis 失败", "error", setErr)
-		} else {
-			log.Logger.Info("文章列表已存入 Redis", "key", cacheKey, "expire", expiration)
-		}
-	}
-
-	c.JSON(http.StatusOK, responseData)
+	c.JSON(http.StatusOK, result)
 }
 
-func SearchBlogs(c *gin.Context) {
+func (h *ArticleHandler) SearchBlogs(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "搜索关键词不能为空"})
 		return
 	}
 
-	var articles []model.Article
-	like := "%" + query + "%"
-
-	result := database.DB.Where("stage != ?", "hidden").
-		Where("title ILIKE ? OR content ILIKE ?", like, like).
-		Order("created_at DESC").
-		Limit(20).
-		Find(&articles)
-
-	if result.Error != nil {
-		log.Logger.Error("搜索文章失败", "query", query, "error", result.Error)
+	articles, err := h.articles.Search(query)
+	if err != nil {
+		log.Logger.Error("搜索文章失败", "query", query, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败"})
 		return
 	}
 
-	log.Logger.Info("搜索文章", "query", query, "results", len(articles))
 	c.JSON(http.StatusOK, gin.H{"data": articles, "total": len(articles), "query": query})
 }
 
-func GetBlog(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+func (h *ArticleHandler) GetBlog(c *gin.Context) {
+	id, ok := parseID(c)
+	if !ok {
 		return
 	}
 
-	var article model.Article
-
-	result := database.DB.Where("stage != ?", "hidden").First(&article, id)
-
-	if result.Error != nil {
-		log.Logger.Error("查询文章失败或文章已被隐藏", "id", id, "error", result.Error)
+	article, err := h.articles.Get(id)
+	if errors.Is(err, service.ErrArticleNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或已被隐藏"})
+		return
+	}
+	if err != nil {
+		log.Logger.Error("查询文章失败", "id", id, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询文章失败"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"data": article})
 }
 
-func UpdateBlog(c *gin.Context) {
-	log.Logger.Info("更新文章请求")
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
-		return
-	}
-
-	var article model.Article
-	if result := database.DB.First(&article, id); result.Error != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+func (h *ArticleHandler) UpdateBlog(c *gin.Context) {
+	id, ok := parseID(c)
+	if !ok {
 		return
 	}
 
@@ -257,54 +138,38 @@ func UpdateBlog(c *gin.Context) {
 		return
 	}
 
-	// 验证身份
-	if req.Name != nil && req.Password != nil {
-		if _, err := authenticateUser(*req.Name, *req.Password); err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
-			return
-		}
+	if _, err := h.currentUser(c, req.Name, req.Password); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
+		return
 	}
 
-	updates := map[string]interface{}{}
-	if req.Title != nil {
-		updates["title"] = *req.Title
+	article, err := h.articles.Update(c.Request.Context(), id, service.ArticleUpdate{
+		Title:   req.Title,
+		Content: req.Content,
+		Stage:   req.Stage,
+		Vol:     req.Vol,
+		Tags:    req.Tags,
+	})
+	if errors.Is(err, service.ErrArticleNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		return
 	}
-	if req.Content != nil {
-		updates["content"] = *req.Content
-	}
-	if req.Stage != nil {
-		updates["stage"] = *req.Stage
-	}
-	if req.Vol != nil {
-		updates["vol"] = *req.Vol
-	}
-	if req.Tags != nil {
-		updates["tags"] = pq.StringArray(req.Tags)
-	}
-
-	if len(updates) == 0 {
+	if errors.Is(err, service.ErrNoArticleUpdate) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "没有需要更新的字段"})
 		return
 	}
-	log.Logger.Info("更新文章", "id", id, "updates", updates)
-
-	if result := database.DB.Model(&article).Updates(updates); result.Error != nil {
-		log.Logger.Error("更新文章失败", "id", id, "error", result.Error)
+	if err != nil {
+		log.Logger.Error("更新文章失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新文章失败"})
 		return
 	}
 
-	database.DB.First(&article, id)
-	log.Logger.Info("更新文章成功", "id", article.ID, "title", article.Title)
-	database.InvalidateBlogListCache()
 	c.JSON(http.StatusOK, gin.H{"data": article})
-
 }
 
-func DeleteBlog(c *gin.Context) {
-	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+func (h *ArticleHandler) DeleteBlog(c *gin.Context) {
+	id, ok := parseID(c)
+	if !ok {
 		return
 	}
 
@@ -314,28 +179,46 @@ func DeleteBlog(c *gin.Context) {
 		return
 	}
 
-	if _, err := authenticateUser(req.Name, req.Password); err != nil {
+	if _, err := h.currentUser(c, stringPtr(req.Name), stringPtr(req.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
 
-	// 1. 数据库操作：不执行物理删除，而是更新 stage 字段为 "hidden"
-	result := database.DB.Model(&model.Article{}).Where("id = ?", id).Update("stage", "hidden")
-
-	if result.Error != nil {
-		log.Logger.Error("删除(隐藏)文章失败", "id", id, "error", result.Error)
+	if err := h.articles.Delete(c.Request.Context(), id); errors.Is(err, service.ErrArticleNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		return
+	} else if err != nil {
+		log.Logger.Error("删除文章失败", "id", id, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文章失败"})
 		return
 	}
 
-	if result.RowsAffected == 0 {
-		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
-		return
-	}
-
-	// 2. 清理缓存
-	database.InvalidateBlogListCache()
-
-	log.Logger.Info("文章已标记为不显示", "id", id)
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
+}
+
+func (h *ArticleHandler) currentUser(c *gin.Context, name, password *string) (model.User, error) {
+	if claims, ok := middleware.Claims(c); ok {
+		return h.auth.UserFromClaims(claims), nil
+	}
+	if name == nil || password == nil || *name == "" || *password == "" {
+		return model.User{}, service.ErrInvalidCredentials
+	}
+	result, err := h.auth.Authenticate(*name, *password)
+	if err != nil {
+		return model.User{}, err
+	}
+	return result.User, nil
+}
+
+func parseID(c *gin.Context) (uint, bool) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		return 0, false
+	}
+	return uint(id), true
+}
+
+func stringPtr(value string) *string {
+	return &value
 }

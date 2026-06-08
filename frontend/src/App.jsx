@@ -130,8 +130,13 @@ function App() {
   });
   const [showSignIn, setShowSignIn] = useState(false);
 
-  const handleLogin = (name, password) => {
-    const u = { name, password };
+  const handleLogin = (profile) => {
+    const u = {
+      id: profile.id,
+      name: profile.name,
+      role: profile.role,
+      token: profile.token,
+    };
     setUser(u);
     localStorage.setItem("user", JSON.stringify(u));
     setShowSignIn(false);

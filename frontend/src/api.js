@@ -2,6 +2,15 @@ import axios from "axios";
 
 const BASE = "/api/v1";
 
+const authConfig = (token) =>
+  token
+    ? {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    : {};
+
 // ============================================================
 //  Auth
 // ============================================================
@@ -32,16 +41,17 @@ export const getArticle = (id) => axios.get(`${BASE}/articles/${id}`);
 //  Articles (protected — 需 JWT)
 // ============================================================
 
-/** POST /api/v1/articles — 创建文章（name + password 验证） */
-export const createArticle = (data) => axios.post(`${BASE}/articles`, data);
+/** POST /api/v1/articles — 创建文章 */
+export const createArticle = (data, token) =>
+  axios.post(`${BASE}/articles`, data, authConfig(token));
 
-/** PUT /api/v1/articles/:id — 更新文章（name + password 验证） */
-export const updateArticle = (id, data) =>
-  axios.put(`${BASE}/articles/${id}`, data);
+/** PUT /api/v1/articles/:id — 更新文章 */
+export const updateArticle = (id, data, token) =>
+  axios.put(`${BASE}/articles/${id}`, data, authConfig(token));
 
-/** DELETE /api/v1/articles/:id — 删除文章（name + password 验证） */
-export const deleteArticle = (id, data) =>
-  axios.delete(`${BASE}/articles/${id}`, { data });
+/** DELETE /api/v1/articles/:id — 删除文章 */
+export const deleteArticle = (id, data, token) =>
+  axios.delete(`${BASE}/articles/${id}`, { ...authConfig(token), data });
 
 // ============================================================
 //  Counters (public)

@@ -29,7 +29,7 @@ const (
 // updateCachedArticle 扫描所有 blogs:page:* 缓存，对匹配 articleID 的文章
 // 执行 updateFn 修改其字段值，然后写回缓存。
 func updateCachedArticle(ctx context.Context, articleID uint, updateFn func(article *map[string]interface{})) {
-	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
+	keys, err := database.BlogListCacheKeys(ctx)
 	if err != nil {
 		return
 	}
@@ -67,7 +67,7 @@ func updateCachedArticle(ctx context.Context, articleID uint, updateFn func(arti
 
 // IncrementView 在缓存中为指定文章增加一次浏览计数，缓存不存在时直接写 DB
 func IncrementView(ctx context.Context, articleID uint) error {
-	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
+	keys, err := database.BlogListCacheKeys(ctx)
 	if err != nil || len(keys) == 0 {
 		// 缓存不存在，直接写入 DB
 		return database.DB.Model(&model.Article{}).
@@ -114,11 +114,11 @@ func ToggleLike(ctx context.Context, articleID uint, ipHash string) (bool, error
 	})
 
 	// 如果缓存不存在，直接写 DB
-	keys, _ := database.RDB.Keys(ctx, "blogs:page:*").Result()
+	keys, _ := database.BlogListCacheKeys(ctx)
 	if len(keys) == 0 {
 		database.DB.Model(&model.Article{}).
 			Where("id = ?", articleID).
-			Update("like_count", gorm.Expr("like_count + ?", delta))
+			Update("like_count", gorm.Expr("GREATEST(like_count + ?, 0)", delta))
 	}
 
 	return delta == 1, nil
@@ -128,7 +128,7 @@ func ToggleLike(ctx context.Context, articleID uint, ipHash string) (bool, error
 func SyncCountsToDB(ctx context.Context) {
 	log.Logger.Info("开始同步浏览/点赞计数到数据库")
 
-	keys, err := database.RDB.Keys(ctx, "blogs:page:*").Result()
+	keys, err := database.BlogListCacheKeys(ctx)
 	if err != nil || len(keys) == 0 {
 		return
 	}

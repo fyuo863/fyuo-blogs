@@ -12,6 +12,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
+	Auth     AuthConfig     `mapstructure:"auth"`
 }
 
 type ServerConfig struct {
@@ -42,6 +43,11 @@ type RedisConfig struct {
 	QueryTimeout time.Duration `mapstructure:"query_timeout"` // 单次操作超时时间
 }
 
+type AuthConfig struct {
+	TokenSecret   string `mapstructure:"token_secret"`
+	TokenTTLHours int    `mapstructure:"token_ttl_hours"`
+}
+
 func Load(configPath string) (*Config, error) {
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("yaml")
@@ -56,6 +62,8 @@ func Load(configPath string) (*Config, error) {
 	viper.BindEnv("redis.host", "REDIS_HOST")
 	viper.BindEnv("redis.port", "REDIS_PORT")
 	viper.BindEnv("redis.password", "REDIS_PASSWORD")
+	viper.BindEnv("auth.token_secret", "AUTH_TOKEN_SECRET")
+	viper.BindEnv("auth.token_ttl_hours", "AUTH_TOKEN_TTL_HOURS")
 
 	// 同时保留 APP_ 前缀的自动绑定作为补充
 	viper.SetEnvPrefix("APP")
@@ -68,6 +76,15 @@ func Load(configPath string) (*Config, error) {
 	var cfg Config
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, fmt.Errorf("解析配置文件失败: %w", err)
+	}
+	if cfg.Auth.TokenTTLHours <= 0 {
+		cfg.Auth.TokenTTLHours = 24
+	}
+	if cfg.Auth.TokenSecret == "" {
+		cfg.Auth.TokenSecret = cfg.Database.Password
+	}
+	if cfg.Auth.TokenSecret == "" {
+		cfg.Auth.TokenSecret = "dev-only-change-me"
 	}
 
 	return &cfg, nil

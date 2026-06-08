@@ -2,11 +2,16 @@ package main
 
 import (
 	"context"
+	"myblog/internal/auth"
 	"myblog/internal/config"
 	"myblog/internal/database"
+	"myblog/internal/handler"
+	"myblog/internal/middleware"
+	"myblog/internal/repository"
 	"myblog/internal/router"
 	"myblog/internal/service"
 	"myblog/log"
+	"time"
 )
 
 func main() {
@@ -45,7 +50,20 @@ func main() {
 
 	// database.DBCreate(&newArticle)
 	//database.DBRead(4)
-	router := router.NewRouter()
+	tokenManager := auth.NewTokenManager(
+		cfg.Auth.TokenSecret,
+		time.Duration(cfg.Auth.TokenTTLHours)*time.Hour,
+	)
+	userRepo := repository.NewUserRepository(database.DB)
+	articleRepo := repository.NewArticleRepository(database.DB)
+	authService := service.NewAuthService(userRepo, tokenManager)
+	articleService := service.NewArticleService(articleRepo)
+
+	router := router.NewRouter(router.Dependencies{
+		Articles:   handler.NewArticleHandler(articleService, authService),
+		Auth:       handler.NewAuthHandler(authService),
+		AuthTokens: middleware.OptionalAuth(tokenManager),
+	})
 
 	router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default
 }

@@ -164,22 +164,25 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       const content = editRef.current?.getContent() ?? selectedPost.content;
       const title = editRef.current?.getTitle() ?? selectedPost.title;
       const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
-      const auth = { name: user?.name ?? "", password: user?.password ?? "" };
+      const token = user?.token;
+      const legacyAuth = token
+        ? {}
+        : { name: user?.name ?? "", password: user?.password ?? "" };
       if (isNewPost) {
         createArticle({
-          ...auth,
+          ...legacyAuth,
           title,
           content,
           stage: "published",
           vol: 1,
           tags,
-        })
+        }, token)
           .then(() => {
             closePost();
           })
           .catch((err) => console.error("创建失败", err));
       } else {
-        updateArticle(selectedPost.id, { ...auth, title, content, tags })
+        updateArticle(selectedPost.id, { ...legacyAuth, title, content, tags }, token)
           .then((res) => {
             setSelectedPost(res.data.data);
             setIsEditing(false);
@@ -188,8 +191,11 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       }
     }
     if (action === "delete") {
-      const auth = { name: user?.name ?? "", password: user?.password ?? "" };
-      deleteArticle(selectedPost.id, auth)
+      const token = user?.token;
+      const legacyAuth = token
+        ? {}
+        : { name: user?.name ?? "", password: user?.password ?? "" };
+      deleteArticle(selectedPost.id, legacyAuth, token)
         .then(() => {
           closePost();
         })

@@ -123,11 +123,31 @@ func RedisLPop(ctx context.Context, key string) (string, error) {
 // InvalidateBlogListCache 清除所有博客列表的分页缓存
 func InvalidateBlogListCache() {
 	ctx := context.Background()
-	keys, err := RDB.Keys(ctx, "blogs:page:*").Result()
+	keys, err := BlogListCacheKeys(ctx)
 	if err == nil && len(keys) > 0 {
 		RDB.Del(ctx, keys...)
 		log.Logger.Info("已清理旧的博客列表 Redis 缓存", "keys_deleted", len(keys))
 	}
+}
+
+func BlogListCacheKeys(ctx context.Context) ([]string, error) {
+	if RDB == nil {
+		return nil, nil
+	}
+	var cursor uint64
+	keys := []string{}
+	for {
+		batch, next, err := RDB.Scan(ctx, cursor, "blogs:page:*", 100).Result()
+		if err != nil {
+			return nil, err
+		}
+		keys = append(keys, batch...)
+		cursor = next
+		if cursor == 0 {
+			break
+		}
+	}
+	return keys, nil
 }
 
 // RedisLLen 获取列表当前的长度

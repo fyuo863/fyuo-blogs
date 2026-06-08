@@ -23,3 +23,7 @@ redis:
   db: 0
   pool_size: 100 # 连接池大小
   query_timeout: 2s # 单次 Redis 操作超时
+
+auth:
+  token_secret: "" # 推荐通过 AUTH_TOKEN_SECRET 注入；为空时回退到 DB_PASSWORD
+  token_ttl_hours: 24

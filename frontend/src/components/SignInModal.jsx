@@ -24,7 +24,7 @@ function SignInModal({ open, onClose, onLogin }) {
     try {
       const res = await signIn(username.trim(), password);
       if (res.data?.data) {
-        onLogin(username.trim(), password);
+        onLogin(res.data.data);
       }
     } catch (err) {
       const msg =
