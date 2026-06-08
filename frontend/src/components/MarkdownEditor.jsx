@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import parseBlocks from "../utils/parseBlocks";
@@ -173,23 +173,19 @@ function BlockView({ block }) {
 
 // ── 主组件 ──
 export default function MarkdownEditor({ value, onChange, editorRef, editing }) {
-  const [blocks, setBlocks] = useState(() => parseBlocks(value));
   const [fullEdit, setFullEdit] = useState(false);
   const [fullText, setFullText] = useState("");
   const [editText, setEditText] = useState(value);
   const containerRef = useRef(null);
   const fullTaRef = useRef(null);
 
+  const sourceText = fullEdit ? fullText : editing ? editText : value;
+  const blocks = useMemo(() => parseBlocks(sourceText), [sourceText]);
   const rebuild = useCallback((bs) => bs.map((b) => b.content).join("\n\n"), []);
-  const getContent = useCallback(() => rebuild(blocks), [blocks, rebuild]);
-
-  useEffect(() => {
-    setBlocks(parseBlocks(value));
-  }, [value]);
-
-  useEffect(() => {
-    setEditText(value);
-  }, [value]);
+  const getContent = useCallback(
+    () => (editing ? editText : rebuild(blocks)),
+    [blocks, editText, editing, rebuild]
+  );
 
   useEffect(() => {
     if (editorRef) editorRef.current = { getContent };
@@ -214,7 +210,7 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
   }, [fullEdit]);
 
   const commitFullEdit = (text) => {
-    setBlocks(parseBlocks(text));
+    setEditText(text);
     setFullEdit(false);
     if (onChange) onChange(text);
   };
@@ -273,7 +269,6 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
   // ── 编辑态：左侧渲染预览 + 右侧编辑框 ──
   const handleEditChange = (text) => {
     setEditText(text);
-    setBlocks(parseBlocks(text));
     if (onChange) onChange(text);
   };
 

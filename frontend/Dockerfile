@@ -4,7 +4,7 @@ WORKDIR /app
 
 # 利用缓存加速安装依赖
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 # 复制源码并执行打包
 COPY . .

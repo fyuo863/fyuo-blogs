@@ -56,7 +56,6 @@ function Blog({ user, onOpenSignIn, onLogout }) {
   useEffect(() => {
     if (!selectedPost) {
       fetchPosts();
-      setSearchQuery("");
     }
   }, [selectedPost, fetchPosts]);
 
@@ -134,6 +133,12 @@ function Blog({ user, onOpenSignIn, onLogout }) {
         ];
   const currentMenu = isBlogView ? blogItems : [];
 
+  const closePost = () => {
+    setSelectedPost(null);
+    setIsEditing(false);
+    setSearchQuery("");
+  };
+
   const handleMenuAction = (action) => {
     setMenuOpen(false);
     if (action === "logout") onLogout();
@@ -150,8 +155,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       setIsEditing(true);
     }
     if (action === "back") {
-      setSelectedPost(null);
-      setIsEditing(false);
+      closePost();
     }
     if (action === "edit") {
       setIsEditing(true);
@@ -171,8 +175,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
           tags,
         })
           .then(() => {
-            setSelectedPost(null);
-            setIsEditing(false);
+            closePost();
           })
           .catch((err) => console.error("创建失败", err));
       } else {
@@ -188,14 +191,13 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       const auth = { name: user?.name ?? "", password: user?.password ?? "" };
       deleteArticle(selectedPost.id, auth)
         .then(() => {
-          setSelectedPost(null);
-          setIsEditing(false);
+          closePost();
         })
         .catch((err) => console.error("删除失败", err));
     }
     if (action === "discard") {
       if (isNewPost) {
-        setSelectedPost(null);
+        closePost();
       }
       setIsEditing(false);
     }
@@ -410,10 +412,7 @@ function Blog({ user, onOpenSignIn, onLogout }) {
           post={selectedPost}
           isEditing={isEditing}
           editRef={editRef}
-          onBack={() => {
-            setSelectedPost(null);
-            setIsEditing(false);
-          }}
+          onBack={closePost}
         />
       )}
     </div>

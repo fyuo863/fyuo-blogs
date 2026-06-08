@@ -3,3 +3,9 @@ docker-compose.local.yml
 *.env
 *.local
 .env.local
+
+# Frontend generated files
+frontend/node_modules/
+frontend/.vite/
+frontend/dist/
+frontend/dist-ssr/
