@@ -1,0 +1,7 @@
+.gocache
+tmp
+
+*.log
+
+.git
+.gitignore

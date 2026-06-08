@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, User, Lock, Eye, EyeOff } from "lucide-react";
 import { signIn } from "../api";
 
-function SignInModal({ open, onClose, onLogin }) {
+function SignInModal({ open, onClose, onLogin, onNotify }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +25,11 @@ function SignInModal({ open, onClose, onLogin }) {
       const res = await signIn(username.trim(), password);
       if (res.data?.data) {
         onLogin(res.data.data);
+        onNotify?.({
+          variant: "success",
+          title: "logged-in.",
+          message: "身份验证完成，可以继续管理文章。",
+        });
       }
     } catch (err) {
       const msg =

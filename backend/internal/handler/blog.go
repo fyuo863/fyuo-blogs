@@ -18,28 +18,19 @@ type ArticleHandler struct {
 }
 
 type CreateBlogRequest struct {
-	Name     string   `json:"name"`
-	Password string   `json:"password"`
-	Title    string   `json:"title"`
-	Content  string   `json:"content"`
-	Stage    string   `json:"stage"`
-	Vol      int      `json:"vol"`
-	Tags     []string `json:"tags"`
+	Title   string   `json:"title"`
+	Content string   `json:"content"`
+	Stage   string   `json:"stage"`
+	Vol     int      `json:"vol"`
+	Tags    []string `json:"tags"`
 }
 
 type UpdateBlogRequest struct {
-	Name     *string  `json:"name"`
-	Password *string  `json:"password"`
-	Title    *string  `json:"title"`
-	Content  *string  `json:"content"`
-	Stage    *string  `json:"stage"`
-	Vol      *int     `json:"vol"`
-	Tags     []string `json:"tags"`
-}
-
-type DeleteBlogRequest struct {
-	Name     string `json:"name"`
-	Password string `json:"password"`
+	Title   *string  `json:"title"`
+	Content *string  `json:"content"`
+	Stage   *string  `json:"stage"`
+	Vol     *int     `json:"vol"`
+	Tags    []string `json:"tags"`
 }
 
 func NewArticleHandler(articles *service.ArticleService, auth *service.AuthService) *ArticleHandler {
@@ -53,7 +44,7 @@ func (h *ArticleHandler) CreateBlog(c *gin.Context) {
 		return
 	}
 
-	author, err := h.currentUser(c, stringPtr(req.Name), stringPtr(req.Password))
+	author, err := h.currentUser(c)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
@@ -96,7 +87,7 @@ func (h *ArticleHandler) SearchBlogs(c *gin.Context) {
 		return
 	}
 
-	articles, err := h.articles.Search(query)
+	articles, err := h.articles.Search(c.Request.Context(), query)
 	if err != nil {
 		log.Logger.Error("搜索文章失败", "query", query, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "搜索失败"})
@@ -112,7 +103,7 @@ func (h *ArticleHandler) GetBlog(c *gin.Context) {
 		return
 	}
 
-	article, err := h.articles.Get(id)
+	article, err := h.articles.Get(c.Request.Context(), id)
 	if errors.Is(err, service.ErrArticleNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在或已被隐藏"})
 		return
@@ -138,7 +129,7 @@ func (h *ArticleHandler) UpdateBlog(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.currentUser(c, req.Name, req.Password); err != nil {
+	if _, err := h.currentUser(c); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
@@ -173,13 +164,7 @@ func (h *ArticleHandler) DeleteBlog(c *gin.Context) {
 		return
 	}
 
-	var req DeleteBlogRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求格式"})
-		return
-	}
-
-	if _, err := h.currentUser(c, stringPtr(req.Name), stringPtr(req.Password)); err != nil {
+	if _, err := h.currentUser(c); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
@@ -196,18 +181,11 @@ func (h *ArticleHandler) DeleteBlog(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
 }
 
-func (h *ArticleHandler) currentUser(c *gin.Context, name, password *string) (model.User, error) {
+func (h *ArticleHandler) currentUser(c *gin.Context) (model.User, error) {
 	if claims, ok := middleware.Claims(c); ok {
 		return h.auth.UserFromClaims(claims), nil
 	}
-	if name == nil || password == nil || *name == "" || *password == "" {
-		return model.User{}, service.ErrInvalidCredentials
-	}
-	result, err := h.auth.Authenticate(*name, *password)
-	if err != nil {
-		return model.User{}, err
-	}
-	return result.User, nil
+	return model.User{}, service.ErrInvalidCredentials
 }
 
 func parseID(c *gin.Context) (uint, bool) {
@@ -217,8 +195,4 @@ func parseID(c *gin.Context) (uint, bool) {
 		return 0, false
 	}
 	return uint(id), true
-}
-
-func stringPtr(value string) *string {
-	return &value
 }

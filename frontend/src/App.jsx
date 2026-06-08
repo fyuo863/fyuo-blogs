@@ -5,8 +5,9 @@ import Blog from "./pages/Blog";
 import Navbar from "./module/Navbar";
 import Footer from "./module/Footer";
 import SignInModal from "./components/SignInModal";
+import InfoModal from "./components/InfoModal";
 
-function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onLogout }) {
+function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onLogout, onNotify }) {
   const location = useLocation();
   const isHome = location.pathname === "/";
 
@@ -107,6 +108,7 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
               user={user}
               onOpenSignIn={onOpenSignIn}
               onLogout={onLogout}
+              onNotify={onNotify}
             />
           }
         />
@@ -118,6 +120,7 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
         open={showSignIn}
         onClose={onCloseSignIn}
         onLogin={onLogin}
+        onNotify={onNotify}
       />
     </>
   );
@@ -126,9 +129,27 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
 function App() {
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem("user");
-    return saved ? JSON.parse(saved) : null;
+    if (!saved) return null;
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed?.token) return parsed;
+    } catch {
+      // Ignore stale or malformed local login state.
+    }
+    localStorage.removeItem("user");
+    return null;
   });
   const [showSignIn, setShowSignIn] = useState(false);
+  const [info, setInfo] = useState(null);
+
+  const notify = (next) => {
+    setInfo({
+      variant: "info",
+      title: "info.",
+      message: "",
+      ...next,
+    });
+  };
 
   const handleLogin = (profile) => {
     const u = {
@@ -156,6 +177,14 @@ function App() {
         onCloseSignIn={() => setShowSignIn(false)}
         onLogin={handleLogin}
         onLogout={handleLogout}
+        onNotify={notify}
+      />
+      <InfoModal
+        open={Boolean(info)}
+        title={info?.title}
+        message={info?.message}
+        variant={info?.variant}
+        onClose={() => setInfo(null)}
       />
     </BrowserRouter>
   );

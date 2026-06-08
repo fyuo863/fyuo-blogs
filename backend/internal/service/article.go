@@ -73,6 +73,7 @@ func (s *ArticleService) List(ctx context.Context, page, pageSize int) (ArticleL
 	cacheKey := articleListCacheKey(page, pageSize)
 
 	if cached, ok := s.readListCache(ctx, cacheKey); ok {
+		cached.Data = ApplyCounts(ctx, cached.Data)
 		return cached, nil
 	}
 
@@ -87,19 +88,27 @@ func (s *ArticleService) List(ctx context.Context, page, pageSize int) (ArticleL
 		PageSize: pageSize,
 	}
 	s.writeListCache(ctx, cacheKey, result, listCacheTTL(page, pageSize))
+	result.Data = ApplyCounts(ctx, result.Data)
 	return result, nil
 }
 
-func (s *ArticleService) Search(query string) ([]model.Article, error) {
-	return s.articles.SearchVisible(query, 20)
+func (s *ArticleService) Search(ctx context.Context, query string) ([]model.Article, error) {
+	articles, err := s.articles.SearchVisible(query, 20)
+	if err != nil {
+		return nil, err
+	}
+	return ApplyCounts(ctx, articles), nil
 }
 
-func (s *ArticleService) Get(id uint) (model.Article, error) {
+func (s *ArticleService) Get(ctx context.Context, id uint) (model.Article, error) {
 	article, err := s.articles.GetVisible(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return article, ErrArticleNotFound
 	}
-	return article, err
+	if err != nil {
+		return article, err
+	}
+	return applyCountsToArticle(ctx, article), nil
 }
 
 func (s *ArticleService) Update(ctx context.Context, id uint, update ArticleUpdate) (model.Article, error) {
@@ -120,7 +129,7 @@ func (s *ArticleService) Update(ctx context.Context, id uint, update ArticleUpda
 		return article, err
 	}
 	s.refreshListCache(ctx)
-	return article, nil
+	return applyCountsToArticle(ctx, article), nil
 }
 
 func (s *ArticleService) Delete(ctx context.Context, id uint) error {
@@ -174,6 +183,11 @@ func (s *ArticleService) writeListCache(ctx context.Context, key string, result 
 		return
 	}
 	database.RDB.Set(ctx, key, payload, expiration)
+}
+
+func applyCountsToArticle(ctx context.Context, article model.Article) model.Article {
+	articles := ApplyCounts(ctx, []model.Article{article})
+	return articles[0]
 }
 
 func articleListCacheKey(page, pageSize int) string {

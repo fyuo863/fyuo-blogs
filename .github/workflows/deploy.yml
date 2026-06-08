@@ -2,53 +2,83 @@ name: Deploy Blog to Aliyun ECS
 
 on:
   push:
-    # 核心修改 1：只有在推送以 v 开头的 tag 时才触发自动部署 (例如 v1.0.0)
     tags:
       - "v*"
-  # 保留手动触发按钮，方便你在没有发版时也想强制部署测试
   workflow_dispatch:
+    inputs:
+      action:
+        description: "deploy builds a new image; rollback reuses an existing image tag"
+        required: true
+        default: "deploy"
+        type: choice
+        options:
+          - deploy
+          - rollback
+      image_tag:
+        description: "Image tag for manual deploy or rollback, for example v1.2.3"
+        required: false
+        default: ""
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    # 核心修改 2：二次确认，确保只有 tag 推送或手动执行时才运行此任务
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # 升级到了更快的 v4 版本
+        uses: actions/checkout@v4
 
-      # 1. 登录阿里云容器镜像服务 (ACR)
+      - name: Resolve release inputs
+        run: |
+          ACTION="deploy"
+          TAG="${GITHUB_REF_NAME}"
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ACTION="${{ inputs.action }}"
+            TAG="${{ inputs.image_tag }}"
+            if [ -z "$TAG" ]; then
+              TAG="latest"
+            fi
+          fi
+
+          if [ "$ACTION" = "rollback" ] && [ "$TAG" = "latest" ]; then
+            echo "::error::Rollback requires a concrete image_tag, for example v1.2.3"
+            exit 1
+          fi
+
+          echo "DEPLOY_ACTION=$ACTION" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
+          echo "Resolved action=$ACTION tag=$TAG"
+
       - name: Login to Aliyun ACR
+        if: env.DEPLOY_ACTION == 'deploy'
         uses: docker/login-action@v3
         with:
           registry: ${{ secrets.ALIYUN_REGISTRY }}
           username: ${{ secrets.ALIYUN_REGISTRY_USER }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
-      # 2. 构建并推送后端镜像 (借鉴你之前的项目，使用更优雅的官方 action)
-      - name: Build and push Backend Image
+      - name: Build and push backend image
+        if: env.DEPLOY_ACTION == 'deploy'
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
-          # 同时打上 latest 标签(给 docker-compose 用) 和 具体版本号标签(如 v1.0.0，方便历史回滚)
           tags: |
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-backend:latest
-            ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-backend:${{ github.ref_name }}
+            ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-backend:${{ env.RELEASE_TAG }}
 
-      # 3. 构建并推送前端镜像
-      - name: Build and push Frontend Image
+      - name: Build and push frontend image
+        if: env.DEPLOY_ACTION == 'deploy'
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
           push: true
           tags: |
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:latest
-            ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:${{ github.ref_name }}
+            ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:${{ env.RELEASE_TAG }}
 
-      # 4. 【已修复】将 docker-compose 和 nginx 配置文件一同传到服务器
-      - name: Copy Files via scp
+      - name: Copy deployment files
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.ECS_HOST }}
@@ -57,29 +87,76 @@ jobs:
           source: "docker-compose.yml,nginx.conf"
           target: "/data/blog/"
 
-      # 5. SSH 登录服务器执行部署命令
-      - name: SSH to ECS and Deploy
+      - name: Deploy or rollback on ECS
         uses: appleboy/ssh-action@master
+        env:
+          IMAGE_TAG: ${{ env.RELEASE_TAG }}
+          DEPLOY_ACTION: ${{ env.DEPLOY_ACTION }}
+          ALIYUN_REGISTRY: ${{ secrets.ALIYUN_REGISTRY }}
+          ALIYUN_REGISTRY_USER: ${{ secrets.ALIYUN_REGISTRY_USER }}
+          ALIYUN_REGISTRY_PASSWORD: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
         with:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           password: ${{ secrets.ECS_PASSWORD }}
+          envs: IMAGE_TAG,DEPLOY_ACTION,ALIYUN_REGISTRY,ALIYUN_REGISTRY_USER,ALIYUN_REGISTRY_PASSWORD
           script: |
-            mkdir -p /data/blog
-            cd /data/blog
+            set -eu
 
-            # 登录服务器端的镜像仓库
-            docker login --username=${{ secrets.ALIYUN_REGISTRY_USER }} --password=${{ secrets.ALIYUN_REGISTRY_PASSWORD }} ${{ secrets.ALIYUN_REGISTRY }}
+            APP_DIR="/data/blog"
 
-            # 拉取刚打包好的 latest 新镜像
-            docker compose pull
+            preflight_fail() {
+              echo "Deployment failed before changing running containers: $1"
+              exit 1
+            }
 
-            # 重新启动服务并清理无用镜像
-            docker compose up -d
-            docker image prune -f
-      # 6. 新增：发送钉钉部署成功通知
-      - name: Send DingTalk Notification
-        # if: success() # 可选：显式声明只有前面的步骤都成功才执行（默认即是如此）
+            runtime_fail() {
+              echo "Deployment failed after starting containers: $1"
+              docker compose ps || true
+              docker compose logs --tail=120 nginx backend frontend || true
+              docker compose stop nginx backend frontend || true
+              exit 1
+            }
+
+            mkdir -p "$APP_DIR"
+            cd "$APP_DIR"
+
+            if [ ! -f .env ]; then
+              preflight_fail "$APP_DIR/.env is missing"
+            fi
+
+            printf '%s' "$ALIYUN_REGISTRY_PASSWORD" | docker login --username="$ALIYUN_REGISTRY_USER" --password-stdin "$ALIYUN_REGISTRY" || preflight_fail "registry login failed"
+
+            PREVIOUS_TAG="$(cat .release 2>/dev/null || true)"
+            if [ -n "$PREVIOUS_TAG" ] && [ "$PREVIOUS_TAG" != "$IMAGE_TAG" ]; then
+              printf '%s\n' "$PREVIOUS_TAG" > .previous-release
+            fi
+
+            export IMAGE_TAG
+            echo "Running $DEPLOY_ACTION with IMAGE_TAG=$IMAGE_TAG"
+
+            docker compose pull backend frontend || preflight_fail "image pull failed"
+            docker compose up -d --remove-orphans || runtime_fail "compose up failed"
+
+            i=1
+            while [ "$i" -le 36 ]; do
+              if docker compose exec -T backend wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1 &&
+                 docker compose exec -T frontend test -f /share_dist/index.html &&
+                 docker compose exec -T nginx nginx -t >/dev/null 2>&1 &&
+                 docker compose exec -T nginx wget -qO- http://backend:8080/healthz >/dev/null 2>&1; then
+                printf '%s\n' "$IMAGE_TAG" > .release
+                docker image prune -f
+                echo "Deployment healthy: $IMAGE_TAG"
+                exit 0
+              fi
+              sleep 5
+              i=$((i + 1))
+            done
+
+            runtime_fail "health check timed out for IMAGE_TAG=$IMAGE_TAG"
+
+      - name: Send DingTalk notification
+        if: success()
         uses: northwang-lucky/chatbot-webhook-client@v1.1.1
         with:
           app: DingTalk
@@ -89,7 +166,7 @@ jobs:
             {
               "msgtype": "markdown",
               "markdown": {
-                "title": "博客部署成功",
-                "text": "### 🚀 项目 [${{ github.event.repository.name }}] 部署成功\n\n**版本 / 分支**: ${{ github.ref_name }}\n**触发者**: ${{ github.actor }}\n\n[点击前往 GitHub 查看部署日志](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})"
+                "title": "Blog deployment succeeded",
+                "text": "### Blog deployment succeeded\n\n**Action**: ${{ env.DEPLOY_ACTION }}\n\n**Image tag**: ${{ env.RELEASE_TAG }}\n\n**Actor**: ${{ github.actor }}\n\n[Open GitHub Actions](${{ github.event.repository.html_url }}/actions/runs/${{ github.run_id }})"
               }
             }

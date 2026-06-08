@@ -28,7 +28,28 @@ function formatDate(iso) {
   return `${date} ${time}`.toUpperCase();
 }
 
-function Blog({ user, onOpenSignIn, onLogout }) {
+function errorMessage(err, fallback) {
+  return (
+    err.response?.data?.error ||
+    err.response?.data?.message ||
+    err.message ||
+    fallback
+  );
+}
+
+function isCount(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function applyCounterPatch(post, counters) {
+  if (!post) return post;
+  const patch = {};
+  if (isCount(counters?.view_count)) patch.view_count = counters.view_count;
+  if (isCount(counters?.like_count)) patch.like_count = counters.like_count;
+  return Object.keys(patch).length > 0 ? { ...post, ...patch } : post;
+}
+
+function Blog({ user, onOpenSignIn, onLogout, onNotify }) {
   const [posts, setPosts] = useState([]);
   const [menuOpen, setMenuOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -46,12 +67,20 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       return [];
     }
   });
+  const pendingLikesRef = useRef(new Set());
+  const [pendingLikes, setPendingLikes] = useState([]);
 
   const fetchPosts = useCallback(() => {
     listArticles()
       .then((res) => setPosts(res.data.data ?? []))
-      .catch((err) => console.error("获取文章列表失败", err));
-  }, []);
+      .catch((err) => {
+        onNotify?.({
+          variant: "error",
+          title: "load-failed.",
+          message: errorMessage(err, "文章列表加载失败。"),
+        });
+      });
+  }, [onNotify]);
 
   useEffect(() => {
     if (!selectedPost) {
@@ -61,17 +90,27 @@ function Blog({ user, onOpenSignIn, onLogout }) {
 
   useEffect(() => {
     if (selectedPost?.id) {
-      incrementView(selectedPost.id).then(() => {
-        setPosts((prev) =>
-          prev.map((p) =>
-            p.id === selectedPost.id
-              ? { ...p, view_count: (p.view_count || 0) + 1 }
-              : p
-          )
-        );
-      });
+      incrementView(selectedPost.id)
+        .then((res) => {
+          const counters = res.data ?? {};
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === selectedPost.id ? applyCounterPatch(p, counters) : p
+            )
+          );
+          setSelectedPost((prev) =>
+            prev?.id === selectedPost.id ? applyCounterPatch(prev, counters) : prev
+          );
+        })
+        .catch((err) => {
+          onNotify?.({
+            variant: "error",
+            title: "view-sync-failed.",
+            message: errorMessage(err, "浏览量同步失败。"),
+          });
+        });
     }
-  }, [selectedPost?.id]);
+  }, [selectedPost?.id, onNotify]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -95,7 +134,13 @@ function Blog({ user, onOpenSignIn, onLogout }) {
         setSearchResults(res.data.data ?? []);
         setShowDropdown(true);
       })
-      .catch((err) => console.error("搜索失败", err));
+      .catch((err) => {
+        onNotify?.({
+          variant: "error",
+          title: "search-failed.",
+          message: errorMessage(err, "搜索失败。"),
+        });
+      });
   };
 
   const handleSearchInputChange = (e) => {
@@ -161,16 +206,22 @@ function Blog({ user, onOpenSignIn, onLogout }) {
       setIsEditing(true);
     }
     if (action === "save") {
+      if (!user?.token) {
+        onNotify?.({
+          variant: "error",
+          title: "login-required.",
+          message: "登录状态不可用，请重新登录后再保存。",
+        });
+        onLogout();
+        onOpenSignIn();
+        return;
+      }
       const content = editRef.current?.getContent() ?? selectedPost.content;
       const title = editRef.current?.getTitle() ?? selectedPost.title;
       const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
       const token = user?.token;
-      const legacyAuth = token
-        ? {}
-        : { name: user?.name ?? "", password: user?.password ?? "" };
       if (isNewPost) {
         createArticle({
-          ...legacyAuth,
           title,
           content,
           stage: "published",
@@ -179,27 +230,49 @@ function Blog({ user, onOpenSignIn, onLogout }) {
         }, token)
           .then(() => {
             closePost();
+            onNotify?.({
+              variant: "success",
+              title: "article-created.",
+              message: "文章已经创建并刷新缓存。",
+            });
           })
-          .catch((err) => console.error("创建失败", err));
+          .catch((err) => handleProtectedError(err, "创建失败。"));
       } else {
-        updateArticle(selectedPost.id, { ...legacyAuth, title, content, tags }, token)
+        updateArticle(selectedPost.id, { title, content, tags }, token)
           .then((res) => {
             setSelectedPost(res.data.data);
             setIsEditing(false);
+            onNotify?.({
+              variant: "success",
+              title: "article-saved.",
+              message: "文章已经保存。",
+            });
           })
-          .catch((err) => console.error("更新失败", err));
+          .catch((err) => handleProtectedError(err, "更新失败。"));
       }
     }
     if (action === "delete") {
+      if (!user?.token) {
+        onNotify?.({
+          variant: "error",
+          title: "login-required.",
+          message: "登录状态不可用，请重新登录后再删除。",
+        });
+        onLogout();
+        onOpenSignIn();
+        return;
+      }
       const token = user?.token;
-      const legacyAuth = token
-        ? {}
-        : { name: user?.name ?? "", password: user?.password ?? "" };
-      deleteArticle(selectedPost.id, legacyAuth, token)
+      deleteArticle(selectedPost.id, token)
         .then(() => {
           closePost();
+          onNotify?.({
+            variant: "success",
+            title: "article-deleted.",
+            message: "文章已标记为隐藏。",
+          });
         })
-        .catch((err) => console.error("删除失败", err));
+        .catch((err) => handleProtectedError(err, "删除失败。"));
     }
     if (action === "discard") {
       if (isNewPost) {
@@ -210,32 +283,66 @@ function Blog({ user, onOpenSignIn, onLogout }) {
   };
 
   const handleLike = async (postId) => {
-    const wasLiked = likedPosts.includes(postId);
-    const updated = wasLiked
-      ? likedPosts.filter((id) => id !== postId)
-      : [...likedPosts, postId];
-    setLikedPosts(updated);
-    localStorage.setItem("liked_articles", JSON.stringify(updated));
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? { ...p, like_count: (p.like_count || 0) + (wasLiked ? -1 : 1) }
-          : p
-      )
-    );
+    if (pendingLikesRef.current.has(postId)) return;
+
+    pendingLikesRef.current.add(postId);
+    setPendingLikes(Array.from(pendingLikesRef.current));
+
     try {
-      await incrementLike(postId);
-    } catch (err) {
-      setLikedPosts(wasLiked ? [...updated, postId] : updated.filter((id) => id !== postId));
+      const res = await incrementLike(postId);
+      const counters = res.data ?? {};
+      if (typeof counters.liked !== "boolean" || !isCount(counters.like_count)) {
+        throw new Error("Invalid like response");
+      }
+
+      setLikedPosts((prev) => {
+        const next = counters.liked
+          ? prev.includes(postId)
+            ? prev
+            : [...prev, postId]
+          : prev.filter((id) => id !== postId);
+        try {
+          localStorage.setItem("liked_articles", JSON.stringify(next));
+        } catch {
+          // localStorage can be unavailable in restricted browser modes.
+        }
+        return next;
+      });
       setPosts((prev) =>
-        prev.map((p) =>
-          p.id === postId
-            ? { ...p, like_count: (p.like_count || 0) + (wasLiked ? 1 : -1) }
-            : p
-        )
+        prev.map((p) => (p.id === postId ? applyCounterPatch(p, counters) : p))
       );
-      console.error("点赞操作失败", err);
+      setSelectedPost((prev) =>
+        prev?.id === postId ? applyCounterPatch(prev, counters) : prev
+      );
+    } catch (err) {
+      onNotify?.({
+        variant: "error",
+        title: "like-failed.",
+        message: errorMessage(err, "点赞操作失败。"),
+      });
+    } finally {
+      pendingLikesRef.current.delete(postId);
+      setPendingLikes(Array.from(pendingLikesRef.current));
     }
+  };
+
+  const handleProtectedError = (err, fallback) => {
+    const status = err.response?.status;
+    if (status === 401) {
+      onLogout();
+      onNotify?.({
+        variant: "error",
+        title: "session-expired.",
+        message: errorMessage(err, "登录已过期，请重新登录。"),
+      });
+      onOpenSignIn();
+      return;
+    }
+    onNotify?.({
+      variant: "error",
+      title: "request-failed.",
+      message: errorMessage(err, fallback),
+    });
   };
 
   return (
@@ -391,8 +498,11 @@ function Blog({ user, onOpenSignIn, onLogout }) {
                   </span>
                   <button
                     onClick={() => handleLike(post.id)}
+                    disabled={pendingLikes.includes(post.id)}
                     className={`transition-colors ${
-                      likedPosts.includes(post.id)
+                      pendingLikes.includes(post.id)
+                        ? "text-zinc-500 cursor-wait"
+                        : likedPosts.includes(post.id)
                         ? "text-white"
                         : "text-zinc-600 hover:text-zinc-400"
                     }`}

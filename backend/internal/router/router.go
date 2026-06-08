@@ -24,9 +24,11 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	config.AllowAllOrigins = true
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	r.Use(cors.New(config))
+	r.GET("/healthz", handler.Health)
 
 	api := r.Group("/api/v1")
 	{
+		api.GET("/healthz", handler.Health)
 		api.POST("/signin", deps.Auth.SignIn)
 
 		api.GET("/articles/search", deps.Articles.SearchBlogs)

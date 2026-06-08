@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"context"
+	"errors"
 	"myblog/internal/service"
 	"net/http"
 	"strconv"
@@ -12,29 +12,39 @@ import (
 func IncrementView(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid article id"})
 		return
 	}
 
-	// 静默失败：浏览计数为尽力而为
-	_ = service.IncrementView(context.Background(), uint(id))
-	c.JSON(http.StatusOK, gin.H{"message": "ok"})
+	snapshot, err := service.IncrementView(c.Request.Context(), uint(id))
+	if errors.Is(err, service.ErrArticleNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "article not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to increment view count"})
+		return
+	}
+
+	c.JSON(http.StatusOK, snapshot)
 }
 
 func ToggleLike(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的文章ID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid article id"})
 		return
 	}
 
-	clientIP := c.ClientIP()
-	ipHash := service.HashIP(clientIP)
-
-	liked, err := service.ToggleLike(context.Background(), uint(id), ipHash)
+	result, err := service.ToggleLike(c.Request.Context(), uint(id), service.HashIP(c.ClientIP()))
+	if errors.Is(err, service.ErrArticleNotFound) {
+		c.JSON(http.StatusNotFound, gin.H{"error": "article not found"})
+		return
+	}
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "操作失败，请稍后重试"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to toggle like"})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"liked": liked})
+
+	c.JSON(http.StatusOK, result)
 }

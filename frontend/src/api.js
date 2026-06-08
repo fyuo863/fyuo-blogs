@@ -50,8 +50,8 @@ export const updateArticle = (id, data, token) =>
   axios.put(`${BASE}/articles/${id}`, data, authConfig(token));
 
 /** DELETE /api/v1/articles/:id — 删除文章 */
-export const deleteArticle = (id, data, token) =>
-  axios.delete(`${BASE}/articles/${id}`, { ...authConfig(token), data });
+export const deleteArticle = (id, token) =>
+  axios.delete(`${BASE}/articles/${id}`, authConfig(token));
 
 // ============================================================
 //  Counters (public)
