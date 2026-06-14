@@ -2,12 +2,14 @@ import axios from "axios";
 export class BlogApiClient {
     config;
     http;
-    constructor(config) {
+    apiKey;
+    constructor(config, options) {
         this.config = config;
         this.http = axios.create({
             baseURL: `${config.baseUrl.replace(/\/$/, "")}/api/v1`,
             timeout: config.timeoutMs,
         });
+        this.apiKey = options?.apiKey ?? config.apiKey;
     }
     async signIn(name, password) {
         const res = await this.http.post("/signin", { name, password });
@@ -40,10 +42,10 @@ export class BlogApiClient {
         return res.data;
     }
     auth(token) {
-        if (this.config.apiKey) {
+        if (this.apiKey) {
             return {
                 headers: {
-                    "X-API-Key": this.config.apiKey,
+                    "X-API-Key": this.apiKey,
                 },
             };
         }

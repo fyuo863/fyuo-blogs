@@ -4,12 +4,14 @@ import type { Article, ArticlePayload, LoginResponse } from "./types.js";
 
 export class BlogApiClient {
   private http: AxiosInstance;
+  private readonly apiKey?: string;
 
-  constructor(private readonly config: BlogPublisherConfig) {
+  constructor(private readonly config: BlogPublisherConfig, options?: { apiKey?: string }) {
     this.http = axios.create({
       baseURL: `${config.baseUrl.replace(/\/$/, "")}/api/v1`,
       timeout: config.timeoutMs,
     });
+    this.apiKey = options?.apiKey ?? config.apiKey;
   }
 
   async signIn(name: string, password: string): Promise<LoginResponse> {
@@ -55,10 +57,10 @@ export class BlogApiClient {
   }
 
   private auth(token?: string) {
-    if (this.config.apiKey) {
+    if (this.apiKey) {
       return {
         headers: {
-          "X-API-Key": this.config.apiKey,
+          "X-API-Key": this.apiKey,
         },
       };
     }

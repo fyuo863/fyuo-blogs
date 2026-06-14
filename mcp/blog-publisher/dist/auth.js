@@ -25,12 +25,5 @@ export async function ensureLogin(client, session, config) {
             token: "",
         };
     }
-    if (session.getToken())
-        return session.getProfile();
-    const result = await client.signIn(config.username, config.password);
-    if (!result.data?.token) {
-        throw new Error("Agent login failed: missing token");
-    }
-    session.setSession(result.data);
-    return result.data;
+    throw new Error("BLOG_API_KEY is required for remote MCP deployment");
 }

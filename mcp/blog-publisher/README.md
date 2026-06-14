@@ -3,14 +3,19 @@
 Environment variables:
 
 ```bash
-BLOG_BASE_URL=http://localhost:18080
-BLOG_API_KEY=blogak_xxx
-# 可选回退：未配置 BLOG_API_KEY 时使用用户名密码登录
-BLOG_AGENT_NAME=agent-publisher
-BLOG_AGENT_PASSWORD=agent123456
+BLOG_BASE_URL=https://fyuoblog.top
 BLOG_TIMEOUT_MS=10000
 BLOG_DEFAULT_STAGE=published
+MCP_HOST=0.0.0.0
+MCP_PORT=18081
+MCP_PATH=/mcp
 ```
+
+Remote HTTP mode:
+
+- Client sends its own blog API key in `X-Blog-Api-Key`
+- MCP forwards that key to the blog backend as `X-API-Key`
+- This lets different agents use different keys created in the admin panel
 
 Tools:
 

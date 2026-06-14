@@ -1,6 +1,6 @@
-import { startServer } from "./server.js";
+import { startStdioServer } from "./server.js";
 
-startServer().catch((error) => {
+startStdioServer().catch((error) => {
   console.error("blog-publisher MCP failed:", error);
   process.exit(1);
 });

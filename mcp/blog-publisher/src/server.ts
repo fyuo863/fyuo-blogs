@@ -3,15 +3,17 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { z } from "zod";
 import { ensureLogin, SessionStore } from "./auth.js";
 import { BlogApiClient } from "./client.js";
-import { loadConfig } from "./config.js";
+import { loadConfig, type BlogPublisherConfig } from "./config.js";
 
-export async function startServer() {
-  const config = loadConfig();
-  const client = new BlogApiClient(config);
+export function createBlogPublisherServer(
+  config: BlogPublisherConfig,
+  options?: { apiKey?: string },
+) {
+  const client = new BlogApiClient(config, { apiKey: options?.apiKey });
   const session = new SessionStore();
   const server = new McpServer({
     name: "blog-publisher",
-    version: "0.1.0",
+    version: "0.2.0",
   });
 
   server.tool("blog_login", {}, async () => {
@@ -44,7 +46,7 @@ export async function startServer() {
       vol: z.number().int().positive().optional(),
     },
     async ({ title, content, tags, stage, vol }) => {
-      const profile = await ensureLogin(client, session, config);
+      await ensureLogin(client, session, config);
       const article = await client.createArticle({
         title,
         content,
@@ -120,6 +122,12 @@ export async function startServer() {
     },
   );
 
+  return server;
+}
+
+export async function startStdioServer() {
+  const config = loadConfig();
+  const server = createBlogPublisherServer(config, { apiKey: config.apiKey });
   const transport = new StdioServerTransport();
   await server.connect(transport);
 }

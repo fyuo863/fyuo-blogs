@@ -4,13 +4,12 @@ import { z } from "zod";
 import { ensureLogin, SessionStore } from "./auth.js";
 import { BlogApiClient } from "./client.js";
 import { loadConfig } from "./config.js";
-export async function startServer() {
-    const config = loadConfig();
-    const client = new BlogApiClient(config);
+export function createBlogPublisherServer(config, options) {
+    const client = new BlogApiClient(config, { apiKey: options?.apiKey });
     const session = new SessionStore();
     const server = new McpServer({
         name: "blog-publisher",
-        version: "0.1.0",
+        version: "0.2.0",
     });
     server.tool("blog_login", {}, async () => {
         const profile = await ensureLogin(client, session, config);
@@ -34,7 +33,7 @@ export async function startServer() {
         stage: z.string().optional(),
         vol: z.number().int().positive().optional(),
     }, async ({ title, content, tags, stage, vol }) => {
-        const profile = await ensureLogin(client, session, config);
+        await ensureLogin(client, session, config);
         const article = await client.createArticle({
             title,
             content,
@@ -88,6 +87,11 @@ export async function startServer() {
             content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
         };
     });
+    return server;
+}
+export async function startStdioServer() {
+    const config = loadConfig();
+    const server = createBlogPublisherServer(config, { apiKey: config.apiKey });
     const transport = new StdioServerTransport();
     await server.connect(transport);
 }
