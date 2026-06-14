@@ -53,6 +53,18 @@ export const updateArticle = (id, data, token) =>
 export const deleteArticle = (id, token) =>
   axios.delete(`${BASE}/articles/${id}`, authConfig(token));
 
+export const uploadArticleImage = (file, token) => {
+  const formData = new FormData();
+  formData.append("file", file);
+  return axios.post(`${BASE}/uploads/images`, formData, {
+    ...authConfig(token),
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "Content-Type": "multipart/form-data",
+    },
+  });
+};
+
 // ============================================================
 //  Counters (public)
 // ============================================================

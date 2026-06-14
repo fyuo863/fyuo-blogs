@@ -39,6 +39,8 @@ FROM builder AS runner
 # 设置最终运行的工作目录
 WORKDIR /app
 
+RUN mkdir -p /app/uploads
+
 # 从构建阶段 (builder) 中，把编译好的二进制文件复制过来
 COPY --from=builder /build/main .
 

@@ -36,6 +36,7 @@ type Article struct {
 	ID            uint      `gorm:"primaryKey" json:"id"`
 	Title         string    `gorm:"type:varchar(255);not null" json:"title"`
 	Content       string    `gorm:"type:text" json:"content"` // PG 中 text 可以存任意长度
+	CoverImage    string    `gorm:"type:text" json:"cover_image"`
 	Stage         string    `gorm:"type:varchar(20);default:'draft'" json:"stage"`
 	Vol           int       `gorm:"type:int" json:"vol"`
 	AuthorID      uint      `json:"author_id"`

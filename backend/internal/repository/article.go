@@ -12,11 +12,12 @@ type ArticleRepository struct {
 }
 
 type ArticleUpdate struct {
-	Title   *string
-	Content *string
-	Stage   *string
-	Vol     *int
-	Tags    []string
+	Title      *string
+	Content    *string
+	CoverImage *string
+	Stage      *string
+	Vol        *int
+	Tags       []string
 }
 
 func NewArticleRepository(db *gorm.DB) *ArticleRepository {
@@ -96,6 +97,9 @@ func (r *ArticleRepository) Update(id uint, update ArticleUpdate) (model.Article
 	}
 	if update.Content != nil {
 		updates["content"] = *update.Content
+	}
+	if update.CoverImage != nil {
+		updates["cover_image"] = *update.CoverImage
 	}
 	if update.Stage != nil {
 		updates["stage"] = *update.Stage

@@ -28,7 +28,12 @@ function AppLayout({
   const splashStartRef = useRef(0);
 
   useEffect(() => {
-    if (!isHome || splashPlayedRef.current) {
+    if (!isHome) {
+      splashPlayedRef.current = true;
+      setSplashPhase("done");
+      return;
+    }
+    if (splashPlayedRef.current) {
       setSplashPhase("done");
       return;
     }

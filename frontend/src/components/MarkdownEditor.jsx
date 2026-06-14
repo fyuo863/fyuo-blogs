@@ -172,12 +172,22 @@ function BlockView({ block }) {
 }
 
 // ── 主组件 ──
-export default function MarkdownEditor({ value, onChange, editorRef, editing }) {
+export default function MarkdownEditor({
+  value,
+  onChange,
+  editorRef,
+  editing,
+  onUploadImage,
+}) {
   const [fullEdit, setFullEdit] = useState(false);
   const [fullText, setFullText] = useState("");
   const [editText, setEditText] = useState(value);
+  const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const dragDepthRef = useRef(0);
   const containerRef = useRef(null);
   const fullTaRef = useRef(null);
+  const editorAreaRef = useRef(null);
 
   const sourceText = fullEdit ? fullText : editing ? editText : value;
   const blocks = useMemo(() => parseBlocks(sourceText), [sourceText]);
@@ -190,6 +200,23 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
   useEffect(() => {
     if (editorRef) editorRef.current = { getContent };
   }, [editorRef, getContent]);
+
+  useEffect(() => {
+    if (!editing) return undefined;
+
+    const preventWindowDrop = (event) => {
+      const hasFiles = Array.from(event.dataTransfer?.types || []).includes("Files");
+      if (!hasFiles) return;
+      event.preventDefault();
+    };
+
+    window.addEventListener("dragover", preventWindowDrop);
+    window.addEventListener("drop", preventWindowDrop);
+    return () => {
+      window.removeEventListener("dragover", preventWindowDrop);
+      window.removeEventListener("drop", preventWindowDrop);
+    };
+  }, [editing]);
 
   // Auto-resize fullEdit textarea
   useEffect(() => {
@@ -272,8 +299,91 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
     if (onChange) onChange(text);
   };
 
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    await insertUploadedImage(file);
+  };
+
+  const insertUploadedImage = async (file) => {
+    if (!file || !onUploadImage) return;
+    setUploading(true);
+    try {
+      const url = await onUploadImage(file);
+      if (!url) return;
+      const textarea = editorAreaRef.current;
+      const insertion = `\n![${file.name}](${url})\n`;
+      if (!textarea) {
+        handleEditChange(`${editText}${insertion}`);
+        return;
+      }
+      const start = textarea.selectionStart ?? textarea.value.length;
+      const end = textarea.selectionEnd ?? textarea.value.length;
+      const next = `${editText.slice(0, start)}${insertion}${editText.slice(end)}`;
+      handleEditChange(next);
+      requestAnimationFrame(() => {
+        textarea.focus();
+        const cursor = start + insertion.length;
+        textarea.setSelectionRange(cursor, cursor);
+      });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDragEnter = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current += 1;
+    if (event.dataTransfer?.types?.includes("Files")) {
+      setDragActive(true);
+    }
+  };
+
+  const handleDragOver = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleDragLeave = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(0, dragDepthRef.current - 1);
+    if (dragDepthRef.current === 0) {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = 0;
+    setDragActive(false);
+    const file = Array.from(event.dataTransfer?.files || []).find((item) =>
+      item.type.startsWith("image/")
+    );
+    if (!file) return;
+    await insertUploadedImage(file);
+  };
+
   return (
-    <div className="flex gap-6" style={{ minHeight: "60vh" }}>
+    <div
+      className={`relative flex gap-6 ${dragActive ? "ring-1 ring-white/40" : ""}`}
+      style={{ minHeight: "60vh" }}
+      onDragEnter={handleDragEnter}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {dragActive ? (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center border border-dashed border-white/30 bg-black/70 text-sm font-mono uppercase tracking-[0.28em] text-white">
+          drop image to upload
+        </div>
+      ) : null}
       {/* 左侧：渲染预览 */}
       <div className="flex-1 min-w-0 border-r border-zinc-800 pr-6">
         <div className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
@@ -295,10 +405,23 @@ export default function MarkdownEditor({ value, onChange, editorRef, editing }) 
       {/* 右侧：编辑框（sticky 跟随滚动） */}
       <div className="flex-1 min-w-0 pl-6">
         <div className="sticky top-0 z-10 bg-black pb-4">
-          <div className="text-xs text-zinc-600 uppercase tracking-wider mb-4">
-            Editor
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div className="text-xs text-zinc-600 uppercase tracking-wider">
+              Editor
+            </div>
+            <label className="cursor-pointer border border-zinc-800 px-3 py-2 text-xs font-mono text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white">
+              {uploading ? "uploading..." : "insert image"}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                className="hidden"
+                onChange={handleImageUpload}
+                disabled={uploading}
+              />
+            </label>
           </div>
           <textarea
+            ref={editorAreaRef}
             value={editText}
             onChange={(e) => handleEditChange(e.target.value)}
             className="w-full resize-none bg-transparent

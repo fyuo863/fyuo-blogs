@@ -18,19 +18,21 @@ type ArticleHandler struct {
 }
 
 type CreateBlogRequest struct {
-	Title   string   `json:"title"`
-	Content string   `json:"content"`
-	Stage   string   `json:"stage"`
-	Vol     int      `json:"vol"`
-	Tags    []string `json:"tags"`
+	Title      string   `json:"title"`
+	Content    string   `json:"content"`
+	CoverImage string   `json:"cover_image"`
+	Stage      string   `json:"stage"`
+	Vol        int      `json:"vol"`
+	Tags       []string `json:"tags"`
 }
 
 type UpdateBlogRequest struct {
-	Title   *string  `json:"title"`
-	Content *string  `json:"content"`
-	Stage   *string  `json:"stage"`
-	Vol     *int     `json:"vol"`
-	Tags    []string `json:"tags"`
+	Title      *string  `json:"title"`
+	Content    *string  `json:"content"`
+	CoverImage *string  `json:"cover_image"`
+	Stage      *string  `json:"stage"`
+	Vol        *int     `json:"vol"`
+	Tags       []string `json:"tags"`
 }
 
 func NewArticleHandler(articles *service.ArticleService, auth *service.AuthService) *ArticleHandler {
@@ -54,6 +56,7 @@ func (h *ArticleHandler) CreateBlog(c *gin.Context) {
 	article, err := h.articles.Create(c.Request.Context(), author, service.ArticleInput{
 		Title:         req.Title,
 		Content:       req.Content,
+		CoverImage:    req.CoverImage,
 		Stage:         req.Stage,
 		Vol:           req.Vol,
 		Tags:          req.Tags,
@@ -138,11 +141,12 @@ func (h *ArticleHandler) UpdateBlog(c *gin.Context) {
 
 	currentUser, _ := h.currentUser(c)
 	article, err := h.articles.Update(c.Request.Context(), currentUser, id, service.ArticleUpdate{
-		Title:   req.Title,
-		Content: req.Content,
-		Stage:   req.Stage,
-		Vol:     req.Vol,
-		Tags:    req.Tags,
+		Title:      req.Title,
+		Content:    req.Content,
+		CoverImage: req.CoverImage,
+		Stage:      req.Stage,
+		Vol:        req.Vol,
+		Tags:       req.Tags,
 	})
 	if errors.Is(err, service.ErrArticleNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})

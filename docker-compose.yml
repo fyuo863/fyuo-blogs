@@ -40,6 +40,8 @@ services:
     restart: always
     expose:
       - "8080"
+    volumes:
+      - backend_uploads:/app/uploads
     env_file:
       - ./.env
     environment:
@@ -96,3 +98,4 @@ volumes:
   redis_data:
   postgres_data:
   frontend_dist:
+  backend_uploads:

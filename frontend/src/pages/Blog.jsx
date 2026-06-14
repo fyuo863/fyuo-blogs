@@ -12,6 +12,7 @@ import {
   searchArticles,
   recordArticleView,
   incrementLike,
+  uploadArticleImage,
 } from "../api";
 
 function formatDate(iso) {
@@ -228,6 +229,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         id: null,
         title: "New Article",
         content: "",
+        cover_image: "",
         stage: "published",
         vol: 1,
         tags: [],
@@ -254,12 +256,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       }
       const content = editRef.current?.getContent() ?? selectedPost.content;
       const title = editRef.current?.getTitle() ?? selectedPost.title;
+      const coverImage =
+        editRef.current?.getCoverImage?.() ?? selectedPost.cover_image ?? "";
       const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
       const token = user?.token;
       if (isNewPost) {
         createArticle({
           title,
           content,
+          cover_image: coverImage,
           stage: "published",
           vol: 1,
           tags,
@@ -274,7 +279,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
           })
           .catch((err) => handleProtectedError(err, "创建失败。"));
       } else {
-        updateArticle(selectedPost.id, { title, content, tags }, token)
+        updateArticle(selectedPost.id, { title, content, cover_image: coverImage, tags }, token)
           .then((res) => {
             setSelectedPost(res.data.data);
             setIsEditing(false);
@@ -397,6 +402,29 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
     });
   };
 
+  const handleUploadImage = async (file) => {
+    if (!user?.token) {
+      onNotify?.({
+        variant: "error",
+        title: "login-required.",
+        message: "请先登录后再上传图片。",
+      });
+      onOpenSignIn();
+      return "";
+    }
+    try {
+      const res = await uploadArticleImage(file, user.token);
+      return res.data?.data?.url || "";
+    } catch (err) {
+      onNotify?.({
+        variant: "error",
+        title: "upload-failed.",
+        message: errorMessage(err, "图片上传失败。"),
+      });
+      return "";
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black">
       <AppDrawer
@@ -406,22 +434,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         onOpenSignIn={onOpenSignIn}
       />
 
-      {/* 头部区域 */}
-      <div className="relative w-full h-72 sm:h-80 md:h-96 border-t border-b border-zinc-800 group flex items-center overflow-hidden">
-        <img
-          src="/fyuo-blogs.svg"
-          alt="Blog Cover"
-          className="absolute inset-0 w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700 z-0"
-        />
-        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors duration-700 z-0"></div>
-        <header className="relative z-10 px-[10%] w-full">
-          <h1 className="text-5xl font-extrabold tracking-tighter text-white drop-shadow-xl">
+      <div className="border-t border-b border-zinc-800">
+        <header className="px-[10%] py-20">
+          <h1 className="text-5xl font-extrabold tracking-tighter text-white">
             <span className="italic">Latest Updates</span>
           </h1>
-          <p className="mt-6 text-lg font-bold text-white leading-relaxed drop-shadow-md">
+          <p className="mt-6 text-lg font-bold text-white leading-relaxed">
             All the latest blogs, straight from
           </p>
-          <span className="text-lg font-extrabold tracking-tight text-white drop-shadow-md">
+          <span className="text-lg font-extrabold tracking-tight text-white">
             fyuo.
           </span>
         </header>
@@ -540,6 +561,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
           isEditing={isEditing}
           editRef={editRef}
           onBack={closePost}
+          onUploadImage={handleUploadImage}
         />
       )}
     </div>

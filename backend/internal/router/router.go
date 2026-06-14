@@ -13,6 +13,7 @@ type Dependencies struct {
 	Counters     *handler.CounterHandler
 	VisitRecords *handler.VisitRecordHandler
 	APIKeys      *handler.APIKeyHandler
+	Uploads      *handler.UploadHandler
 	AuthorTokens gin.HandlerFunc
 	AdminTokens  gin.HandlerFunc
 }
@@ -23,6 +24,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		gin.Logger(),
 		gin.Recovery(),
 	)
+	r.Static("/uploads", "./uploads")
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
@@ -48,6 +50,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		authorProtected.POST("/articles", deps.Articles.CreateBlog)
 		authorProtected.PUT("/articles/:id", deps.Articles.UpdateBlog)
 		authorProtected.DELETE("/articles/:id", deps.Articles.DeleteBlog)
+		authorProtected.POST("/uploads/images", deps.Uploads.UploadImage)
 	}
 
 	adminProtected := api.Group("")

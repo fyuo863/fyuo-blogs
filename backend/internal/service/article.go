@@ -26,6 +26,7 @@ type ArticleService struct {
 type ArticleInput struct {
 	Title         string
 	Content       string
+	CoverImage    string
 	Stage         string
 	Vol           int
 	Tags          []string
@@ -33,11 +34,12 @@ type ArticleInput struct {
 }
 
 type ArticleUpdate struct {
-	Title   *string
-	Content *string
-	Stage   *string
-	Vol     *int
-	Tags    []string
+	Title      *string
+	Content    *string
+	CoverImage *string
+	Stage      *string
+	Vol        *int
+	Tags       []string
 }
 
 type ArticleListResult struct {
@@ -55,6 +57,7 @@ func (s *ArticleService) Create(ctx context.Context, author model.User, input Ar
 	article := model.Article{
 		Title:         input.Title,
 		Content:       input.Content,
+		CoverImage:    input.CoverImage,
 		Stage:         normalizeStage(input.Stage),
 		Vol:           input.Vol,
 		AuthorID:      author.ID,
@@ -127,11 +130,12 @@ func (s *ArticleService) Update(ctx context.Context, actor model.User, id uint, 
 	}
 
 	article, err := s.articles.Update(id, repository.ArticleUpdate{
-		Title:   update.Title,
-		Content: update.Content,
-		Stage:   update.Stage,
-		Vol:     update.Vol,
-		Tags:    update.Tags,
+		Title:      update.Title,
+		Content:    update.Content,
+		CoverImage: update.CoverImage,
+		Stage:      update.Stage,
+		Vol:        update.Vol,
+		Tags:       update.Tags,
 	})
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return article, ErrArticleNotFound

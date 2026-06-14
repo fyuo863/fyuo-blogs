@@ -85,6 +85,7 @@ func main() {
 		Counters:     handler.NewCounterHandler(visitRecordService),
 		VisitRecords: handler.NewVisitRecordHandler(visitRecordService),
 		APIKeys:      handler.NewAPIKeyHandler(apiKeyService, authService),
+		Uploads:      handler.NewUploadHandler(),
 		AuthorTokens: middleware.RequireRole(tokenManager, apiKeyService, "admin", "agent"),
 		AdminTokens:  middleware.RequireRole(tokenManager, apiKeyService, "admin"),
 	})
