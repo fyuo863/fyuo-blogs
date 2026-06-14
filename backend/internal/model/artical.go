@@ -49,3 +49,13 @@ type Article struct {
 	ViewCount int `gorm:"default:0" json:"view_count"`
 	LikeCount int `gorm:"default:0" json:"like_count"`
 }
+
+type VisitRecord struct {
+	ID           uint      `gorm:"primaryKey" json:"id"`
+	VisitorID    string    `gorm:"type:varchar(80);index;not null" json:"visitor_id"`
+	IPAddress    string    `gorm:"type:varchar(64);index" json:"ip_address"`
+	City         string    `gorm:"type:varchar(120);index" json:"city"`
+	ContentTitle string    `gorm:"type:varchar(255)" json:"content_title"`
+	ArticleID    *uint     `gorm:"index" json:"article_id,omitempty"`
+	CreatedAt    time.Time `gorm:"index" json:"created_at"`
+}

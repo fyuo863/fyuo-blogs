@@ -25,3 +25,7 @@ func (r *UserRepository) FindByID(id uint) (model.User, error) {
 	err := r.db.First(&user, id).Error
 	return user, err
 }
+
+func (r *UserRepository) Save(user *model.User) error {
+	return r.db.Save(user).Error
+}

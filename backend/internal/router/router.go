@@ -8,9 +8,11 @@ import (
 )
 
 type Dependencies struct {
-	Articles   *handler.ArticleHandler
-	Auth       *handler.AuthHandler
-	AuthTokens gin.HandlerFunc
+	Articles     *handler.ArticleHandler
+	Auth         *handler.AuthHandler
+	Counters     *handler.CounterHandler
+	VisitRecords *handler.VisitRecordHandler
+	AuthTokens   gin.HandlerFunc
 }
 
 func NewRouter(deps Dependencies) *gin.Engine {
@@ -34,7 +36,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		api.GET("/articles/search", deps.Articles.SearchBlogs)
 		api.GET("/articles", deps.Articles.ListBlogs)
 		api.GET("/articles/:id", deps.Articles.GetBlog)
-		api.POST("/articles/:id/view", handler.IncrementView)
+		api.POST("/articles/:id/view", deps.Counters.IncrementView)
 		api.POST("/articles/:id/like", handler.ToggleLike)
 	}
 
@@ -44,6 +46,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		protected.POST("/articles", deps.Articles.CreateBlog)
 		protected.PUT("/articles/:id", deps.Articles.UpdateBlog)
 		protected.DELETE("/articles/:id", deps.Articles.DeleteBlog)
+		protected.GET("/visit-records", deps.VisitRecords.List)
 	}
 
 	return r

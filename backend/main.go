@@ -11,6 +11,7 @@ import (
 	"myblog/internal/router"
 	"myblog/internal/service"
 	"myblog/log"
+	"os"
 	"time"
 	_ "time/tzdata"
 )
@@ -57,13 +58,24 @@ func main() {
 	)
 	userRepo := repository.NewUserRepository(database.DB)
 	articleRepo := repository.NewArticleRepository(database.DB)
+	visitRecordRepo := repository.NewVisitRecordRepository(database.DB)
 	authService := service.NewAuthService(userRepo, tokenManager)
 	articleService := service.NewArticleService(articleRepo)
+	visitRecordService := service.NewVisitRecordService(visitRecordRepo, articleRepo)
+	if err := authService.EnsureAdminAccount(
+		os.Getenv("LOCAL_ADMIN_NAME"),
+		os.Getenv("LOCAL_ADMIN_PASSWORD"),
+	); err != nil {
+		log.Logger.Error("初始化本地管理员账号失败", "error", err)
+		panic(err)
+	}
 
 	router := router.NewRouter(router.Dependencies{
-		Articles:   handler.NewArticleHandler(articleService, authService),
-		Auth:       handler.NewAuthHandler(authService),
-		AuthTokens: middleware.RequireRole(tokenManager, "admin"),
+		Articles:     handler.NewArticleHandler(articleService, authService),
+		Auth:         handler.NewAuthHandler(authService),
+		Counters:     handler.NewCounterHandler(visitRecordService),
+		VisitRecords: handler.NewVisitRecordHandler(visitRecordService),
+		AuthTokens:   middleware.RequireRole(tokenManager, "admin"),
 	})
 
 	router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default

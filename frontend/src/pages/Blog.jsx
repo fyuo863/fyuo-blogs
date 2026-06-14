@@ -3,13 +3,14 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { Heart } from "lucide-react";
 import BlogPost from "../components/BlogPost";
+import AppDrawer from "../components/AppDrawer";
 import {
   createArticle,
   updateArticle,
   listArticles,
   deleteArticle,
   searchArticles,
-  incrementView,
+  recordArticleView,
   incrementLike,
 } from "../api";
 
@@ -49,9 +50,21 @@ function applyCounterPatch(post, counters) {
   return Object.keys(patch).length > 0 ? { ...post, ...patch } : post;
 }
 
-function Blog({ user, onOpenSignIn, onLogout, onNotify }) {
+function getVisitorId() {
+  const key = "fyuo_visitor_id";
+  const existing = localStorage.getItem(key);
+  if (existing) return existing;
+
+  const created =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `visitor-${Date.now()}`;
+  localStorage.setItem(key, created);
+  return created;
+}
+
+function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const [posts, setPosts] = useState([]);
-  const [menuOpen, setMenuOpen] = useState(false);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -90,7 +103,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify }) {
 
   useEffect(() => {
     if (selectedPost?.id) {
-      incrementView(selectedPost.id)
+      recordArticleView(selectedPost.id, getVisitorId(), `/blog/${selectedPost.id}`)
         .then((res) => {
           const counters = res.data ?? {};
           setPosts((prev) =>
@@ -185,8 +198,6 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify }) {
   };
 
   const handleMenuAction = (action) => {
-    setMenuOpen(false);
-    if (action === "logout") onLogout();
     if (action === "create") {
       setSelectedPost({
         id: null,
@@ -282,6 +293,16 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify }) {
     }
   };
 
+  const blogDrawerItems = [
+    ...(!isBlogView
+      ? [{ label: "create.", onClick: () => handleMenuAction("create") }]
+      : currentMenu.map((item) => ({
+          label: item.label,
+          onClick: () => handleMenuAction(item.action),
+        }))),
+    ...drawerItems,
+  ];
+
   const handleLike = async (postId) => {
     if (pendingLikesRef.current.has(postId)) return;
 
@@ -347,58 +368,12 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify }) {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* 左下角菜单 */}
-      <div className="fixed bottom-0 left-0 z-[60] px-4 py-4 sm:px-6 lg:px-8">
-        {user ? (
-          <div className="flex flex-col items-start">
-            <div
-              className={`flex flex-col items-start overflow-hidden transition-all duration-300 ease-out ${
-                menuOpen ? "max-h-60 opacity-100 mb-2" : "max-h-0 opacity-0"
-              }`}
-            >
-              {isBlogView && (
-                <button
-                  onClick={() => handleMenuAction("create")}
-                  className="text-lg font-bold tracking-tight text-zinc-500 hover:text-white transition-colors py-0.5"
-                >
-                  creat,
-                </button>
-              )}
-              {currentMenu.map((item) => (
-                <button
-                  key={item.label}
-                  onClick={() => handleMenuAction(item.action)}
-                  className="text-lg font-bold tracking-tight text-zinc-500 hover:text-white transition-colors py-0.5"
-                >
-                  {item.label}
-                </button>
-              ))}
-              <button
-                onClick={() => {
-                  setMenuOpen(false);
-                  onLogout();
-                }}
-                className="text-lg font-bold tracking-tight text-zinc-500 hover:text-white transition-colors py-0.5"
-              >
-                exit.
-              </button>
-            </div>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors"
-            >
-              blog.
-            </button>
-          </div>
-        ) : (
-          <button
-            onClick={onOpenSignIn}
-            className="text-lg font-bold tracking-tight text-zinc-500 hover:text-white transition-colors"
-          >
-            log-in.
-          </button>
-        )}
-      </div>
+      <AppDrawer
+        user={user}
+        label="blog."
+        items={blogDrawerItems}
+        onOpenSignIn={onOpenSignIn}
+      />
 
       {/* 头部区域 */}
       <div className="relative w-full h-72 sm:h-80 md:h-96 border-t border-b border-zinc-800 group flex items-center overflow-hidden">

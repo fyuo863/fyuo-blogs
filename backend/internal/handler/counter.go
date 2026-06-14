@@ -3,13 +3,22 @@ package handler
 import (
 	"errors"
 	"myblog/internal/service"
+	"myblog/log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
 
-func IncrementView(c *gin.Context) {
+type CounterHandler struct {
+	records *service.VisitRecordService
+}
+
+func NewCounterHandler(records *service.VisitRecordService) *CounterHandler {
+	return &CounterHandler{records: records}
+}
+
+func (h *CounterHandler) IncrementView(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid article id"})
@@ -24,6 +33,17 @@ func IncrementView(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to increment view count"})
 		return
+	}
+
+	if h.records != nil {
+		if recordErr := h.records.RecordArticleVisit(c.Request.Context(), service.VisitRecordInput{
+			ArticleID: uint(id),
+			VisitorID: c.GetHeader("X-Visitor-Id"),
+			IPAddress: c.ClientIP(),
+			UserAgent: c.Request.UserAgent(),
+		}); recordErr != nil {
+			log.Logger.Warn("记录访客访问失败", "article_id", id, "error", recordErr)
+		}
 	}
 
 	c.JSON(http.StatusOK, snapshot)

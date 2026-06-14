@@ -6,8 +6,20 @@ import Navbar from "./module/Navbar";
 import Footer from "./module/Footer";
 import SignInModal from "./components/SignInModal";
 import InfoModal from "./components/InfoModal";
+import AdminPanel from "./components/AdminPanel";
 
-function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onLogout, onNotify }) {
+function AppLayout({
+  user,
+  showSignIn,
+  showAdmin,
+  onOpenAdmin,
+  onCloseAdmin,
+  onOpenSignIn,
+  onCloseSignIn,
+  onLogin,
+  onLogout,
+  onNotify,
+}) {
   const location = useLocation();
   const isHome = location.pathname === "/";
 
@@ -35,6 +47,14 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
   };
 
   const showNav = splashPhase === "done" || !isHome;
+  const drawerItems = user
+    ? [
+        ...(user.role === "admin"
+          ? [{ label: "admin.", onClick: onOpenAdmin }]
+          : []),
+        { label: "exit.", onClick: onLogout },
+      ]
+    : [];
 
   return (
     <>
@@ -97,7 +117,7 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
             <Home
               user={user}
               onOpenSignIn={onOpenSignIn}
-              onLogout={onLogout}
+              drawerItems={drawerItems}
             />
           }
         />
@@ -109,6 +129,7 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
               onOpenSignIn={onOpenSignIn}
               onLogout={onLogout}
               onNotify={onNotify}
+              drawerItems={drawerItems}
             />
           }
         />
@@ -120,6 +141,12 @@ function AppLayout({ user, showSignIn, onOpenSignIn, onCloseSignIn, onLogin, onL
         open={showSignIn}
         onClose={onCloseSignIn}
         onLogin={onLogin}
+        onNotify={onNotify}
+      />
+      <AdminPanel
+        open={showAdmin}
+        onClose={onCloseAdmin}
+        user={user}
         onNotify={onNotify}
       />
     </>
@@ -140,6 +167,7 @@ function App() {
     return null;
   });
   const [showSignIn, setShowSignIn] = useState(false);
+  const [showAdmin, setShowAdmin] = useState(false);
   const [info, setInfo] = useState(null);
 
   const notify = (next) => {
@@ -165,6 +193,7 @@ function App() {
 
   const handleLogout = () => {
     setUser(null);
+    setShowAdmin(false);
     localStorage.removeItem("user");
   };
 
@@ -173,6 +202,9 @@ function App() {
       <AppLayout
         user={user}
         showSignIn={showSignIn}
+        showAdmin={showAdmin}
+        onOpenAdmin={() => setShowAdmin(true)}
+        onCloseAdmin={() => setShowAdmin(false)}
         onOpenSignIn={() => setShowSignIn(true)}
         onCloseSignIn={() => setShowSignIn(false)}
         onLogin={handleLogin}

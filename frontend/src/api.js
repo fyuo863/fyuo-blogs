@@ -62,3 +62,17 @@ export const incrementView = (id) => axios.post(`${BASE}/articles/${id}/view`);
 
 /** POST /api/v1/articles/:id/like — 增加点赞数（IP 限频） */
 export const incrementLike = (id) => axios.post(`${BASE}/articles/${id}/like`);
+
+export const recordArticleView = (id, visitorId, contentPath) =>
+  axios.post(`${BASE}/articles/${id}/view`, null, {
+    headers: {
+      "X-Visitor-Id": visitorId,
+      "X-Content-Path": contentPath,
+    },
+  });
+
+export const listVisitRecords = (token, params = {}) =>
+  axios.get(`${BASE}/visit-records`, {
+    ...authConfig(token),
+    params,
+  });
