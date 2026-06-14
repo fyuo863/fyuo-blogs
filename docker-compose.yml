@@ -16,7 +16,7 @@ services:
       backend:
         condition: service_healthy
       mcp-blog-publisher:
-        condition: service_started
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "nginx -t"]
       interval: 10s
@@ -62,9 +62,7 @@ services:
       start_period: 20s
 
   mcp-blog-publisher:
-    build:
-      context: ./mcp/blog-publisher
-      dockerfile: Dockerfile
+    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-mcp-publisher:${IMAGE_TAG:-latest}
     container_name: blog_mcp_publisher
     restart: always
     expose:
@@ -78,6 +76,12 @@ services:
       MCP_HOST: 0.0.0.0
       MCP_PORT: 18081
       MCP_PATH: /mcp
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:18081/healthz >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
 
   redis:
     image: redis:8-alpine

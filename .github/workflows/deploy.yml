@@ -78,6 +78,16 @@ jobs:
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:latest
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-frontend:${{ env.RELEASE_TAG }}
 
+      - name: Build and push MCP image
+        if: env.DEPLOY_ACTION == 'deploy'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./mcp/blog-publisher
+          push: true
+          tags: |
+            ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-mcp-publisher:latest
+            ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-mcp-publisher:${{ env.RELEASE_TAG }}
+
       - name: Copy deployment files
         uses: appleboy/scp-action@master
         with:
@@ -113,8 +123,8 @@ jobs:
             runtime_fail() {
               echo "Deployment failed after starting containers: $1"
               docker compose ps || true
-              docker compose logs --tail=120 nginx backend frontend || true
-              docker compose stop nginx backend frontend || true
+              docker compose logs --tail=120 nginx backend frontend mcp-blog-publisher || true
+              docker compose stop nginx backend frontend mcp-blog-publisher || true
               exit 1
             }
 
@@ -135,15 +145,17 @@ jobs:
             export IMAGE_TAG
             echo "Running $DEPLOY_ACTION with IMAGE_TAG=$IMAGE_TAG"
 
-            docker compose pull backend frontend || preflight_fail "image pull failed"
+            docker compose pull backend frontend mcp-blog-publisher || preflight_fail "image pull failed"
             docker compose up -d --remove-orphans || runtime_fail "compose up failed"
 
             i=1
             while [ "$i" -le 36 ]; do
               if docker compose exec -T backend wget -qO- http://127.0.0.1:8080/healthz >/dev/null 2>&1 &&
                  docker compose exec -T frontend test -f /share_dist/index.html &&
+                 docker compose exec -T mcp-blog-publisher wget -qO- http://127.0.0.1:18081/healthz >/dev/null 2>&1 &&
                  docker compose exec -T nginx nginx -t >/dev/null 2>&1 &&
-                 docker compose exec -T nginx wget -qO- http://backend:8080/healthz >/dev/null 2>&1; then
+                 docker compose exec -T nginx wget -qO- http://backend:8080/healthz >/dev/null 2>&1 &&
+                 docker compose exec -T nginx wget -qO- http://mcp-blog-publisher:18081/healthz >/dev/null 2>&1; then
                 printf '%s\n' "$IMAGE_TAG" > .release
                 docker image prune -f
                 echo "Deployment healthy: $IMAGE_TAG"
