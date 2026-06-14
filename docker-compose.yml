@@ -24,7 +24,7 @@ services:
       retries: 6
 
   frontend:
-    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-frontend:${IMAGE_TAG:-latest}
+    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: blog-frontend
     restart: always
     volumes:
@@ -37,7 +37,7 @@ services:
       start_period: 10s
 
   backend:
-    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-backend:${IMAGE_TAG:-latest}
+    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-backend:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: blog-backend
     restart: always
     expose:
@@ -55,14 +55,14 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/healthz >/dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/v1/healthz >/dev/null"]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 20s
 
   mcp-blog-publisher:
-    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-mcp-publisher:${IMAGE_TAG:-latest}
+    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-mcp-publisher:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: blog_mcp_publisher
     restart: always
     expose:
