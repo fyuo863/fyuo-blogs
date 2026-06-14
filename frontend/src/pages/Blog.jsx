@@ -15,6 +15,9 @@ import {
   uploadArticleImage,
 } from "../api";
 
+const INITIAL_PAGE_SIZE = 10;
+const LOAD_MORE_PAGE_SIZE = 5;
+
 function formatDate(iso) {
   const d = new Date(iso);
   const date = d.toLocaleDateString("en-US", {
@@ -84,6 +87,11 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const editRef = useRef(null);
   const searchRef = useRef(null);
+  const loadMoreRef = useRef(null);
+  const postsRef = useRef([]);
+  const loadingMoreRef = useRef(false);
+  const hasMoreRef = useRef(true);
+  const shouldRefreshListRef = useRef(true);
 
   const [likedPosts, setLikedPosts] = useState(() => {
     try {
@@ -95,12 +103,42 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   });
   const pendingLikesRef = useRef(new Set());
   const [pendingLikes, setPendingLikes] = useState([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  const mergePosts = useCallback((currentPosts, incomingPosts) => {
+    const seen = new Set(currentPosts.map((post) => post.id));
+    const merged = [...currentPosts];
+    incomingPosts.forEach((post) => {
+      if (seen.has(post.id)) return;
+      seen.add(post.id);
+      merged.push(post);
+    });
+    return merged;
+  }, []);
+
+  useEffect(() => {
+    loadingMoreRef.current = isLoadingMore;
+  }, [isLoadingMore]);
+
+  useEffect(() => {
+    hasMoreRef.current = hasMore;
+  }, [hasMore]);
+
+  useEffect(() => {
+    postsRef.current = posts;
+  }, [posts]);
 
   const fetchPosts = useCallback(() => {
-    listArticles()
+    hasMoreRef.current = false;
+    setIsLoadingMore(false);
+    setHasMore(false);
+    listArticles(1, INITIAL_PAGE_SIZE)
       .then((res) => {
         const nextPosts = res.data.data ?? [];
+        const total = Number(res.data.total ?? nextPosts.length);
         setPosts(nextPosts);
+        setHasMore(nextPosts.length < total);
         setLikedPosts((prev) => {
           const legacyIds = new Set(nextPosts.map((post) => String(post.id)));
           const nextLiked = prev.filter((key) => !legacyIds.has(key));
@@ -121,8 +159,41 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       });
   }, [onNotify]);
 
+  const loadMorePosts = useCallback(() => {
+    if (loadingMoreRef.current || !hasMoreRef.current) return;
+
+    loadingMoreRef.current = true;
+    setIsLoadingMore(true);
+    const currentCount = postsRef.current.length;
+    const nextPage = Math.floor(currentCount / LOAD_MORE_PAGE_SIZE) + 1;
+
+    listArticles(nextPage, LOAD_MORE_PAGE_SIZE)
+      .then((res) => {
+        const incomingPosts = res.data.data ?? [];
+        const total = Number(res.data.total ?? currentCount + incomingPosts.length);
+
+        setPosts((latestPosts) => {
+          const mergedPosts = mergePosts(latestPosts, incomingPosts);
+          setHasMore(mergedPosts.length < total && incomingPosts.length > 0);
+          return mergedPosts;
+        });
+      })
+      .catch((err) => {
+        onNotify?.({
+          variant: "error",
+          title: "load-more-failed.",
+          message: errorMessage(err, "更多文章加载失败。"),
+        });
+      })
+      .finally(() => {
+        loadingMoreRef.current = false;
+        setIsLoadingMore(false);
+      });
+  }, [mergePosts, onNotify]);
+
   useEffect(() => {
-    if (!selectedPost) {
+    if (!selectedPost && shouldRefreshListRef.current) {
+      shouldRefreshListRef.current = false;
       fetchPosts();
     }
   }, [selectedPost, fetchPosts]);
@@ -160,6 +231,26 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, []);
+
+  useEffect(() => {
+    if (selectedPost) return undefined;
+    const target = loadMoreRef.current;
+    if (!target) return undefined;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          loadMorePosts();
+        }
+      },
+      {
+        rootMargin: "0px 0px 240px 0px",
+      }
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [selectedPost, posts.length, loadMorePosts]);
 
   const handleSearch = () => {
     const q = searchQuery.trim();
@@ -270,6 +361,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
           tags,
         }, token)
           .then(() => {
+            shouldRefreshListRef.current = true;
             closePost();
             onNotify?.({
               variant: "success",
@@ -281,7 +373,11 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       } else {
         updateArticle(selectedPost.id, { title, content, cover_image: coverImage, tags }, token)
           .then((res) => {
-            setSelectedPost(res.data.data);
+            const updatedPost = res.data.data;
+            setPosts((prev) =>
+              prev.map((post) => (post.id === updatedPost.id ? updatedPost : post))
+            );
+            setSelectedPost(updatedPost);
             setIsEditing(false);
             onNotify?.({
               variant: "success",
@@ -306,6 +402,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       const token = user?.token;
       deleteArticle(selectedPost.id, token)
         .then(() => {
+          shouldRefreshListRef.current = true;
           closePost();
           onNotify?.({
             variant: "success",
@@ -549,6 +646,18 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
               </div>
             </article>
           ))}
+        </div>
+        <div ref={loadMoreRef} className="py-8 text-center">
+          {isLoadingMore && (
+            <p className="text-xs font-mono uppercase tracking-[0.28em] text-zinc-500">
+              loading-more.
+            </p>
+          )}
+          {!hasMore && posts.length > 0 && (
+            <p className="text-xs font-mono uppercase tracking-[0.28em] text-zinc-600">
+              no-more-posts.
+            </p>
+          )}
         </div>
       </div>
 
