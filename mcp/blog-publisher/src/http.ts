@@ -76,7 +76,7 @@ export async function startHttpServer() {
     }
 
     try {
-      await transport.handleRequest(req, res);
+      await transport.handleRequest(req, res, req.body);
     } catch (error) {
       console.error("blog-publisher MCP request failed:", error);
       if (!res.headersSent) {

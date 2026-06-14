@@ -6,7 +6,12 @@ import { createBlogPublisherServer } from "./server.js";
 export async function startHttpServer() {
     const config = loadConfig();
     const app = createMcpExpressApp({ host: config.host });
+    const transports = new Map();
     app.all(config.mcpPath, async (req, res) => {
+        if (req.method === "OPTIONS") {
+            res.status(204).end();
+            return;
+        }
         const apiKey = resolveRequestApiKey(req);
         if (!apiKey) {
             res.status(401).json({
@@ -14,16 +19,67 @@ export async function startHttpServer() {
             });
             return;
         }
-        const server = createBlogPublisherServer(config, { apiKey });
-        const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: () => randomUUID(),
-        });
-        res.on("close", () => {
-            void transport.close();
-            void server.close();
-        });
-        await server.connect(transport);
-        await transport.handleRequest(req, res);
+        const sessionId = resolveSessionId(req);
+        let transport = sessionId ? transports.get(sessionId) : undefined;
+        if (!transport) {
+            if (sessionId) {
+                res.status(404).json({
+                    jsonrpc: "2.0",
+                    error: {
+                        code: -32000,
+                        message: `Session not found: ${sessionId}`,
+                    },
+                    id: null,
+                });
+                return;
+            }
+            if (req.method !== "POST") {
+                res.status(400).json({
+                    jsonrpc: "2.0",
+                    error: {
+                        code: -32000,
+                        message: "Session not initialized. Send the first request as POST JSON-RPC.",
+                    },
+                    id: null,
+                });
+                return;
+            }
+            const server = createBlogPublisherServer(config, { apiKey });
+            transport = new StreamableHTTPServerTransport({
+                sessionIdGenerator: () => randomUUID(),
+                onsessioninitialized: (id) => {
+                    transports.set(id, transport);
+                },
+            });
+            const cleanup = async () => {
+                const activeId = transport?.sessionId;
+                if (activeId) {
+                    transports.delete(activeId);
+                }
+                await transport?.close();
+                await server.close();
+            };
+            res.on("close", () => {
+                void cleanup();
+            });
+            await server.connect(transport);
+        }
+        try {
+            await transport.handleRequest(req, res, req.body);
+        }
+        catch (error) {
+            console.error("blog-publisher MCP request failed:", error);
+            if (!res.headersSent) {
+                res.status(400).json({
+                    jsonrpc: "2.0",
+                    error: {
+                        code: -32700,
+                        message: error instanceof Error ? error.message : "Invalid JSON",
+                    },
+                    id: null,
+                });
+            }
+        }
     });
     app.get("/healthz", (_req, res) => {
         res.status(200).json({ status: "ok", transport: "streamable-http" });
@@ -44,6 +100,16 @@ function resolveRequestApiKey(req) {
         req.headers?.authorization;
     if (typeof authHeader === "string" && authHeader.startsWith("Bearer ")) {
         return authHeader.slice("Bearer ".length).trim();
+    }
+    return "";
+}
+function resolveSessionId(req) {
+    const headerValue = req.header?.("mcp-session-id") ||
+        req.header?.("Mcp-Session-Id") ||
+        req.header?.("MCP-Session-Id") ||
+        req.headers?.["mcp-session-id"];
+    if (typeof headerValue === "string" && headerValue.trim()) {
+        return headerValue.trim();
     }
     return "";
 }
