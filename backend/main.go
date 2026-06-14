@@ -59,14 +59,23 @@ func main() {
 	userRepo := repository.NewUserRepository(database.DB)
 	articleRepo := repository.NewArticleRepository(database.DB)
 	visitRecordRepo := repository.NewVisitRecordRepository(database.DB)
+	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
 	authService := service.NewAuthService(userRepo, tokenManager)
 	articleService := service.NewArticleService(articleRepo)
 	visitRecordService := service.NewVisitRecordService(visitRecordRepo, articleRepo)
+	apiKeyService := service.NewAPIKeyService(apiKeyRepo, userRepo)
 	if err := authService.EnsureAdminAccount(
 		os.Getenv("LOCAL_ADMIN_NAME"),
 		os.Getenv("LOCAL_ADMIN_PASSWORD"),
 	); err != nil {
 		log.Logger.Error("初始化本地管理员账号失败", "error", err)
+		panic(err)
+	}
+	if err := authService.EnsureAgentAccount(
+		os.Getenv("LOCAL_AGENT_NAME"),
+		os.Getenv("LOCAL_AGENT_PASSWORD"),
+	); err != nil {
+		log.Logger.Error("初始化本地Agent账号失败", "error", err)
 		panic(err)
 	}
 
@@ -75,7 +84,9 @@ func main() {
 		Auth:         handler.NewAuthHandler(authService),
 		Counters:     handler.NewCounterHandler(visitRecordService),
 		VisitRecords: handler.NewVisitRecordHandler(visitRecordService),
-		AuthTokens:   middleware.RequireRole(tokenManager, "admin"),
+		APIKeys:      handler.NewAPIKeyHandler(apiKeyService, authService),
+		AuthorTokens: middleware.RequireRole(tokenManager, apiKeyService, "admin", "agent"),
+		AdminTokens:  middleware.RequireRole(tokenManager, apiKeyService, "admin"),
 	})
 
 	router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default

@@ -33,13 +33,8 @@ RUN go build -o main ./main.go
 # ==========================================
 # 第二阶段：运行阶段 (Runner)
 # ==========================================
-# 使用极简的 alpine 镜像作为最终运行环境
-FROM alpine:latest
-
-# 设置时区为上海 (Go 项目记录日志、存入数据库时常常需要依赖系统时区)
-RUN apk --no-cache add tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
-    echo "Asia/Shanghai" > /etc/timezone
+# 复用 builder 阶段，避免单独拉取 alpine:latest 时受到镜像源限制
+FROM builder AS runner
 
 # 设置最终运行的工作目录
 WORKDIR /app

@@ -49,6 +49,7 @@ func (r *ArticleRepository) ListVisible(page, pageSize int) ([]model.Article, in
 
 	var articles []model.Article
 	err = r.db.Where("stage != ?", "hidden").
+		Preload("Author").
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(pageSize).
@@ -64,6 +65,7 @@ func (r *ArticleRepository) SearchVisible(query string, limit int) ([]model.Arti
 	var articles []model.Article
 	err := r.db.Where("stage != ?", "hidden").
 		Where("title ILIKE ? OR content ILIKE ?", like, like).
+		Preload("Author").
 		Order("created_at DESC").
 		Limit(limit).
 		Find(&articles).Error
@@ -72,13 +74,13 @@ func (r *ArticleRepository) SearchVisible(query string, limit int) ([]model.Arti
 
 func (r *ArticleRepository) GetVisible(id uint) (model.Article, error) {
 	var article model.Article
-	err := r.db.Where("stage != ?", "hidden").First(&article, id).Error
+	err := r.db.Where("stage != ?", "hidden").Preload("Author").First(&article, id).Error
 	return article, err
 }
 
 func (r *ArticleRepository) GetByID(id uint) (model.Article, error) {
 	var article model.Article
-	err := r.db.First(&article, id).Error
+	err := r.db.Preload("Author").First(&article, id).Error
 	return article, err
 }
 

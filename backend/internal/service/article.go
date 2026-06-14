@@ -14,8 +14,9 @@ import (
 )
 
 var (
-	ErrArticleNotFound = errors.New("article not found")
-	ErrNoArticleUpdate = errors.New("no article fields to update")
+	ErrArticleNotFound  = errors.New("article not found")
+	ErrNoArticleUpdate  = errors.New("no article fields to update")
+	ErrArticleForbidden = errors.New("article forbidden")
 )
 
 type ArticleService struct {
@@ -23,11 +24,12 @@ type ArticleService struct {
 }
 
 type ArticleInput struct {
-	Title   string
-	Content string
-	Stage   string
-	Vol     int
-	Tags    []string
+	Title         string
+	Content       string
+	Stage         string
+	Vol           int
+	Tags          []string
+	PublisherName string
 }
 
 type ArticleUpdate struct {
@@ -51,12 +53,13 @@ func NewArticleService(articles *repository.ArticleRepository) *ArticleService {
 
 func (s *ArticleService) Create(ctx context.Context, author model.User, input ArticleInput) (model.Article, error) {
 	article := model.Article{
-		Title:    input.Title,
-		Content:  input.Content,
-		Stage:    normalizeStage(input.Stage),
-		Vol:      input.Vol,
-		AuthorID: author.ID,
-		Tags:     input.Tags,
+		Title:         input.Title,
+		Content:       input.Content,
+		Stage:         normalizeStage(input.Stage),
+		Vol:           input.Vol,
+		AuthorID:      author.ID,
+		PublisherName: normalizePublisherName(input.PublisherName, author.Name),
+		Tags:          input.Tags,
 	}
 	if article.Vol == 0 {
 		article.Vol = 1
@@ -65,7 +68,7 @@ func (s *ArticleService) Create(ctx context.Context, author model.User, input Ar
 		return article, err
 	}
 	s.refreshListCache(ctx)
-	return article, nil
+	return s.articles.GetByID(article.ID)
 }
 
 func (s *ArticleService) List(ctx context.Context, page, pageSize int) (ArticleListResult, error) {
@@ -111,7 +114,18 @@ func (s *ArticleService) Get(ctx context.Context, id uint) (model.Article, error
 	return applyCountsToArticle(ctx, article), nil
 }
 
-func (s *ArticleService) Update(ctx context.Context, id uint, update ArticleUpdate) (model.Article, error) {
+func (s *ArticleService) Update(ctx context.Context, actor model.User, id uint, update ArticleUpdate) (model.Article, error) {
+	existing, err := s.articles.GetByID(id)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return model.Article{}, ErrArticleNotFound
+	}
+	if err != nil {
+		return model.Article{}, err
+	}
+	if actor.Role != "admin" && existing.AuthorID != actor.ID {
+		return model.Article{}, ErrArticleForbidden
+	}
+
 	article, err := s.articles.Update(id, repository.ArticleUpdate{
 		Title:   update.Title,
 		Content: update.Content,
@@ -142,6 +156,13 @@ func (s *ArticleService) Delete(ctx context.Context, id uint) error {
 	}
 	s.refreshListCache(ctx)
 	return nil
+}
+
+func (s *ArticleService) DeleteByActor(ctx context.Context, actor model.User, id uint) error {
+	if actor.Role != "admin" {
+		return ErrArticleForbidden
+	}
+	return s.Delete(ctx, id)
 }
 
 func (s *ArticleService) refreshListCache(ctx context.Context) {
@@ -219,4 +240,11 @@ func normalizeStage(stage string) string {
 		return "published"
 	}
 	return stage
+}
+
+func normalizePublisherName(name, fallback string) string {
+	if name != "" {
+		return name
+	}
+	return fallback
 }

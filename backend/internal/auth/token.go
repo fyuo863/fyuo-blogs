@@ -18,10 +18,11 @@ var (
 )
 
 type Claims struct {
-	UserID uint   `json:"uid"`
-	Name   string `json:"name"`
-	Role   string `json:"role"`
-	Exp    int64  `json:"exp"`
+	UserID        uint   `json:"uid"`
+	Name          string `json:"name"`
+	Role          string `json:"role"`
+	PublisherName string `json:"publisher_name,omitempty"`
+	Exp           int64  `json:"exp"`
 }
 
 type TokenManager struct {
@@ -38,10 +39,11 @@ func NewTokenManager(secret string, ttl time.Duration) *TokenManager {
 
 func (m *TokenManager) Generate(user model.User) (string, error) {
 	claims := Claims{
-		UserID: user.ID,
-		Name:   user.Name,
-		Role:   user.Role,
-		Exp:    time.Now().Add(m.ttl).Unix(),
+		UserID:        user.ID,
+		Name:          user.Name,
+		Role:          user.Role,
+		PublisherName: user.Name,
+		Exp:           time.Now().Add(m.ttl).Unix(),
 	}
 	payload, err := json.Marshal(claims)
 	if err != nil {

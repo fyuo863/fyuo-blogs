@@ -49,13 +49,15 @@ func (h *ArticleHandler) CreateBlog(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
+	claims, _ := middleware.Claims(c)
 
 	article, err := h.articles.Create(c.Request.Context(), author, service.ArticleInput{
-		Title:   req.Title,
-		Content: req.Content,
-		Stage:   req.Stage,
-		Vol:     req.Vol,
-		Tags:    req.Tags,
+		Title:         req.Title,
+		Content:       req.Content,
+		Stage:         req.Stage,
+		Vol:           req.Vol,
+		Tags:          req.Tags,
+		PublisherName: h.auth.PublisherNameFromClaims(claims),
 	})
 	if err != nil {
 		log.Logger.Error("创建文章失败", "error", err)
@@ -134,7 +136,8 @@ func (h *ArticleHandler) UpdateBlog(c *gin.Context) {
 		return
 	}
 
-	article, err := h.articles.Update(c.Request.Context(), id, service.ArticleUpdate{
+	currentUser, _ := h.currentUser(c)
+	article, err := h.articles.Update(c.Request.Context(), currentUser, id, service.ArticleUpdate{
 		Title:   req.Title,
 		Content: req.Content,
 		Stage:   req.Stage,
@@ -143,6 +146,10 @@ func (h *ArticleHandler) UpdateBlog(c *gin.Context) {
 	})
 	if errors.Is(err, service.ErrArticleNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		return
+	}
+	if errors.Is(err, service.ErrArticleForbidden) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "只能编辑自己发布的文章"})
 		return
 	}
 	if errors.Is(err, service.ErrNoArticleUpdate) {
@@ -164,13 +171,17 @@ func (h *ArticleHandler) DeleteBlog(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.currentUser(c); err != nil {
+	currentUser, err := h.currentUser(c)
+	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "身份验证失败"})
 		return
 	}
 
-	if err := h.articles.Delete(c.Request.Context(), id); errors.Is(err, service.ErrArticleNotFound) {
+	if err := h.articles.DeleteByActor(c.Request.Context(), currentUser, id); errors.Is(err, service.ErrArticleNotFound) {
 		c.JSON(http.StatusNotFound, gin.H{"error": "文章不存在"})
+		return
+	} else if errors.Is(err, service.ErrArticleForbidden) {
+		c.JSON(http.StatusForbidden, gin.H{"error": "仅管理员可以删除文章"})
 		return
 	} else if err != nil {
 		log.Logger.Error("删除文章失败", "id", id, "error", err)

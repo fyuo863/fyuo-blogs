@@ -12,7 +12,9 @@ type Dependencies struct {
 	Auth         *handler.AuthHandler
 	Counters     *handler.CounterHandler
 	VisitRecords *handler.VisitRecordHandler
-	AuthTokens   gin.HandlerFunc
+	APIKeys      *handler.APIKeyHandler
+	AuthorTokens gin.HandlerFunc
+	AdminTokens  gin.HandlerFunc
 }
 
 func NewRouter(deps Dependencies) *gin.Engine {
@@ -40,13 +42,24 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		api.POST("/articles/:id/like", handler.ToggleLike)
 	}
 
-	protected := api.Group("")
-	protected.Use(deps.AuthTokens)
+	authorProtected := api.Group("")
+	authorProtected.Use(deps.AuthorTokens)
 	{
-		protected.POST("/articles", deps.Articles.CreateBlog)
-		protected.PUT("/articles/:id", deps.Articles.UpdateBlog)
-		protected.DELETE("/articles/:id", deps.Articles.DeleteBlog)
-		protected.GET("/visit-records", deps.VisitRecords.List)
+		authorProtected.POST("/articles", deps.Articles.CreateBlog)
+		authorProtected.PUT("/articles/:id", deps.Articles.UpdateBlog)
+		authorProtected.DELETE("/articles/:id", deps.Articles.DeleteBlog)
+	}
+
+	adminProtected := api.Group("")
+	adminProtected.Use(deps.AdminTokens)
+	{
+		adminProtected.GET("/visit-records", deps.VisitRecords.List)
+		adminProtected.GET("/admin/publisher-users", deps.APIKeys.ListPublisherUsers)
+		adminProtected.GET("/admin/api-keys", deps.APIKeys.List)
+		adminProtected.POST("/admin/api-keys", deps.APIKeys.Create)
+		adminProtected.PATCH("/admin/api-keys/:id", deps.APIKeys.Update)
+		adminProtected.POST("/admin/api-keys/:id/rotate", deps.APIKeys.Rotate)
+		adminProtected.DELETE("/admin/api-keys/:id", deps.APIKeys.Delete)
 	}
 
 	return r

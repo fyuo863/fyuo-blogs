@@ -47,3 +47,14 @@ func (s *AuthService) UserFromClaims(claims auth.Claims) model.User {
 		Role: claims.Role,
 	}
 }
+
+func (s *AuthService) PublisherNameFromClaims(claims auth.Claims) string {
+	if claims.PublisherName != "" {
+		return claims.PublisherName
+	}
+	return claims.Name
+}
+
+func (s *AuthService) ListPrivilegedUsers() ([]model.User, error) {
+	return s.users.ListPrivileged()
+}

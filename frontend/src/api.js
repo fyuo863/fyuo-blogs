@@ -76,3 +76,21 @@ export const listVisitRecords = (token, params = {}) =>
     ...authConfig(token),
     params,
   });
+
+export const listPublisherUsers = (token) =>
+  axios.get(`${BASE}/admin/publisher-users`, authConfig(token));
+
+export const listApiKeys = (token) =>
+  axios.get(`${BASE}/admin/api-keys`, authConfig(token));
+
+export const createApiKey = (token, data) =>
+  axios.post(`${BASE}/admin/api-keys`, data, authConfig(token));
+
+export const updateApiKey = (token, id, data) =>
+  axios.patch(`${BASE}/admin/api-keys/${id}`, data, authConfig(token));
+
+export const rotateApiKey = (token, id) =>
+  axios.post(`${BASE}/admin/api-keys/${id}/rotate`, {}, authConfig(token));
+
+export const deleteApiKey = (token, id) =>
+  axios.delete(`${BASE}/admin/api-keys/${id}`, authConfig(token));

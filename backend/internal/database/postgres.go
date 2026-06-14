@@ -53,6 +53,7 @@ func InitPostgres(cfg *config.DatabaseConfig) error {
 		&model.Article{},
 		&model.Comment{},
 		&model.VisitRecord{},
+		&model.APIKey{},
 	)
 	if err != nil {
 		log.Logger.Error("自动同步表结构失败", "error", err)
@@ -152,20 +153,19 @@ func GetUserByName(name string) (model.User, error) {
 		// 判断错误类型是否为“找不到记录”
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			log.Logger.Warn("查询用户", "未找到该账号:", name)
-			return user, result.Error 
+			return user, result.Error
 		}
-		
+
 		// 其他数据库错误（如断连、表不存在等）
 		log.Logger.Error("查询用户", "数据库查询失败:", result.Error)
 		return user, result.Error
 	}
 
 	log.Logger.Info("查询用户", "成功!", "ID:", user.ID, "Name:", user.Name)
-	
+
 	// 返回查询到的真实用户数据和 nil 错误
 	return user, nil
 }
-
 
 func DeleteUserByName(name string) error {
 	// 注意：Delete 方法需要传入一个模型指针（这里传空指针 &User{} 即可），告诉 GORM 要操作哪张表
@@ -179,7 +179,7 @@ func DeleteUserByName(name string) error {
 	// RowsAffected 代表受影响的行数，如果是 0，说明数据库里根本没这个人
 	if result.RowsAffected == 0 {
 		log.Logger.Warn("删除用户", "未找到该用户，无需删除:", name)
-		return nil 
+		return nil
 	}
 
 	log.Logger.Info("删除用户", "成功彻底删除!", "Name:", name)

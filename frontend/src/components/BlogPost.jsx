@@ -16,6 +16,12 @@ function formatDate(iso) {
   return `${date} ${time}`.toUpperCase();
 }
 
+function formatAuthor(post) {
+  const name = post?.publisher_name?.trim() || post?.author?.name?.trim();
+  if (!name) return "by unknown";
+  return `by ${name}`;
+}
+
 export default function BlogPost({ post, isEditing, editRef, onBack }) {
   const [editTitle, setEditTitle] = useState(post.title);
   const [editTags, setEditTags] = useState((post.tags || []).join(", "));
@@ -50,9 +56,14 @@ export default function BlogPost({ post, isEditing, editRef, onBack }) {
           back.
         </button>
 
-        <time className="ml-10 font-mono text-sm tracking-widest text-zinc-500 uppercase">
-          {formatDate(post.created_at)}
-        </time>
+        <div className="ml-10 flex flex-wrap items-center gap-x-4 gap-y-2">
+          <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
+            {formatDate(post.created_at)}
+          </time>
+          <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
+            {formatAuthor(post)}
+          </div>
+        </div>
 
         {isEditing ? (
           <textarea

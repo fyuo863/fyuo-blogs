@@ -29,3 +29,16 @@ func (r *UserRepository) FindByID(id uint) (model.User, error) {
 func (r *UserRepository) Save(user *model.User) error {
 	return r.db.Save(user).Error
 }
+
+func (r *UserRepository) Create(user *model.User) error {
+	return r.db.Create(user).Error
+}
+
+func (r *UserRepository) ListPrivileged() ([]model.User, error) {
+	var users []model.User
+	err := r.db.
+		Where("role IN ?", []string{"admin", "agent"}).
+		Order("created_at DESC").
+		Find(&users).Error
+	return users, err
+}

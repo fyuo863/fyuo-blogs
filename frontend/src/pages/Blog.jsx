@@ -29,6 +29,12 @@ function formatDate(iso) {
   return `${date} ${time}`.toUpperCase();
 }
 
+function formatAuthor(post) {
+  const name = post?.publisher_name?.trim() || post?.author?.name?.trim();
+  if (!name) return "unknown";
+  return `by ${name}`;
+}
+
 function errorMessage(err, fallback) {
   return (
     err.response?.data?.error ||
@@ -63,6 +69,11 @@ function getVisitorId() {
   return created;
 }
 
+function likeStorageKey(post) {
+  if (!post?.id) return "";
+  return `${post.id}:${post.created_at || ""}`;
+}
+
 function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -75,7 +86,8 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
   const [likedPosts, setLikedPosts] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("liked_articles") || "[]");
+      const saved = JSON.parse(localStorage.getItem("liked_articles") || "[]");
+      return Array.isArray(saved) ? saved.filter((item) => typeof item === "string") : [];
     } catch {
       return [];
     }
@@ -85,7 +97,20 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
   const fetchPosts = useCallback(() => {
     listArticles()
-      .then((res) => setPosts(res.data.data ?? []))
+      .then((res) => {
+        const nextPosts = res.data.data ?? [];
+        setPosts(nextPosts);
+        setLikedPosts((prev) => {
+          const legacyIds = new Set(nextPosts.map((post) => String(post.id)));
+          const nextLiked = prev.filter((key) => !legacyIds.has(key));
+          try {
+            localStorage.setItem("liked_articles", JSON.stringify(nextLiked));
+          } catch {
+            // localStorage can be unavailable in restricted browser modes.
+          }
+          return nextLiked;
+        });
+      })
       .catch((err) => {
         onNotify?.({
           variant: "error",
@@ -304,6 +329,10 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   ];
 
   const handleLike = async (postId) => {
+    const currentPost =
+      posts.find((post) => post.id === postId) ||
+      (selectedPost?.id === postId ? selectedPost : null);
+    const currentLikeKey = likeStorageKey(currentPost);
     if (pendingLikesRef.current.has(postId)) return;
 
     pendingLikesRef.current.add(postId);
@@ -318,10 +347,12 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
       setLikedPosts((prev) => {
         const next = counters.liked
-          ? prev.includes(postId)
+          ? prev.includes(currentLikeKey)
             ? prev
-            : [...prev, postId]
-          : prev.filter((id) => id !== postId);
+            : currentLikeKey
+              ? [...prev, currentLikeKey]
+              : prev
+          : prev.filter((key) => key !== currentLikeKey);
         try {
           localStorage.setItem("liked_articles", JSON.stringify(next));
         } catch {
@@ -446,9 +477,14 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         <div className="divide-y divide-zinc-800">
           {posts.map((post) => (
             <article key={post.id} className="py-16">
-              <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
-                {formatDate(post.created_at)}
-              </time>
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
+                  {formatDate(post.created_at)}
+                </time>
+                <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
+                  {formatAuthor(post)}
+                </div>
+              </div>
               <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
                 {post.title}
               </h2>
@@ -477,15 +513,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
                     className={`transition-colors ${
                       pendingLikes.includes(post.id)
                         ? "text-zinc-500 cursor-wait"
-                        : likedPosts.includes(post.id)
+                        : likedPosts.includes(likeStorageKey(post))
                         ? "text-white"
                         : "text-zinc-600 hover:text-zinc-400"
                     }`}
-                    title={likedPosts.includes(post.id) ? "取消点赞" : "点赞"}
+                    title={likedPosts.includes(likeStorageKey(post)) ? "取消点赞" : "点赞"}
                   >
                     <Heart
                       size={18}
-                      fill={likedPosts.includes(post.id) ? "currentColor" : "none"}
+                      fill={likedPosts.includes(likeStorageKey(post)) ? "currentColor" : "none"}
                     />
                   </button>
                 </div>
