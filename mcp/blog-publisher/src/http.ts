@@ -8,6 +8,7 @@ export async function startHttpServer() {
   const config = loadConfig();
   const app = createMcpExpressApp({ host: config.host });
   const transports = new Map<string, StreamableHTTPServerTransport>();
+  const servers = new Map<string, Awaited<ReturnType<typeof createBlogPublisherServer>>>();
 
   app.all(config.mcpPath, async (req: any, res: any) => {
     if (req.method === "OPTIONS") {
@@ -25,6 +26,39 @@ export async function startHttpServer() {
 
     const sessionId = resolveSessionId(req);
     let transport = sessionId ? transports.get(sessionId) : undefined;
+
+    if (req.method === "DELETE") {
+      if (!transport) {
+        res.status(404).json({
+          jsonrpc: "2.0",
+          error: {
+            code: -32000,
+            message: sessionId
+              ? `Session not found: ${sessionId}`
+              : "Missing session ID",
+          },
+          id: null,
+        });
+        return;
+      }
+
+      try {
+        await transport.handleRequest(req, res);
+      } catch (error) {
+        console.error("blog-publisher MCP session delete failed:", error);
+        if (!res.headersSent) {
+          res.status(500).json({
+            jsonrpc: "2.0",
+            error: {
+              code: -32603,
+              message: error instanceof Error ? error.message : "Internal server error",
+            },
+            id: null,
+          });
+        }
+      }
+      return;
+    }
 
     if (!transport) {
       if (sessionId) {
@@ -56,21 +90,20 @@ export async function startHttpServer() {
         sessionIdGenerator: () => randomUUID(),
         onsessioninitialized: (id: string) => {
           transports.set(id, transport!);
+          servers.set(id, server);
         },
       } as any);
 
-      const cleanup = async () => {
-        const activeId = (transport as any)?.sessionId;
-        if (activeId) {
-          transports.delete(activeId);
+      transport.onclose = () => {
+        const activeId = transport?.sessionId;
+        if (!activeId) {
+          return;
         }
-        await transport?.close();
-        await server.close();
+        transports.delete(activeId);
+        const activeServer = servers.get(activeId);
+        servers.delete(activeId);
+        void activeServer?.close();
       };
-
-      res.on("close", () => {
-        void cleanup();
-      });
 
       await server.connect(transport);
     }

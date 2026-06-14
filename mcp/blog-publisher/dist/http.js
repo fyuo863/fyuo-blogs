@@ -7,6 +7,7 @@ export async function startHttpServer() {
     const config = loadConfig();
     const app = createMcpExpressApp({ host: config.host });
     const transports = new Map();
+    const servers = new Map();
     app.all(config.mcpPath, async (req, res) => {
         if (req.method === "OPTIONS") {
             res.status(204).end();
@@ -21,6 +22,38 @@ export async function startHttpServer() {
         }
         const sessionId = resolveSessionId(req);
         let transport = sessionId ? transports.get(sessionId) : undefined;
+        if (req.method === "DELETE") {
+            if (!transport) {
+                res.status(404).json({
+                    jsonrpc: "2.0",
+                    error: {
+                        code: -32000,
+                        message: sessionId
+                            ? `Session not found: ${sessionId}`
+                            : "Missing session ID",
+                    },
+                    id: null,
+                });
+                return;
+            }
+            try {
+                await transport.handleRequest(req, res);
+            }
+            catch (error) {
+                console.error("blog-publisher MCP session delete failed:", error);
+                if (!res.headersSent) {
+                    res.status(500).json({
+                        jsonrpc: "2.0",
+                        error: {
+                            code: -32603,
+                            message: error instanceof Error ? error.message : "Internal server error",
+                        },
+                        id: null,
+                    });
+                }
+            }
+            return;
+        }
         if (!transport) {
             if (sessionId) {
                 res.status(404).json({
@@ -49,19 +82,19 @@ export async function startHttpServer() {
                 sessionIdGenerator: () => randomUUID(),
                 onsessioninitialized: (id) => {
                     transports.set(id, transport);
+                    servers.set(id, server);
                 },
             });
-            const cleanup = async () => {
+            transport.onclose = () => {
                 const activeId = transport?.sessionId;
-                if (activeId) {
-                    transports.delete(activeId);
+                if (!activeId) {
+                    return;
                 }
-                await transport?.close();
-                await server.close();
+                transports.delete(activeId);
+                const activeServer = servers.get(activeId);
+                servers.delete(activeId);
+                void activeServer?.close();
             };
-            res.on("close", () => {
-                void cleanup();
-            });
             await server.connect(transport);
         }
         try {
