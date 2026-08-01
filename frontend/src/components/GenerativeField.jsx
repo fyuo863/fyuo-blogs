@@ -1,11 +1,6 @@
 import { useEffect, useRef } from "react";
 
-const RIPPLE_DURATION = 520;
-
-function hash(value) {
-  const sine = Math.sin(value * 12.9898) * 43758.5453;
-  return sine - Math.floor(sine);
-}
+const LENS_DURATION = 520;
 
 function GenerativeField() {
   const canvasRef = useRef(null);
@@ -22,13 +17,15 @@ function GenerativeField() {
     const rootStyles = getComputedStyle(document.documentElement);
     const colors = {
       paper: rootStyles.getPropertyValue("--color-paper-soft").trim(),
-      acid: rootStyles.getPropertyValue("--color-acid").trim(),
       coral: rootStyles.getPropertyValue("--color-coral").trim(),
       cobalt: rootStyles.getPropertyValue("--color-cobalt").trim(),
     };
+    const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--field-cell-size")) || 38;
     const fieldOpacity = Number.parseFloat(rootStyles.getPropertyValue("--field-opacity")) || 0.09;
     const minDot = Number.parseFloat(rootStyles.getPropertyValue("--field-dot-min")) || 0.7;
     const maxDot = Number.parseFloat(rootStyles.getPropertyValue("--field-dot-max")) || 2.8;
+    const dotOpacity = Number.parseFloat(rootStyles.getPropertyValue("--field-dot-opacity")) || 0.74;
+    const baseLight = Number.parseFloat(rootStyles.getPropertyValue("--field-base-light")) || 0.3;
     const state = {
       width: 0,
       height: 0,
@@ -42,19 +39,15 @@ function GenerativeField() {
     const canAnimate = () => supportsFinePointer.matches && !prefersReducedMotion.matches;
 
     const rebuildPoints = () => {
-      const area = state.width * state.height;
-      const spacing = Math.max(34, Math.min(58, Math.sqrt(area / 270)));
-      const columns = Math.ceil(state.width / spacing) + 2;
-      const rows = Math.ceil(state.height / spacing) + 2;
+      const columns = Math.ceil(state.width / cellSize);
+      const rows = Math.ceil(state.height / cellSize);
       const points = [];
 
       for (let row = 0; row < rows; row += 1) {
         for (let column = 0; column < columns; column += 1) {
-          const seed = row * 131 + column * 17;
           points.push({
-            x: (column - 0.5) * spacing + (hash(seed) - 0.5) * spacing * 0.28,
-            y: (row - 0.5) * spacing + (hash(seed + 1) - 0.5) * spacing * 0.28,
-            phase: hash(seed + 2) * Math.PI * 2,
+            x: (column + 0.5) * cellSize,
+            y: (row + 0.5) * cellSize,
           });
         }
       }
@@ -62,10 +55,8 @@ function GenerativeField() {
       state.points = points;
     };
 
-    const drawMoire = (time, activity) => {
+    const drawMoire = () => {
       const diagonal = Math.hypot(state.width, state.height);
-      const wave = activity * 8;
-      const phase = time * 0.0025 * activity;
 
       [[colors.cobalt, -0.22], [colors.coral, 0.24]].forEach(([color, rotation], index) => {
         context.save();
@@ -78,7 +69,7 @@ function GenerativeField() {
         for (let line = -diagonal; line <= diagonal; line += 17) {
           context.beginPath();
           for (let x = -diagonal; x <= diagonal; x += 18) {
-            const y = line + Math.sin(x * 0.035 + phase + index * 1.7) * wave;
+            const y = line + Math.sin(x * 0.035 + index * 1.7) * 2.4;
             if (x === -diagonal) context.moveTo(x, y);
             else context.lineTo(x, y);
           }
@@ -91,25 +82,35 @@ function GenerativeField() {
     const draw = (time = 0) => {
       if (!state.width || !state.height) return;
 
-      const activity = state.pointer.active
-        ? Math.max(0, 1 - (time - state.lastMove) / RIPPLE_DURATION)
+      const lensActivity = state.pointer.active
+        ? Math.max(0, 1 - (time - state.lastMove) / LENS_DURATION)
         : 0;
+      const anchorX = state.width * 0.7;
+      const anchorY = state.height * 0.54;
+      const anchorRadius = Math.max(state.width, state.height) * 0.76;
 
       context.clearRect(0, 0, state.width, state.height);
-      drawMoire(time, activity);
+      drawMoire();
 
       state.points.forEach((point) => {
-        const distance = Math.hypot(point.x - state.pointer.x, point.y - state.pointer.y);
-        const proximity = state.pointer.active ? Math.max(0, 1 - distance / 220) : 0;
-        const ripple = Math.sin(time * 0.008 + point.phase) * proximity * activity;
-        const radius = minDot + proximity * (maxDot - minDot) + Math.abs(ripple) * 0.8;
+        const anchorDistance = Math.hypot(point.x - anchorX, point.y - anchorY);
+        const staticLight = Math.max(0, 1 - anchorDistance / anchorRadius);
+        const pointerDistance = Math.hypot(point.x - state.pointer.x, point.y - state.pointer.y);
+        const pointerLight = state.pointer.active
+          ? Math.max(0, 1 - pointerDistance / 230)
+          : 0;
+        const brightness = Math.min(
+          1,
+          baseLight * staticLight + Math.pow(pointerLight, 2.2) * lensActivity,
+        );
+        const radius = minDot + brightness * (maxDot - minDot);
 
         context.beginPath();
-        context.fillStyle = proximity > 0.1 ? colors.acid : colors.paper;
-        context.globalAlpha = 0.18 + proximity * 0.66;
+        context.fillStyle = colors.paper;
+        context.globalAlpha = dotOpacity;
         context.arc(
-          point.x + ripple * 8,
-          point.y + ripple * 5,
+          point.x,
+          point.y,
           radius,
           0,
           Math.PI * 2,
@@ -130,7 +131,7 @@ function GenerativeField() {
       state.frame = window.requestAnimationFrame((time) => {
         state.frame = 0;
         draw(time);
-        if (state.pointer.active && time - state.lastMove < RIPPLE_DURATION) requestDraw();
+        if (state.pointer.active && time - state.lastMove < LENS_DURATION) requestDraw();
       });
     };
 

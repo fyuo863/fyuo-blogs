@@ -23,7 +23,7 @@ Dark indigo ink is the stable field. Acid green, coral, and cobalt act as small,
 
 ## Motion
 
-- Generative field: the home masthead owns a Canvas 2D dot field with two low-opacity moire passes. It is deterministic at rest and only ripples briefly under a fine pointer.
+- Generative field: the home masthead owns a fixed Canvas 2D halftone matrix with two low-opacity moire passes. Dot centres never move; their radius encodes a composed light field, with a local pointer lens on fine pointers.
 - Runtime guardrails: animation runs only while the masthead is visible and the tab is active; it pauses immediately when either condition changes.
 - Entry: a short opacity and translate reveal may use a native CSS view timeline when available, with the static composition as the baseline.
 - Exit: existing physics transition remains.

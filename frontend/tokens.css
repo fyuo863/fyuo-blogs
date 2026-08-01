@@ -1,6 +1,6 @@
-/* Hallmark · pre-emit critique: P5 H4 E5 S5 R4 V5
+/* Hallmark · pre-emit critique: P5 H4 E5 S5 R5 V5
  * genre: playful graphic lab · macrostructure: project poster wall · design-system: design.md
- * variation: home masthead shifts from static texture to a local generated field
+ * variation: fixed halftone centres with radius-only light encoding
  * contrast: pass (40–41) · motion: local Canvas field, reduced-motion and visibility guarded
  */
 :root {
@@ -38,10 +38,12 @@
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --dur-short: 180ms;
   --dur-medium: 360ms;
-  --field-dot-min: 0.7;
-  --field-dot-max: 2.8;
+  --field-cell-size: 38;
+  --field-dot-min: 0.65;
+  --field-dot-max: 5.4;
+  --field-dot-opacity: 0.74;
+  --field-base-light: 0.76;
   --field-opacity: 0.09;
-  --field-spacing: 3rem;
   --radius-card: 1.25rem;
   --radius-pill: 999px;
   --pointer-x: 50vw;
