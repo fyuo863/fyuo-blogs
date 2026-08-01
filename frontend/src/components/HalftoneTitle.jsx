@@ -46,7 +46,7 @@ function HalftoneTitle({ id, children }) {
       height: 0,
       titleBounds: { x: 0, y: 0, width: 0, height: 0 },
       points: [],
-      pointer: { x: 0, y: 0, active: false },
+      pointer: { x: 0, y: 0, clientX: 0, clientY: 0, active: false },
       visible: true,
       frame: 0,
       animation: 0,
@@ -55,6 +55,10 @@ function HalftoneTitle({ id, children }) {
     };
     const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canTrackPointer = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReducedMotion();
+    const updatePointerPosition = (clientX, clientY) => {
+      const bounds = surface.getBoundingClientRect();
+      state.pointer = { x: clientX - bounds.left, y: clientY - bounds.top, clientX, clientY, active: true };
+    };
 
     const injectWaveAt = (x, y, strength = waveStrength) => {
       const wave = state.wave;
@@ -131,6 +135,7 @@ function HalftoneTitle({ id, children }) {
         width: titleBox.width,
         height: titleBox.height,
       };
+      if (state.pointer.active) updatePointerPosition(state.pointer.clientX, state.pointer.clientY);
       canvas.width = Math.round(state.width * scale);
       canvas.height = Math.round(state.height * scale);
       context.setTransform(scale, 0, 0, scale, 0, 0);
@@ -171,11 +176,15 @@ function HalftoneTitle({ id, children }) {
     };
     const onPointerMove = (event) => {
       if (!canTrackPointer()) return;
-      const bounds = surface.getBoundingClientRect();
-      state.pointer = { x: event.clientX - bounds.left, y: event.clientY - bounds.top, active: true };
+      updatePointerPosition(event.clientX, event.clientY);
       requestDraw();
     };
-    const onPointerLeave = () => { state.pointer.active = false; requestDraw(); };
+    const onScroll = () => {
+      if (!state.pointer.active) return;
+      updatePointerPosition(state.pointer.clientX, state.pointer.clientY);
+      requestDraw();
+    };
+    const onWindowBlur = () => { state.pointer.active = false; requestDraw(); };
     const onPointerDown = (event) => {
       if (prefersReducedMotion()) return;
       const bounds = surface.getBoundingClientRect();
@@ -210,8 +219,9 @@ function HalftoneTitle({ id, children }) {
     resizeObserver.observe(surface);
     resizeObserver.observe(title);
     intersectionObserver.observe(surface);
-    surface.addEventListener("pointermove", onPointerMove, { passive: true });
-    surface.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("blur", onWindowBlur);
     surface.addEventListener("pointerdown", onPointerDown, { passive: true });
     resize();
     startAnimation();
@@ -220,8 +230,9 @@ function HalftoneTitle({ id, children }) {
       if (state.animation) window.cancelAnimationFrame(state.animation);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
-      surface.removeEventListener("pointermove", onPointerMove);
-      surface.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("blur", onWindowBlur);
       surface.removeEventListener("pointerdown", onPointerDown);
     };
   }, []);

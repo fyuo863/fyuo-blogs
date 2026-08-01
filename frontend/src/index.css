@@ -62,6 +62,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .section-head { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-md); padding: var(--space-xl) 0 var(--space-lg); border-top: var(--rule-hair) solid var(--color-ink); }
 .section-kicker { color: var(--color-accent); }
 .section-title { max-width: 10ch; margin: var(--space-sm) 0 0; font-family: var(--font-display); font-size: clamp(3rem, 6vw, 6rem); font-style: normal; font-weight: 800; letter-spacing: -0.08em; line-height: 0.84; overflow-wrap: anywhere; }
+.section-title__selected { position: relative; z-index: 1; display: inline-block; }
+.section-title__selected::before { position: absolute; z-index: -1; inset: -0.12em -0.05em; background: var(--color-accent); content: ""; }
 .section-note { max-width: 32ch; margin: 0; color: var(--color-muted); line-height: 1.45; }
 .project-grid { display: grid; grid-template-columns: minmax(0, 1fr); border-top: var(--rule-hair) solid var(--color-ink); }
 .project-card { display: grid; grid-template-columns: minmax(0, 1fr); border-bottom: var(--rule-hair) solid var(--color-ink); color: var(--color-ink); text-decoration: none; }
