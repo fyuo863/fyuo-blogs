@@ -27,6 +27,12 @@ Warm paper and ink carry the reading surface. Vermilion marks an action; cobalt 
 
 Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is structural, not filler.
 
+## Project index
+
+- The cover story remains the lone lead feature.
+- Selected work is arranged as a sequence of facing-page pairs: recto uses image then copy; verso uses copy then image. Each pair shares one outer rule and a centre seam.
+- On narrow screens, the pair resolves to a single reading order: image, title, description.
+
 ## Motion
 
 - One quiet opacity/translate reveal for large desktop surfaces.
