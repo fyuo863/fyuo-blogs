@@ -35,9 +35,11 @@ function HalftoneTitle({ id, children }) {
     };
     const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
     const revealRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-reveal-radius")) || 180;
-    const waveCadence = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-cadence")) || 1150;
+    const waveIntervalMin = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-interval-min")) || 460;
+    const waveIntervalMax = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-interval-max")) || 1540;
     const waveSpeed = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-speed")) || 0.14;
     const waveDamping = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-damping")) || 0.992;
+    const waveStrength = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-strength")) || 1.65;
     const state = {
       width: 0,
       height: 0,
@@ -54,15 +56,16 @@ function HalftoneTitle({ id, children }) {
 
     const injectWave = (timestamp) => {
       const wave = state.wave;
-      if (!wave || timestamp - wave.lastImpulse < waveCadence) return;
+      if (!wave || timestamp < wave.nextImpulse) return;
 
       wave.lastImpulse = timestamp;
+      wave.nextImpulse = timestamp + waveIntervalMin + Math.random() * (waveIntervalMax - waveIntervalMin);
       const sourceRow = 2 + Math.round(((Math.sin(timestamp / 620) + 1) / 2) * (wave.rows - 5));
-      for (let row = Math.max(1, sourceRow - 2); row <= Math.min(wave.rows - 2, sourceRow + 2); row += 1) {
-        for (let column = 1; column <= 3; column += 1) {
+      for (let row = Math.max(1, sourceRow - 3); row <= Math.min(wave.rows - 2, sourceRow + 3); row += 1) {
+        for (let column = 1; column <= 4; column += 1) {
           const distance = Math.hypot(column - 1, row - sourceRow);
-          if (distance > 2.5) continue;
-          wave.current[row * wave.columns + column] += (1 - distance / 2.5) * 1.1;
+          if (distance > 3.5) continue;
+          wave.current[row * wave.columns + column] += (1 - distance / 3.5) * waveStrength;
         }
       }
     };
@@ -98,7 +101,7 @@ function HalftoneTitle({ id, children }) {
         const proximity = state.pointer.active ? Math.max(0, 1 - distance / revealRadius) : 0;
         const eased = proximity * proximity * (3 - 2 * proximity);
         const waveHeight = state.wave?.current[point.waveIndex] || 0;
-        const radius = cellSize * Math.max(0.14, Math.min(0.92, 0.78 - eased * 0.63 - waveHeight * 0.18));
+        const radius = cellSize * Math.max(0.12, Math.min(0.96, 0.78 - eased * 0.63 - waveHeight * 0.27));
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
         context.fill();
@@ -123,6 +126,7 @@ function HalftoneTitle({ id, children }) {
         current: new Float32Array(columns * rows),
         next: new Float32Array(columns * rows),
         lastImpulse: Number.NEGATIVE_INFINITY,
+        nextImpulse: 0,
       };
       let row = 1;
       for (let y = cellSize / 2; y < state.height + cellSize; y += cellSize) {
