@@ -75,7 +75,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__item:nth-child(4n + 2) { background: var(--color-cobalt); }
 .cover-flow__item:nth-child(4n) { background: var(--color-paper-3); }
 .cover-flow__item[aria-pressed="true"] { background: var(--color-paper); }
-.cover-flow__item img { width: 72%; max-height: 72%; object-fit: contain; filter: grayscale(1) contrast(1.15); }
+.cover-flow__item img { width: 72%; max-height: 72%; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-drag: none; filter: grayscale(1) contrast(1.15); }
 .cover-flow__item-index { position: absolute; top: var(--space-sm); left: var(--space-sm); font-family: var(--font-outlier); font-size: var(--text-xs); }
 .cover-flow__caption { display: grid; gap: var(--space-sm); padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-ink); }
 .cover-flow__index { margin: 0; color: var(--color-cobalt); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.08em; }

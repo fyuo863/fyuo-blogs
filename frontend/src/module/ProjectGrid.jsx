@@ -95,7 +95,7 @@ function ProjectGrid({ projects = [] }) {
               style={style}
               tabIndex={distance > 3 ? -1 : 0}
             >
-              <img src={project.image} alt="" />
+              <img src={project.image} alt="" draggable="false" />
               <span className="cover-flow__item-index">{String(index + 2).padStart(2, "0")}</span>
             </button>
           );
