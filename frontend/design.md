@@ -31,7 +31,7 @@ Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is s
 
 - The cover story remains the lone lead feature.
 - Selected work uses enlarged iPod-style Cover Flow: one centred project cover sits forward while adjacent covers recede, overlap slightly to avoid visible gaps, and rotate inward at 68 degrees. The first side gap remains 66%; each gap after it shrinks to two-thirds of the previous one. The selected project’s title, liner note, and external link live in a separate caption strip.
-- Selection works with cover clicks, bounded previous/next controls, Left/Right keys, and horizontal drag. Covers follow the drag live, snap to an adjacent project beyond a threshold, do not loop, and never fade. Spatial transitions respect reduced motion.
+- Selection works with cover clicks, bounded previous/next controls, Left/Right keys, and horizontal drag. Drag behaves like an iPod wheel: covers follow continuously, fast flicks project momentum across multiple projects, and release snaps to the nearest projected cover. The first and last positions have a restrained edge resistance, do not loop, and never fade. Spatial transitions respect reduced motion.
 
 ## Motion
 

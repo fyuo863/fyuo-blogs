@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
 
+const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), maximum);
+
 function ProjectGrid({ projects = [] }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [dragOffset, setDragOffset] = useState(0);
@@ -10,6 +12,14 @@ function ProjectGrid({ projects = [] }) {
   const activeIndex = selectedIndex % projects.length;
   const activeProject = projects[activeIndex];
   const selectRelative = (direction) => setSelectedIndex((current) => Math.max(0, Math.min(projects.length - 1, current + direction)));
+
+  const getResistedOffset = (offset, step) => {
+    const minimum = -(projects.length - 1 - activeIndex) * step;
+    const maximum = activeIndex * step;
+    if (offset < minimum) return minimum + (offset - minimum) * 0.18;
+    if (offset > maximum) return maximum + (offset - maximum) * 0.18;
+    return offset;
+  };
 
   const onStageKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
@@ -24,23 +34,38 @@ function ProjectGrid({ projects = [] }) {
 
   const onPointerDown = (event) => {
     if (event.button !== 0) return;
-    dragRef.current = { pointerId: event.pointerId, startX: event.clientX };
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      lastX: event.clientX,
+      lastTime: event.timeStamp,
+      velocity: 0,
+      step: Math.max(72, event.currentTarget.clientWidth * 0.22),
+    };
     setIsDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
   };
 
   const onPointerMove = (event) => {
-    if (dragRef.current?.pointerId !== event.pointerId) return;
-    setDragOffset(event.clientX - dragRef.current.startX);
+    const drag = dragRef.current;
+    if (drag?.pointerId !== event.pointerId) return;
+    const elapsed = Math.max(1, event.timeStamp - drag.lastTime);
+    const instantVelocity = (event.clientX - drag.lastX) / elapsed;
+    drag.velocity = drag.velocity * 0.72 + instantVelocity * 0.28;
+    drag.lastX = event.clientX;
+    drag.lastTime = event.timeStamp;
+    setDragOffset(getResistedOffset(event.clientX - drag.startX, drag.step));
   };
 
   const finishDrag = (event, cancelled = false) => {
-    if (dragRef.current?.pointerId !== event.pointerId) return;
-    const delta = cancelled ? 0 : event.clientX - dragRef.current.startX;
-    const threshold = Math.max(48, event.currentTarget.clientWidth * 0.12);
-    suppressClickRef.current = Math.abs(delta) > 8;
+    const drag = dragRef.current;
+    if (drag?.pointerId !== event.pointerId) return;
+    const delta = cancelled ? 0 : event.clientX - drag.startX;
+    const projectedOffset = cancelled ? 0 : delta + drag.velocity * 240;
+    const targetIndex = clamp(activeIndex - Math.round(projectedOffset / drag.step), 0, projects.length - 1);
+    suppressClickRef.current = Math.abs(delta) > 8 || targetIndex !== activeIndex;
     if (suppressClickRef.current) window.setTimeout(() => { suppressClickRef.current = false; }, 0);
-    if (!cancelled && Math.abs(delta) >= threshold) selectRelative(delta > 0 ? -1 : 1);
+    if (!cancelled) setSelectedIndex(targetIndex);
     setDragOffset(0);
     setIsDragging(false);
     dragRef.current = null;
@@ -49,7 +74,7 @@ function ProjectGrid({ projects = [] }) {
 
   return (
     <section className="project-grid cover-flow" aria-label="Project cover flow">
-      <div className={`cover-flow__stage${isDragging ? " is-dragging" : ""}`} role="region" aria-label="Project covers. Drag horizontally or use left and right arrow keys to browse." tabIndex="0" onKeyDown={onStageKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={finishDrag} onPointerCancel={(event) => finishDrag(event, true)}>
+      <div className={`cover-flow__stage${isDragging ? " is-dragging" : ""}`} role="region" aria-roledescription="Cover flow" aria-label="Project covers. Drag horizontally to browse quickly, or use left and right arrow keys." tabIndex="0" onKeyDown={onStageKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={finishDrag} onPointerCancel={(event) => finishDrag(event, true)}>
         {projects.map((project, index) => {
           const offset = index - activeIndex;
           const distance = Math.abs(offset);

@@ -69,8 +69,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__stage { position: relative; height: clamp(31.5rem, 69vw, 52.5rem); overflow: clip; perspective: 93rem; touch-action: pan-y; transform-style: preserve-3d; outline: 0; cursor: grab; }
 .cover-flow__stage.is-dragging { cursor: grabbing; }
 .cover-flow__stage:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: -0.18rem; }
-.cover-flow__item { position: absolute; top: 50%; left: 50%; display: grid; width: clamp(14.25rem, 31.5vw, 24rem); aspect-ratio: 1; place-items: center; padding: 0; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); cursor: pointer; transform-style: preserve-3d; transition: transform var(--dur-medium) var(--ease-out); }
+.cover-flow__item { position: absolute; top: 50%; left: 50%; display: grid; width: clamp(14.25rem, 31.5vw, 24rem); aspect-ratio: 1; place-items: center; padding: 0; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); cursor: pointer; transform-style: preserve-3d; transition: transform calc(var(--dur-medium) + 120ms) var(--ease-out); will-change: transform; }
 .cover-flow__stage.is-dragging .cover-flow__item { transition: none; }
+.cover-flow__item:focus-visible, .cover-flow__button:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: 0.18rem; }
+.cover-flow__item:active { filter: contrast(0.96); }
 .cover-flow__item:nth-child(4n + 2) { background: var(--color-cobalt); }
 .cover-flow__item:nth-child(4n) { background: var(--color-paper-3); }
 .cover-flow__item[aria-pressed="true"] { background: var(--color-paper); }
@@ -84,6 +86,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__controls { display: flex; align-items: center; gap: var(--space-xs); }
 .cover-flow__button { display: grid; width: 2.75rem; min-height: 2.75rem; place-items: center; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); cursor: pointer; font-family: var(--font-outlier); font-size: var(--text-lg); line-height: 1; }
 .cover-flow__button:hover { background: var(--color-accent); }
+.cover-flow__button:active { transform: translateY(1px); }
 .cover-flow__button:disabled, .cover-flow__button:disabled:hover { border-color: var(--color-rule); background: var(--color-paper); color: var(--color-muted); cursor: not-allowed; }
 
 .blog-hero { padding: clamp(var(--space-2xl), 7vw, var(--space-4xl)) clamp(var(--space-sm), 7vw, var(--space-4xl)) var(--space-xl); border-bottom: var(--rule-hair) solid var(--color-ink); }
