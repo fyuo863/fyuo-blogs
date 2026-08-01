@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ChevronRight, Eye, KeyRound, Shield, X } from "lucide-react";
 import {
   createApiKey,
@@ -45,21 +45,31 @@ function VisitRecordPage({ open, token, onNotify, active }) {
 
   useEffect(() => {
     if (!open || !token || !active) return;
-    setLoading(true);
-    listVisitRecords(token, { sort })
-      .then((res) => setRecords(res.data?.data ?? []))
-      .catch((err) => {
-        onNotify?.({
-          variant: "error",
-          title: "visit-load-failed.",
-          message:
-            err.response?.data?.error ||
-            err.response?.data?.message ||
-            err.message ||
-            "访客记录加载失败。",
+    let cancelled = false;
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      listVisitRecords(token, { sort })
+        .then((res) => {
+          if (!cancelled) setRecords(res.data?.data ?? []);
+        })
+        .catch((err) => {
+          if (!cancelled) {
+            onNotify?.({
+              variant: "error",
+              title: "visit-load-failed.",
+              message: err.response?.data?.error || err.response?.data?.message || err.message || "访客记录加载失败。",
+            });
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
         });
-      })
-      .finally(() => setLoading(false));
+    }, 0);
+
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
   }, [open, token, sort, onNotify, active]);
 
   if (!active) return null;
@@ -169,7 +179,7 @@ function ApiKeyPage({ open, token, onNotify, active }) {
   const [form, setForm] = useState({ name: "", user_id: "" });
   const [freshKey, setFreshKey] = useState("");
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
     try {
@@ -192,12 +202,15 @@ function ApiKeyPage({ open, token, onNotify, active }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, onNotify]);
 
   useEffect(() => {
     if (!open || !token || !active) return;
-    load();
-  }, [open, token, active]);
+    const timer = window.setTimeout(() => {
+      void load();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [open, token, active, load]);
 
   const handleCreate = async (e) => {
     e.preventDefault();

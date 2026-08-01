@@ -1,171 +1,46 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import GithubIcon from "./GithubIcon";
 
 function Navbar({ visible }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === "/";
-
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isNavigating, setIsNavigating] = useState(false);
-
-  const homeRef = useRef(null);
-  const blogsRef = useRef(null);
   const menuRef = useRef(null);
-
-  const [indicatorStyle, setIndicatorStyle] = useState({
-    left: 0,
-    width: 0,
-  });
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
-    const activeEl = isHome ? homeRef.current : blogsRef.current;
-    if (!activeEl) return;
-
-    const { offsetLeft, offsetWidth } = activeEl;
-    const barWidth = offsetWidth * 0.6;
-    const barLeft = offsetLeft + (offsetWidth - barWidth) / 2;
-
-    setIndicatorStyle({
-      left: barLeft,
-      width: barWidth,
-    });
-  }, [isHome]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const closeOnOutsidePress = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
     };
 
-    document.addEventListener("mousedown", handler);
-
-    return () => {
-      document.removeEventListener("mousedown", handler);
-    };
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePress);
   }, []);
 
-  useEffect(() => {
-    setIsNavigating(false);
-  }, [location.pathname]);
-
-  const handleNav = (path) => {
+  const navigateTo = (path) => {
     setMenuOpen(false);
-
-    // 当前页面点击当前导航，不触发动画，不 navigate
-    if (path === location.pathname) {
-      return;
-    }
-
-    if (isNavigating) return;
-
-    setIsNavigating(true);
-    navigate(path);
+    if (path !== location.pathname) navigate(path);
   };
 
+  const navigation = (
+    <>
+      <button className="site-nav__link" type="button" aria-current={location.pathname === "/" ? "page" : undefined} onClick={() => navigateTo("/")}>home.</button>
+      <button className="site-nav__link" type="button" aria-current={location.pathname === "/blog" ? "page" : undefined} onClick={() => navigateTo("/blog")}>blogs.</button>
+    </>
+  );
+
   return (
-    <div
-      className={`fixed top-0 left-0 right-0 z-[110] px-4 py-6 sm:px-6 lg:px-8 transition-opacity duration-500 ease-out ${
-        visible ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
-    >
-      <div
-        className="absolute inset-0 backdrop-blur-md"
-        style={{
-          maskImage:
-            "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
-          WebkitMaskImage:
-            "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
-
-      <div className="relative flex items-center justify-between">
-        <button
-          onClick={() => handleNav("/")}
-          disabled={isNavigating}
-          className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors italic shrink-0 disabled:opacity-70"
-        >
-          fyuo-blogs.
-        </button>
-
-        <div className="absolute left-1/2 -translate-x-1/2">
-          <nav className="hidden md:flex relative items-center gap-6">
-            <button
-              ref={homeRef}
-              onClick={() => handleNav("/")}
-              disabled={isNavigating}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors disabled:opacity-70"
-            >
-              home.
-            </button>
-
-            <button
-              ref={blogsRef}
-              onClick={() => handleNav("/blog")}
-              disabled={isNavigating}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors disabled:opacity-70"
-            >
-              blogs.
-            </button>
-
-            <div
-              className="absolute -bottom-1 h-[3px] bg-white transition-all duration-300 ease-out"
-              style={{
-                left: indicatorStyle.left,
-                width: indicatorStyle.width,
-              }}
-            />
-          </nav>
-
-          <div className="md:hidden relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              disabled={isNavigating}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors disabled:opacity-70"
-            >
-              menu.
-            </button>
-
-            {menuOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-zinc-900 border border-zinc-700 shadow-2xl py-2 px-6 flex flex-col items-center gap-2 min-w-[120px]">
-                <button
-                  onClick={() => handleNav("/")}
-                  disabled={isNavigating}
-                  className={`text-lg font-bold tracking-tight transition-colors disabled:opacity-70 ${
-                    isHome ? "text-white" : "text-zinc-500 hover:text-white"
-                  }`}
-                >
-                  home.
-                </button>
-
-                <button
-                  onClick={() => handleNav("/blog")}
-                  disabled={isNavigating}
-                  className={`text-lg font-bold tracking-tight transition-colors disabled:opacity-70 ${
-                    !isHome ? "text-white" : "text-zinc-500 hover:text-white"
-                  }`}
-                >
-                  blogs.
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <a
-          href="https://github.com/fyuo863"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-500 hover:text-white transition-colors shrink-0"
-          aria-label="GitHub"
-        >
-          <GithubIcon size={20} />
-        </a>
+    <header className={`site-nav transition-opacity duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+      <button className="site-wordmark" type="button" onClick={() => navigateTo("/")}>fyuo-blogs.</button>
+      <nav className="site-nav__rail" aria-label="Primary navigation">{navigation}</nav>
+      <div className="relative" ref={menuRef}>
+        <button className="site-nav__menu" type="button" aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen((open) => !open)}>menu.</button>
+        {menuOpen && <nav className="site-nav__sheet" id="site-menu" aria-label="Mobile navigation">{navigation}</nav>}
       </div>
-    </div>
+      <a className="site-nav__github" href="https://github.com/fyuo863" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><GithubIcon size={20} /></a>
+    </header>
   );
 }
 

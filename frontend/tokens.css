@@ -1,0 +1,44 @@
+/* Hallmark · pre-emit critique: P5 H4 E4 S5 R4 V5
+ * genre: playful graphic lab · macrostructure: project poster wall · design-system: design.md
+ * contrast: pass (40–41) · motion: reduced-motion supported
+ */
+:root {
+  --color-paper: oklch(0.965 0.026 95);
+  --color-paper-soft: oklch(0.91 0.036 95);
+  --color-ink: oklch(0.16 0.042 275);
+  --color-ink-soft: oklch(0.24 0.048 275);
+  --color-ink-muted: oklch(0.57 0.055 275);
+  --color-rule: oklch(0.46 0.065 275);
+  --color-acid: oklch(0.9 0.205 125);
+  --color-coral: oklch(0.69 0.205 28);
+  --color-cobalt: oklch(0.59 0.2 275);
+  --color-focus: oklch(0.86 0.19 125);
+  --color-on-acid: oklch(0.16 0.042 275);
+  --font-display: "Archivo Black", "Arial Black", sans-serif;
+  --font-body: "Space Grotesk", "Segoe UI", sans-serif;
+  --font-mono: "DM Mono", "Cascadia Mono", monospace;
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+  --space-3xl: 7rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --text-display: clamp(3.25rem, 9vw, 8rem);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-short: 180ms;
+  --dur-medium: 360ms;
+  --radius-card: 1.25rem;
+  --radius-pill: 999px;
+  --pointer-x: 50vw;
+  --pointer-y: 20vh;
+}

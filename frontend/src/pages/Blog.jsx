@@ -90,25 +90,11 @@ function likeStorageKey(post) {
 function BackendOfflineNotice() {
   return (
     <PhysicsItem strength={0.75}>
-      <div className="px-[10%] py-10">
-        <div className="border border-zinc-800 bg-white/[0.03] px-6 py-5">
-          <div className="text-sm font-mono tracking-[0.25em] text-zinc-500 uppercase">
-            dev-backend-offline.
-          </div>
-
-          <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">
-            Backend is not connected.
-          </h2>
-
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
-            当前正在进行纯前端开发，博客数据接口暂不可用。启动后端服务后，
-            文章列表、搜索、点赞、浏览量和管理功能会恢复。
-          </p>
-
-          <div className="mt-5 rounded-sm bg-black/40 px-4 py-3 font-mono text-xs text-zinc-500 border border-zinc-900">
-            npm run dev only starts the frontend. Start the backend separately.
-          </div>
-        </div>
+      <div className="blog-empty" role="status">
+        <div className="blog-empty__label">archive temporarily unavailable.</div>
+        <h2>文章服务暂不可用。</h2>
+        <p>文章列表、搜索、点赞、浏览量和管理功能会在服务恢复后自动可用。页面其余内容仍然可以正常浏览。</p>
+        <code>API service is unavailable. Please try again shortly.</code>
       </div>
     </PhysicsItem>
   );
@@ -491,6 +477,8 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       ? [{ label: "create.", onClick: () => handleMenuAction("create") }]
       : currentMenu.map((item) => ({
           label: item.label,
+          // The editor ref is intentionally read only after this click.
+          // eslint-disable-next-line react-hooks/refs
           onClick: () => handleMenuAction(item.action),
         }))),
     ...drawerItems,
@@ -606,7 +594,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   };
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="blog-page">
       <PhysicsItem strength={0.8}>
         <AppDrawer
           user={user}
@@ -617,25 +605,19 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       </PhysicsItem>
 
       <PhysicsItem strength={1}>
-        <div className="border-t border-b border-zinc-800">
-          <header className="px-[10%] py-20">
-            <h1 className="text-5xl font-extrabold tracking-tighter text-white">
-              <span className="italic">Latest Updates</span>
-            </h1>
-            <p className="mt-6 text-lg font-bold text-white leading-relaxed">
-              All the latest blogs, straight from
-            </p>
-            <span className="text-lg font-extrabold tracking-tight text-white">
-              fyuo.
-            </span>
+        <div>
+          <header className="blog-hero">
+            <p className="blog-eyebrow">field notes / archive</p>
+            <h1 className="blog-title">Latest Updates</h1>
+            <p className="blog-lede">All the latest blogs, straight from fyuo.</p>
           </header>
         </div>
       </PhysicsItem>
 
       <PhysicsItem strength={0.9}>
-        <div className="border-t border-b border-zinc-800">
-          <div className="px-[10%] py-12">
-            <div className="flex flex-col gap-3 sm:flex-row">
+        <div className="blog-search-band">
+          <div>
+            <div className="blog-search-form">
               <div className="relative flex-1" ref={searchRef}>
                 <input
                   type="text"
@@ -655,7 +637,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
                       setShowDropdown(true);
                     }
                   }}
-                  className="w-full bg-white/5 py-3 pl-5 pr-5 text-sm text-white placeholder:text-zinc-500 border border-zinc-800 focus:border-zinc-600 focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60"
+                  className="blog-search-input w-full px-5 disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 {showDropdown && searchResults.length > 0 && (
@@ -681,7 +663,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
               <button
                 onClick={handleSearch}
                 disabled={backendOffline}
-                className="bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/20 active:bg-white/5 transition-colors shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
+                className="blog-search-button px-7 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 search.
               </button>

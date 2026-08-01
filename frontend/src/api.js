@@ -31,6 +31,7 @@ const offlineUnavailable = async (message = "Backend is offline.") => {
 export const isBackendOfflineError = (err) => {
   return Boolean(
     err?.isBackendOffline ||
+      (typeof err?.response?.status === "number" && err.response.status >= 500) ||
       err?.code === "ERR_NETWORK" ||
       err?.code === "ECONNABORTED" ||
       err?.message === "Network Error" ||

@@ -1,0 +1,7 @@
+{
+  "framework": "React 19 + Vite 8",
+  "styling": "Tailwind CSS 3 with token-led custom CSS",
+  "motion": "Framer Motion and Matter.js",
+  "design_system": "design.md",
+  "scanned_at": "2026-08-01"
+}

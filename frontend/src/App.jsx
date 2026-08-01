@@ -15,6 +15,7 @@ import SignInModal from "./components/SignInModal";
 import InfoModal from "./components/InfoModal";
 import AdminPanel from "./components/AdminPanel";
 import PhysicsPage from "./physics/PhysicsPage";
+import PointerField from "./components/PointerField";
 
 const PHYSICS_EVENT_NAME = "fyuo:route-physics-start";
 
@@ -118,7 +119,7 @@ function AppLayout({
     }
 
     const elapsed = Date.now() - splashStartRef.current;
-    const remaining = Math.max(0, 3000 - elapsed);
+    const remaining = Math.max(0, 900 - elapsed);
 
     const timer = setTimeout(() => {
       setSplashPhase("exiting");
@@ -147,7 +148,7 @@ function AppLayout({
     <>
       {isHome && splashPhase !== "done" && (
         <div
-          className={`fixed inset-0 z-[100] bg-black transition-opacity duration-[1000ms] ease-out ${
+          className={`fixed inset-0 z-[100] bg-black transition-opacity duration-[450ms] ease-out ${
             splashPhase === "exiting"
               ? "opacity-0 pointer-events-none"
               : "opacity-100"
@@ -162,7 +163,7 @@ function AppLayout({
 
       {isHome && splashPhase !== "done" && (
         <div
-          className={`fixed z-[110] italic transition-all duration-[1000ms] ease-out ${
+          className={`fixed z-[110] transition-all duration-[450ms] ease-out ${
             splashPhase === "exiting"
               ? "top-0 left-0 px-4 py-4 sm:px-6 lg:px-8"
               : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
@@ -170,24 +171,17 @@ function AppLayout({
         >
           <span
             className={`font-bold tracking-tight text-white select-none transition-all duration-[1000ms] ease-out ${
-              splashPhase === "exiting" ? "text-lg" : "text-7xl"
+              splashPhase === "exiting" ? "text-lg" : "text-6xl"
             }`}
           >
             {"fyuo-blogs.".split("").map((char, i) => (
               <span
                 key={`${char}-${i}`}
                 className={
-                  splashPhase === "visible"
-                    ? "inline-block animate-bounce"
-                    : "inline-block"
+                  "inline-block"
                 }
                 style={
-                  splashPhase === "visible"
-                    ? {
-                        animationDelay: `${i * 0.07}s`,
-                        transform: "translateY(-25%)",
-                      }
-                    : undefined
+                  splashPhase === "visible" ? { opacity: 0.86 + i * 0.01 } : undefined
                 }
               >
                 {char}
@@ -198,8 +192,9 @@ function AppLayout({
       )}
 
       <Navbar visible={showNav} />
+      <PointerField />
 
-      <div className="relative min-h-screen overflow-hidden bg-black">
+      <div className="app-shell">
         <AnimatePresence mode="sync" initial={false}>
           <PhysicsPage key={location.pathname}>
             <Routes location={location}>

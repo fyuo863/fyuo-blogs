@@ -223,8 +223,8 @@ export default function PhysicsPage({ children }) {
   return (
     <main
       ref={pageRef}
-      className={`absolute inset-x-0 top-0 min-h-screen bg-black ${
-        isPresent ? "z-10" : "z-30"
+      className={`page-shell ${
+        isPresent ? "relative z-10" : "absolute inset-x-0 top-0 z-30"
       }`}
     >
       {children}
