@@ -5,7 +5,7 @@ function ProjectGrid({ projects = [] }) {
   if (!projects.length) return null;
   const activeIndex = selectedIndex % projects.length;
   const activeProject = projects[activeIndex];
-  const selectRelative = (direction) => setSelectedIndex((current) => (current + direction + projects.length) % projects.length);
+  const selectRelative = (direction) => setSelectedIndex((current) => Math.max(0, Math.min(projects.length - 1, current + direction)));
 
   const onStageKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
@@ -22,13 +22,10 @@ function ProjectGrid({ projects = [] }) {
     <section className="project-grid cover-flow" aria-label="Project cover flow">
       <div className="cover-flow__stage" role="region" aria-label="Project covers. Use left and right arrow keys to browse." tabIndex="0" onKeyDown={onStageKeyDown}>
         {projects.map((project, index) => {
-          let offset = index - activeIndex;
-          if (offset > projects.length / 2) offset -= projects.length;
-          if (offset < -projects.length / 2) offset += projects.length;
+          const offset = index - activeIndex;
           const distance = Math.abs(offset);
           const turn = offset === 0 ? 0 : offset > 0 ? -54 : 54;
           const style = {
-            opacity: Math.max(0.18, 1 - distance * 0.16),
             transform: `translate(-50%, -50%) translateX(${offset * 68}%) translateZ(${-distance * 5.5}rem) rotateY(${turn}deg) scale(${Math.max(0.58, 1 - distance * 0.11)})`,
             zIndex: projects.length - distance,
           };
@@ -59,8 +56,8 @@ function ProjectGrid({ projects = [] }) {
           {activeProject.linkUrl && <a className="cover-flow__open" href={activeProject.linkUrl} target="_blank" rel="noopener noreferrer">open project ↗</a>}
         </div>
         <div className="cover-flow__controls" aria-label="Project navigation">
-          <button className="cover-flow__button" type="button" onClick={() => selectRelative(-1)} aria-label="Previous project">←</button>
-          <button className="cover-flow__button" type="button" onClick={() => selectRelative(1)} aria-label="Next project">→</button>
+          <button className="cover-flow__button" type="button" onClick={() => selectRelative(-1)} aria-label="Previous project" disabled={activeIndex === 0}>←</button>
+          <button className="cover-flow__button" type="button" onClick={() => selectRelative(1)} aria-label="Next project" disabled={activeIndex === projects.length - 1}>→</button>
         </div>
       </div>
     </section>
