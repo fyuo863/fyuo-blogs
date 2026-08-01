@@ -35,8 +35,56 @@ function HalftoneTitle({ id, children }) {
     };
     const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
     const revealRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-reveal-radius")) || 180;
-    const state = { width: 0, height: 0, points: [], pointer: { x: 0, y: 0, active: false }, visible: true, frame: 0 };
-    const canTrackPointer = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const waveCadence = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-cadence")) || 1150;
+    const waveSpeed = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-speed")) || 0.14;
+    const waveDamping = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-damping")) || 0.992;
+    const state = {
+      width: 0,
+      height: 0,
+      points: [],
+      pointer: { x: 0, y: 0, active: false },
+      visible: true,
+      frame: 0,
+      animation: 0,
+      lastFrame: 0,
+      wave: null,
+    };
+    const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const canTrackPointer = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReducedMotion();
+
+    const injectWave = (timestamp) => {
+      const wave = state.wave;
+      if (!wave || timestamp - wave.lastImpulse < waveCadence) return;
+
+      wave.lastImpulse = timestamp;
+      const sourceRow = 2 + Math.round(((Math.sin(timestamp / 620) + 1) / 2) * (wave.rows - 5));
+      for (let row = Math.max(1, sourceRow - 2); row <= Math.min(wave.rows - 2, sourceRow + 2); row += 1) {
+        for (let column = 1; column <= 3; column += 1) {
+          const distance = Math.hypot(column - 1, row - sourceRow);
+          if (distance > 2.5) continue;
+          wave.current[row * wave.columns + column] += (1 - distance / 2.5) * 1.1;
+        }
+      }
+    };
+
+    const advanceWave = (timestamp) => {
+      const wave = state.wave;
+      if (!wave) return;
+      injectWave(timestamp);
+
+      for (let row = 1; row < wave.rows - 1; row += 1) {
+        for (let column = 1; column < wave.columns - 1; column += 1) {
+          const index = row * wave.columns + column;
+          const laplacian = wave.current[index - 1] + wave.current[index + 1] + wave.current[index - wave.columns] + wave.current[index + wave.columns] - 4 * wave.current[index];
+          const edgeDistance = Math.min(row, column, wave.rows - 1 - row, wave.columns - 1 - column);
+          const edgeDamping = edgeDistance < 4 ? 0.94 + edgeDistance * 0.014 : 1;
+          wave.next[index] = (2 * wave.current[index] - wave.previous[index] + laplacian * waveSpeed) * waveDamping * edgeDamping;
+        }
+      }
+
+      [wave.previous, wave.current, wave.next] = [wave.current, wave.next, wave.previous];
+      wave.next.fill(0);
+    };
 
     const draw = () => {
       if (!state.width || !state.height) return;
@@ -49,7 +97,8 @@ function HalftoneTitle({ id, children }) {
         const distance = Math.hypot(point.x - state.pointer.x, point.y - state.pointer.y);
         const proximity = state.pointer.active ? Math.max(0, 1 - distance / revealRadius) : 0;
         const eased = proximity * proximity * (3 - 2 * proximity);
-        const radius = cellSize * (0.78 - eased * 0.63);
+        const waveHeight = state.wave?.current[point.waveIndex] || 0;
+        const radius = cellSize * Math.max(0.14, Math.min(0.92, 0.78 - eased * 0.63 - waveHeight * 0.18));
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
         context.fill();
@@ -65,8 +114,24 @@ function HalftoneTitle({ id, children }) {
       canvas.height = Math.round(state.height * scale);
       context.setTransform(scale, 0, 0, scale, 0, 0);
       state.points = [];
+      const columns = Math.ceil(state.width / cellSize) + 2;
+      const rows = Math.ceil(state.height / cellSize) + 2;
+      state.wave = {
+        columns,
+        rows,
+        previous: new Float32Array(columns * rows),
+        current: new Float32Array(columns * rows),
+        next: new Float32Array(columns * rows),
+        lastImpulse: Number.NEGATIVE_INFINITY,
+      };
+      let row = 1;
       for (let y = cellSize / 2; y < state.height + cellSize; y += cellSize) {
-        for (let x = cellSize / 2; x < state.width + cellSize; x += cellSize) state.points.push({ x, y });
+        let column = 1;
+        for (let x = cellSize / 2; x < state.width + cellSize; x += cellSize) {
+          state.points.push({ x, y, waveIndex: row * columns + column });
+          column += 1;
+        }
+        row += 1;
       }
       draw();
     };
@@ -82,16 +147,40 @@ function HalftoneTitle({ id, children }) {
       requestDraw();
     };
     const onPointerLeave = () => { state.pointer.active = false; requestDraw(); };
+    const animate = (timestamp) => {
+      if (!state.visible || prefersReducedMotion()) {
+        state.animation = 0;
+        return;
+      }
+      if (state.lastFrame) advanceWave(timestamp);
+      state.lastFrame = timestamp;
+      draw();
+      state.animation = window.requestAnimationFrame(animate);
+    };
+    const startAnimation = () => {
+      if (!state.animation && state.visible && !prefersReducedMotion()) {
+        state.lastFrame = 0;
+        state.animation = window.requestAnimationFrame(animate);
+      }
+    };
     const resizeObserver = new ResizeObserver(resize);
-    const intersectionObserver = new IntersectionObserver(([entry]) => { state.visible = entry.isIntersecting; if (state.visible) draw(); }, { threshold: 0.01 });
+    const intersectionObserver = new IntersectionObserver(([entry]) => {
+      state.visible = entry.isIntersecting;
+      if (state.visible) {
+        draw();
+        startAnimation();
+      }
+    }, { threshold: 0.01 });
 
     resizeObserver.observe(title);
     intersectionObserver.observe(title);
     title.addEventListener("pointermove", onPointerMove, { passive: true });
     title.addEventListener("pointerleave", onPointerLeave, { passive: true });
     resize();
+    startAnimation();
     return () => {
       if (state.frame) window.cancelAnimationFrame(state.frame);
+      if (state.animation) window.cancelAnimationFrame(state.animation);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       title.removeEventListener("pointermove", onPointerMove);
