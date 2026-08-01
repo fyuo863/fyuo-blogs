@@ -33,8 +33,8 @@ function Navbar({ visible }) {
 
   return (
     <header className={`site-nav transition-opacity duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-      <span className="site-nav__edition">fyuo863 / 2026</span>
-      <button className="site-wordmark" type="button" onClick={() => navigateTo("/")}>FYUO863</button>
+      <span className="site-nav__edition">fyuo<sub className="brand-subscript">863</sub> / 2026</span>
+      <button className="site-wordmark" type="button" onClick={() => navigateTo("/")}>FYUO<sub className="brand-subscript">863</sub></button>
       <div className="site-nav__actions">
         <nav className="site-nav__rail" aria-label="Primary navigation">{navigation}</nav>
         <div className="relative" ref={menuRef}>

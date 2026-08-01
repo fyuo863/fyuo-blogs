@@ -18,6 +18,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .site-nav__edition, .site-nav__link, .site-nav__menu, .site-nav__github, .drawer-toggle, .drawer-item { font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase; }
 .site-nav__edition { color: var(--color-muted); }
 .site-wordmark { margin: 0; padding: 0; border: 0; background: transparent; color: var(--color-ink); font-family: var(--font-display); font-size: clamp(1.65rem, 3vw, 2.3rem); font-weight: 800; letter-spacing: -0.08em; line-height: 0.9; cursor: pointer; white-space: nowrap; }
+.brand-subscript { margin-left: 0.035em; font-family: var(--font-outlier); font-size: 0.34em; font-weight: 500; letter-spacing: -0.04em; line-height: 1; vertical-align: sub; }
+.site-nav__edition .brand-subscript { font-family: inherit; font-size: 0.72em; }
 .site-nav__actions { display: flex; align-items: center; justify-self: end; gap: var(--space-md); }
 .site-nav__rail { display: flex; justify-content: flex-end; gap: var(--space-md); }
 .site-nav__link, .site-nav__menu, .site-nav__github { border: 0; background: transparent; color: var(--color-ink); text-decoration: none; cursor: pointer; white-space: nowrap; }
