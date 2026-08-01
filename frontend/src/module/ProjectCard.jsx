@@ -1,4 +1,4 @@
-function ProjectCard({ image, title, description, linkUrl, index, page }) {
+function ProjectCard({ image, title, description, linkUrl, index }) {
   const content = (
     <>
       <div className="project-card__image">
@@ -12,9 +12,8 @@ function ProjectCard({ image, title, description, linkUrl, index, page }) {
     </>
   );
 
-  const className = `project-card project-card--${page}`;
-  if (!linkUrl) return <article className={className}>{content}</article>;
-  return <a className={className} href={linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>;
+  if (!linkUrl) return <article className="project-card">{content}</article>;
+  return <a className="project-card" href={linkUrl} target="_blank" rel="noopener noreferrer">{content}</a>;
 }
 
 export default ProjectCard;
