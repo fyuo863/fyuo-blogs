@@ -1,7 +1,7 @@
 /* Hallmark · genre: editorial · macrostructure: Portfolio Grid / Long Document · design-system: design.md
  * theme: custom · vibe: "magazine portfolio, generous whitespace, bold contrast" · paper: oklch(0.97 0.014 82) · accent: oklch(0.63 0.21 30)
  * display: Bricolage Grotesque · body: Newsreader · axes: light / display-heavy / warm · studied: no
- * pre-emit critique: P5 H5 E5 S5 R5 V5 · contrast: pass (40–41) · title: fixed-dot radius reveal
+ * pre-emit critique: P5 H5 E5 S5 R5 V5 · contrast: pass (40–41) · title: fixed-dot reveal + one-second character marker
  */
 :root {
   --color-paper: oklch(0.97 0.014 82);

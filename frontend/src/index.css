@@ -33,8 +33,10 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-title--halftone { position: relative; isolation: isolate; overflow: clip; background: var(--color-paper); }
 .halftone-title__canvas { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; pointer-events: none; }
 .cover-title__text { position: relative; z-index: 1; display: block; }
-.cover-title__text > span { display: block; }
-.cover-title__text > span:last-child { color: var(--color-ink); padding-left: clamp(var(--space-lg), 12vw, var(--space-4xl)); }
+.cover-title__line { display: block; }
+.cover-title__line:last-child { color: var(--color-ink); padding-left: clamp(var(--space-lg), 12vw, var(--space-4xl)); }
+.halftone-title__character { position: relative; z-index: 1; display: inline-block; }
+.halftone-title__character.is-selected::before { content: ""; position: absolute; z-index: -1; inset: -0.12em -0.045em; background: var(--color-accent); }
 .cover-deck { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--space-lg); max-width: 65rem; }
 .cover-deck p { max-width: 28ch; margin: 0; font-size: var(--text-xl); line-height: 1.16; }
 .cover-link { display: inline-flex; min-height: 2.75rem; align-items: center; padding: var(--space-xs) var(--space-md); background: var(--color-accent); color: var(--color-accent-ink); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.05em; text-decoration: none; text-transform: uppercase; white-space: nowrap; transition: transform var(--dur-short) var(--ease-out); }

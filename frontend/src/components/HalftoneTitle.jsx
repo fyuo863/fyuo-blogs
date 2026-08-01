@@ -1,8 +1,26 @@
-import { useEffect, useRef } from "react";
+import { Children, useEffect, useRef, useState } from "react";
 
 function HalftoneTitle({ id, children }) {
   const titleRef = useRef(null);
   const canvasRef = useRef(null);
+  const lines = Children.toArray(children).map((child) => (
+    typeof child === "string" ? child : String(child.props?.children ?? "")
+  ));
+  const selectableCount = lines.join("").replace(/\s/g, "").length;
+  const [selectedCharacter, setSelectedCharacter] = useState(0);
+
+  useEffect(() => {
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (reduceMotion.matches || selectableCount < 2) {
+      return undefined;
+    }
+
+    const interval = window.setInterval(() => {
+      setSelectedCharacter((current) => (current + 1) % selectableCount);
+    }, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [selectableCount]);
 
   useEffect(() => {
     const title = titleRef.current;
@@ -81,7 +99,22 @@ function HalftoneTitle({ id, children }) {
     };
   }, []);
 
-  return <h1 className="cover-title cover-title--halftone" id={id} ref={titleRef}><canvas ref={canvasRef} className="halftone-title__canvas" aria-hidden="true" /><span className="cover-title__text">{children}</span></h1>;
+  let sequenceIndex = 0;
+  return (
+    <h1 className="cover-title cover-title--halftone" id={id} ref={titleRef}>
+      <canvas ref={canvasRef} className="halftone-title__canvas" aria-hidden="true" />
+      <span className="cover-title__text">
+        {lines.map((line, lineIndex) => (
+          <span className="cover-title__line" key={`${line}-${lineIndex}`}>
+            {Array.from(line).map((character, characterIndex) => {
+              const index = character.trim() ? sequenceIndex++ : -1;
+              return <span className={`halftone-title__character${index === selectedCharacter ? " is-selected" : ""}`} key={`${character}-${characterIndex}`}>{character || "\u00a0"}</span>;
+            })}
+          </span>
+        ))}
+      </span>
+    </h1>
+  );
 }
 
 export default HalftoneTitle;
