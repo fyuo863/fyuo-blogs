@@ -23,10 +23,11 @@ Dark indigo ink is the stable field. Acid green, coral, and cobalt act as small,
 
 ## Motion
 
-- Pointer field: a local, low-opacity colour halo and moire offset on fine pointers only.
-- Entry: short opacity and translate reveal.
+- Generative field: the home masthead owns a Canvas 2D dot field with two low-opacity moire passes. It is deterministic at rest and only ripples briefly under a fine pointer.
+- Runtime guardrails: animation runs only while the masthead is visible and the tab is active; it pauses immediately when either condition changes.
+- Entry: a short opacity and translate reveal may use a native CSS view timeline when available, with the static composition as the baseline.
 - Exit: existing physics transition remains.
-- Reduced motion: no pointer field or spatial animation.
+- Reduced motion: the masthead retains a static generated texture; no pointer or spatial animation runs.
 
 ## Interaction stance
 
@@ -38,4 +39,5 @@ Dark indigo ink is the stable field. Acid green, coral, and cobalt act as small,
 
 - All colours and font choices originate in `tokens.css`.
 - Decorative textures stay below 10% opacity and never obscure text.
+- Generated visual layers are `aria-hidden`, pointer-transparent, and never carry content or controls.
 - Project names, descriptions, routes, authentication, and API behavior remain unchanged.

@@ -1,6 +1,7 @@
 import FeatureCard from "../module/FeatureCard";
 import ProjectGrid from "../module/ProjectGrid";
 import AppDrawer from "../components/AppDrawer";
+import GenerativeField from "../components/GenerativeField";
 import PhysicsItem from "../physics/PhysicsItem";
 
 const PROJECTS = [
@@ -17,13 +18,14 @@ function Home({ user, onOpenSignIn, drawerItems }) {
     <div className="home-page">
       <PhysicsItem strength={0.75}>
         <section className="home-hero" aria-labelledby="home-title">
-          <div>
+          <GenerativeField />
+          <div className="home-hero__primary">
             <p className="home-kicker">independent projects / notes / experiments</p>
             <h1 className="home-title" id="home-title">fyuo builds in public.</h1>
           </div>
-          <div>
+          <div className="home-hero__secondary">
             <p className="home-intro">一组持续生长的工具、Agent 与技术笔记。</p>
-            <span className="home-mark">scroll for selected work ↓</span>
+            <a className="home-mark" href="#projects">scroll for selected work ↓</a>
           </div>
         </section>
       </PhysicsItem>
@@ -35,7 +37,7 @@ function Home({ user, onOpenSignIn, drawerItems }) {
       </PhysicsItem>
 
       <PhysicsItem strength={1}>
-        <section className="projects-section" aria-labelledby="projects-title">
+        <section className="projects-section" id="projects" aria-labelledby="projects-title">
           <header className="section-head">
             <div><p className="section-kicker">selected work / 02—07</p><h2 className="section-title" id="projects-title">projects.</h2></div>
             <p className="section-note">每张卡片都通往对应的 GitHub 项目。</p>

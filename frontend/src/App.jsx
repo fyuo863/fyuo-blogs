@@ -128,6 +128,19 @@ function AppLayout({
     return () => clearTimeout(timer);
   }, [isHome, splashPhase]);
 
+  useEffect(() => {
+    if (splashPhase !== "exiting") {
+      return undefined;
+    }
+
+    // Reduced-motion environments can suppress transitionend entirely.
+    const fallback = window.setTimeout(() => {
+      splashPlayedRef.current = true;
+      setSplashPhase("done");
+    }, 520);
+    return () => window.clearTimeout(fallback);
+  }, [splashPhase]);
+
   const handleSplashDone = () => {
     splashPlayedRef.current = true;
     setSplashPhase("done");

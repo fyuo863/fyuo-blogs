@@ -1,6 +1,14 @@
 [
   {
     "date": "2026-08-01",
+    "scope": "home masthead",
+    "genre": "playful graphic lab",
+    "theme": "custom graphic lab",
+    "macrostructure": "Project Poster Wall / Long Document",
+    "brief": "Add a deterministic Canvas 2D dot-and-moire field that responds briefly to a fine pointer, pauses out of view, and remains static for reduced motion."
+  },
+  {
+    "date": "2026-08-01",
     "scope": "app",
     "genre": "playful graphic lab",
     "theme": "custom graphic lab",
