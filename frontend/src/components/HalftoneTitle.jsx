@@ -26,7 +26,8 @@ function HalftoneTitle({ id, children }) {
     const title = titleRef.current;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
-    if (!title || !canvas || !context) return undefined;
+    const surface = title?.closest(".home-cover");
+    if (!title || !canvas || !context || !surface) return undefined;
 
     const rootStyles = getComputedStyle(document.documentElement);
     const colors = {
@@ -43,6 +44,7 @@ function HalftoneTitle({ id, children }) {
     const state = {
       width: 0,
       height: 0,
+      titleBounds: { x: 0, y: 0, width: 0, height: 0 },
       points: [],
       pointer: { x: 0, y: 0, active: false },
       visible: true,
@@ -54,6 +56,21 @@ function HalftoneTitle({ id, children }) {
     const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const canTrackPointer = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReducedMotion();
 
+    const injectWaveAt = (x, y, strength = waveStrength) => {
+      const wave = state.wave;
+      if (!wave) return;
+
+      const sourceColumn = Math.max(1, Math.min(wave.columns - 2, Math.round((x - cellSize / 2) / cellSize) + 1));
+      const sourceRow = Math.max(1, Math.min(wave.rows - 2, Math.round((y - cellSize / 2) / cellSize) + 1));
+      for (let row = Math.max(1, sourceRow - 3); row <= Math.min(wave.rows - 2, sourceRow + 3); row += 1) {
+        for (let column = Math.max(1, sourceColumn - 3); column <= Math.min(wave.columns - 2, sourceColumn + 3); column += 1) {
+          const distance = Math.hypot(column - sourceColumn, row - sourceRow);
+          if (distance > 3.5) continue;
+          wave.current[row * wave.columns + column] -= (1 - distance / 3.5) * strength;
+        }
+      }
+    };
+
     const injectWave = (timestamp) => {
       const wave = state.wave;
       if (!wave || timestamp < wave.nextImpulse) return;
@@ -61,13 +78,7 @@ function HalftoneTitle({ id, children }) {
       wave.lastImpulse = timestamp;
       wave.nextImpulse = timestamp + waveIntervalMin + Math.random() * (waveIntervalMax - waveIntervalMin);
       const sourceRow = 2 + Math.round(((Math.sin(timestamp / 620) + 1) / 2) * (wave.rows - 5));
-      for (let row = Math.max(1, sourceRow - 3); row <= Math.min(wave.rows - 2, sourceRow + 3); row += 1) {
-        for (let column = 1; column <= 4; column += 1) {
-          const distance = Math.hypot(column - 1, row - sourceRow);
-          if (distance > 3.5) continue;
-          wave.current[row * wave.columns + column] += (1 - distance / 3.5) * waveStrength;
-        }
-      }
+      injectWaveAt(cellSize / 2, sourceRow * cellSize - cellSize / 2);
     };
 
     const advanceWave = (timestamp) => {
@@ -101,7 +112,9 @@ function HalftoneTitle({ id, children }) {
         const proximity = state.pointer.active ? Math.max(0, 1 - distance / revealRadius) : 0;
         const eased = proximity * proximity * (3 - 2 * proximity);
         const waveHeight = state.wave?.current[point.waveIndex] || 0;
-        const radius = cellSize * Math.max(0.12, Math.min(0.96, 0.39 - eased * 0.63 + waveHeight * 0.27));
+        const withinTitle = point.x >= state.titleBounds.x && point.x <= state.titleBounds.x + state.titleBounds.width && point.y >= state.titleBounds.y && point.y <= state.titleBounds.y + state.titleBounds.height;
+        const baseRadius = withinTitle ? 0.39 : 0.78;
+        const radius = cellSize * Math.max(0.12, Math.min(0.96, baseRadius - eased * 0.63 + waveHeight * 0.27));
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
         context.fill();
@@ -109,10 +122,17 @@ function HalftoneTitle({ id, children }) {
     };
 
     const resize = () => {
-      const bounds = title.getBoundingClientRect();
+      const bounds = surface.getBoundingClientRect();
+      const titleBox = title.getBoundingClientRect();
       const scale = Math.min(window.devicePixelRatio || 1, 1.5);
       state.width = Math.max(1, bounds.width);
       state.height = Math.max(1, bounds.height);
+      state.titleBounds = {
+        x: titleBox.left - bounds.left,
+        y: titleBox.top - bounds.top,
+        width: titleBox.width,
+        height: titleBox.height,
+      };
       canvas.width = Math.round(state.width * scale);
       canvas.height = Math.round(state.height * scale);
       context.setTransform(scale, 0, 0, scale, 0, 0);
@@ -146,11 +166,17 @@ function HalftoneTitle({ id, children }) {
     };
     const onPointerMove = (event) => {
       if (!canTrackPointer()) return;
-      const bounds = title.getBoundingClientRect();
+      const bounds = surface.getBoundingClientRect();
       state.pointer = { x: event.clientX - bounds.left, y: event.clientY - bounds.top, active: true };
       requestDraw();
     };
     const onPointerLeave = () => { state.pointer.active = false; requestDraw(); };
+    const onPointerDown = (event) => {
+      if (prefersReducedMotion()) return;
+      const bounds = surface.getBoundingClientRect();
+      injectWaveAt(event.clientX - bounds.left, event.clientY - bounds.top, waveStrength * 1.2);
+      requestDraw();
+    };
     const animate = (timestamp) => {
       if (!state.visible || prefersReducedMotion()) {
         state.animation = 0;
@@ -176,10 +202,12 @@ function HalftoneTitle({ id, children }) {
       }
     }, { threshold: 0.01 });
 
+    resizeObserver.observe(surface);
     resizeObserver.observe(title);
-    intersectionObserver.observe(title);
-    title.addEventListener("pointermove", onPointerMove, { passive: true });
-    title.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    intersectionObserver.observe(surface);
+    surface.addEventListener("pointermove", onPointerMove, { passive: true });
+    surface.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    surface.addEventListener("pointerdown", onPointerDown, { passive: true });
     resize();
     startAnimation();
     return () => {
@@ -187,8 +215,9 @@ function HalftoneTitle({ id, children }) {
       if (state.animation) window.cancelAnimationFrame(state.animation);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
-      title.removeEventListener("pointermove", onPointerMove);
-      title.removeEventListener("pointerleave", onPointerLeave);
+      surface.removeEventListener("pointermove", onPointerMove);
+      surface.removeEventListener("pointerleave", onPointerLeave);
+      surface.removeEventListener("pointerdown", onPointerDown);
     };
   }, []);
 
