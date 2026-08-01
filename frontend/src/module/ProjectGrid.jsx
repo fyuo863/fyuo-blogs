@@ -26,7 +26,7 @@ function ProjectGrid({ projects = [] }) {
           const distance = Math.abs(offset);
           const turn = offset === 0 ? 0 : offset > 0 ? -68 : 68;
           const style = {
-            transform: `translate(-50%, -50%) translateX(${offset * 52}%) translateZ(${-distance * 5.5}rem) rotateY(${turn}deg) scale(${Math.max(0.58, 1 - distance * 0.11)})`,
+            transform: `translate(-50%, -50%) translateX(${offset * 66}%) translateZ(${-distance * 5.5}rem) rotateY(${turn}deg) scale(${Math.max(0.7, 1 - distance * 0.07)})`,
             zIndex: projects.length - distance,
           };
 
