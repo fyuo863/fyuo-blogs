@@ -4,7 +4,6 @@ const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), ma
 
 function ProjectGrid({ projects = [] }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
   const dragRef = useRef(null);
   const suppressClickRef = useRef(false);
@@ -12,14 +11,6 @@ function ProjectGrid({ projects = [] }) {
   const activeIndex = selectedIndex % projects.length;
   const activeProject = projects[activeIndex];
   const selectRelative = (direction) => setSelectedIndex((current) => Math.max(0, Math.min(projects.length - 1, current + direction)));
-
-  const getResistedOffset = (offset, step) => {
-    const minimum = -(projects.length - 1 - activeIndex) * step;
-    const maximum = activeIndex * step;
-    if (offset < minimum) return minimum + (offset - minimum) * 0.18;
-    if (offset > maximum) return maximum + (offset - maximum) * 0.18;
-    return offset;
-  };
 
   const onStageKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
@@ -41,6 +32,7 @@ function ProjectGrid({ projects = [] }) {
       lastTime: event.timeStamp,
       velocity: 0,
       step: Math.max(72, event.currentTarget.clientWidth * 0.22),
+      startIndex: activeIndex,
     };
     setIsDragging(true);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -54,7 +46,8 @@ function ProjectGrid({ projects = [] }) {
     drag.velocity = drag.velocity * 0.72 + instantVelocity * 0.28;
     drag.lastX = event.clientX;
     drag.lastTime = event.timeStamp;
-    setDragOffset(getResistedOffset(event.clientX - drag.startX, drag.step));
+    const targetIndex = clamp(drag.startIndex - Math.round((event.clientX - drag.startX) / drag.step), 0, projects.length - 1);
+    setSelectedIndex((current) => current === targetIndex ? current : targetIndex);
   };
 
   const finishDrag = (event, cancelled = false) => {
@@ -62,11 +55,10 @@ function ProjectGrid({ projects = [] }) {
     if (drag?.pointerId !== event.pointerId) return;
     const delta = cancelled ? 0 : event.clientX - drag.startX;
     const projectedOffset = cancelled ? 0 : delta + drag.velocity * 240;
-    const targetIndex = clamp(activeIndex - Math.round(projectedOffset / drag.step), 0, projects.length - 1);
-    suppressClickRef.current = Math.abs(delta) > 8 || targetIndex !== activeIndex;
+    const targetIndex = clamp(drag.startIndex - Math.round(projectedOffset / drag.step), 0, projects.length - 1);
+    suppressClickRef.current = Math.abs(delta) > 8 || targetIndex !== drag.startIndex;
     if (suppressClickRef.current) window.setTimeout(() => { suppressClickRef.current = false; }, 0);
     if (!cancelled) setSelectedIndex(targetIndex);
-    setDragOffset(0);
     setIsDragging(false);
     dragRef.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -81,7 +73,7 @@ function ProjectGrid({ projects = [] }) {
           const turn = offset === 0 ? 0 : offset > 0 ? -68 : 68;
           const horizontalOffset = Math.sign(offset) * 198 * (1 - (2 / 3) ** distance);
           const style = {
-            transform: `translate(-50%, -50%) translateX(${horizontalOffset}%) translateX(${dragOffset}px) translateZ(${-distance * 5.5}rem) rotateY(${turn}deg) scale(${Math.max(0.7, 1 - distance * 0.07)})`,
+            transform: `translate(-50%, -50%) translateX(${horizontalOffset}%) translateZ(${-distance * 5.5}rem) rotateY(${turn}deg) scale(${Math.max(0.7, 1 - distance * 0.07)})`,
             zIndex: projects.length - distance,
           };
 
