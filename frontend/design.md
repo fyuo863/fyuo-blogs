@@ -30,8 +30,8 @@ Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is s
 ## Project index
 
 - The cover story remains the lone lead feature.
-- Selected work is a static iPod-style album library: square project covers form a 2 / 3 / 4-column grid, with the project name and liner note beneath each cover.
-- The library is intentionally interaction-light for now; future Cover Flow or wheel-like navigation must remain optional and respect reduced motion.
+- Selected work uses iPod-style Cover Flow: one centred project cover sits forward while adjacent covers recede and rotate inward. The selected project’s title, liner note, and external link live in a separate caption strip.
+- Selection works with cover clicks, previous/next controls, and Left/Right keys; spatial transitions respect reduced motion.
 
 ## Motion
 
