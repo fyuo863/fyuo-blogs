@@ -112,9 +112,7 @@ function HalftoneTitle({ id, children }) {
         const proximity = state.pointer.active ? Math.max(0, 1 - distance / revealRadius) : 0;
         const eased = proximity * proximity * (3 - 2 * proximity);
         const waveHeight = state.wave?.current[point.waveIndex] || 0;
-        const withinTitle = point.x >= state.titleBounds.x && point.x <= state.titleBounds.x + state.titleBounds.width && point.y >= state.titleBounds.y && point.y <= state.titleBounds.y + state.titleBounds.height;
-        const baseRadius = withinTitle ? 0.39 : 0.78;
-        const radius = cellSize * Math.max(0.12, Math.min(0.96, baseRadius - eased * 0.63 + waveHeight * 0.27));
+        const radius = cellSize * Math.max(0.12, Math.min(0.96, point.baseRadius - eased * 0.63 + waveHeight * 0.27));
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
         context.fill();
@@ -148,14 +146,21 @@ function HalftoneTitle({ id, children }) {
         lastImpulse: Number.NEGATIVE_INFINITY,
         nextImpulse: 0,
       };
-      let row = 1;
       for (let y = cellSize / 2; y < state.height + cellSize; y += cellSize) {
-        let column = 1;
+        const row = Math.max(1, Math.min(rows - 2, Math.round((y - cellSize / 2) / cellSize) + 1));
         for (let x = cellSize / 2; x < state.width + cellSize; x += cellSize) {
-          state.points.push({ x, y, waveIndex: row * columns + column });
-          column += 1;
+          const withinTitle = x >= state.titleBounds.x && x <= state.titleBounds.x + state.titleBounds.width && y >= state.titleBounds.y && y <= state.titleBounds.y + state.titleBounds.height;
+          if (withinTitle) continue;
+          const column = Math.max(1, Math.min(columns - 2, Math.round((x - cellSize / 2) / cellSize) + 1));
+          state.points.push({ x, y, baseRadius: 0.78, waveIndex: row * columns + column });
         }
-        row += 1;
+      }
+      for (let y = state.titleBounds.y + cellSize / 2; y < state.titleBounds.y + state.titleBounds.height; y += cellSize) {
+        const row = Math.max(1, Math.min(rows - 2, Math.round((y - cellSize / 2) / cellSize) + 1));
+        for (let x = state.titleBounds.x + cellSize / 2; x < state.titleBounds.x + state.titleBounds.width; x += cellSize) {
+          const column = Math.max(1, Math.min(columns - 2, Math.round((x - cellSize / 2) / cellSize) + 1));
+          state.points.push({ x, y, baseRadius: 0.39, waveIndex: row * columns + column });
+        }
       }
       draw();
     };
