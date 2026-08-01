@@ -33,14 +33,16 @@ function Navbar({ visible }) {
 
   return (
     <header className={`site-nav transition-opacity duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}>
-      <span className="site-nav__edition">fyuo / 2026</span>
-      <button className="site-wordmark" type="button" onClick={() => navigateTo("/")}>FYUO</button>
-      <nav className="site-nav__rail" aria-label="Primary navigation">{navigation}</nav>
-      <div className="relative" ref={menuRef}>
-        <button className="site-nav__menu" type="button" aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen((open) => !open)}>menu</button>
-        {menuOpen && <nav className="site-nav__sheet" id="site-menu" aria-label="Mobile navigation">{navigation}</nav>}
+      <span className="site-nav__edition">fyuo863 / 2026</span>
+      <button className="site-wordmark" type="button" onClick={() => navigateTo("/")}>FYUO863</button>
+      <div className="site-nav__actions">
+        <nav className="site-nav__rail" aria-label="Primary navigation">{navigation}</nav>
+        <div className="relative" ref={menuRef}>
+          <button className="site-nav__menu" type="button" aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen((open) => !open)}>menu</button>
+          {menuOpen && <nav className="site-nav__sheet" id="site-menu" aria-label="Mobile navigation">{navigation}</nav>}
+        </div>
+        <a className="site-nav__github" href="https://github.com/fyuo863" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><GithubIcon size={20} /></a>
       </div>
-      <a className="site-nav__github" href="https://github.com/fyuo863" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><GithubIcon size={20} /></a>
     </header>
   );
 }
