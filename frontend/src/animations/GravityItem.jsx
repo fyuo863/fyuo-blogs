@@ -5,6 +5,10 @@ function randomBetween(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+function randomSign() {
+  return Math.random() > 0.5 ? 1 : -1;
+}
+
 export default function GravityItem({
   children,
   className = "",
@@ -17,21 +21,21 @@ export default function GravityItem({
     const viewportHeight =
       typeof window !== "undefined" ? window.innerHeight : 900;
 
-    const vx = randomBetween(-260, 260);
-    const initialVy = randomBetween(-180, 70);
+    const vx = randomBetween(-280, 280);
+    const initialVy = randomBetween(-180, 80);
     const gravityFall = randomBetween(
-      viewportHeight * 0.85,
-      viewportHeight * 1.35
+      viewportHeight * 0.95,
+      viewportHeight * 1.5
     );
 
     return {
       x: vx,
       initialVy,
       y: initialVy + gravityFall,
-      rotate: randomBetween(-28, 28),
+      spin: randomSign() * randomBetween(720, 1440),
       delay: delay + randomBetween(0, 0.08),
-      originX: randomBetween(0.2, 0.8),
-      originY: randomBetween(0.2, 0.8),
+      originX: randomBetween(0.12, 0.88),
+      originY: randomBetween(0.12, 0.88),
     };
   }, [delay]);
 
@@ -53,35 +57,52 @@ export default function GravityItem({
     <Component
       className={className}
       style={{
-        transformOrigin: `${physics.originX * 100}% ${physics.originY * 100}%`,
         willChange: "transform, opacity",
       }}
       initial={{
         x: 0,
         y: 0,
-        rotate: 0,
         opacity: 1,
       }}
       animate={{
         x: 0,
         y: 0,
-        rotate: 0,
         opacity: 1,
       }}
       exit={{
-        x: [0, physics.x * 0.38, physics.x],
+        x: [0, physics.x * 0.4, physics.x],
         y: [0, physics.initialVy, physics.y],
-        rotate: [0, physics.rotate * 0.45, physics.rotate],
         opacity: [1, 1, 0],
       }}
       transition={{
-        duration: 1.05,
+        duration: 1.15,
         delay: physics.delay,
         times: [0, 0.32, 1],
         ease: ["easeOut", "easeIn"],
       }}
     >
-      {children}
+      <motion.div
+        style={{
+          transformOrigin: `${physics.originX * 100}% ${physics.originY * 100}%`,
+          willChange: "transform",
+        }}
+        initial={{
+          rotate: 0,
+        }}
+        animate={{
+          rotate: 0,
+        }}
+        exit={{
+          rotate: physics.spin,
+        }}
+        transition={{
+          duration: 1.15,
+          delay: physics.delay,
+          ease: "linear",
+        }}
+      >
+        {children}
+      </motion.div>
     </Component>
   );
 }

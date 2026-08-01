@@ -4,7 +4,7 @@ import remarkGfm from "remark-gfm";
 import { Heart } from "lucide-react";
 import BlogPost from "../components/BlogPost";
 import AppDrawer from "../components/AppDrawer";
-import GravityItem from "../animations/GravityItem";
+import PhysicsItem from "../physics/PhysicsItem";
 import {
   createArticle,
   updateArticle,
@@ -14,6 +14,7 @@ import {
   recordArticleView,
   incrementLike,
   uploadArticleImage,
+  isBackendOfflineError,
 } from "../api";
 
 function formatDate(iso) {
@@ -52,15 +53,24 @@ function isCount(value) {
 
 function applyCounterPatch(post, counters) {
   if (!post) return post;
+
   const patch = {};
-  if (isCount(counters?.view_count)) patch.view_count = counters.view_count;
-  if (isCount(counters?.like_count)) patch.like_count = counters.like_count;
+
+  if (isCount(counters?.view_count)) {
+    patch.view_count = counters.view_count;
+  }
+
+  if (isCount(counters?.like_count)) {
+    patch.like_count = counters.like_count;
+  }
+
   return Object.keys(patch).length > 0 ? { ...post, ...patch } : post;
 }
 
 function getVisitorId() {
   const key = "fyuo_visitor_id";
   const existing = localStorage.getItem(key);
+
   if (existing) return existing;
 
   const created =
@@ -77,6 +87,33 @@ function likeStorageKey(post) {
   return `${post.id}:${post.created_at || ""}`;
 }
 
+function BackendOfflineNotice() {
+  return (
+    <PhysicsItem strength={0.75}>
+      <div className="px-[10%] py-10">
+        <div className="border border-zinc-800 bg-white/[0.03] px-6 py-5">
+          <div className="text-sm font-mono tracking-[0.25em] text-zinc-500 uppercase">
+            dev-backend-offline.
+          </div>
+
+          <h2 className="mt-3 text-2xl font-bold tracking-tight text-white">
+            Backend is not connected.
+          </h2>
+
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-400">
+            当前正在进行纯前端开发，博客数据接口暂不可用。启动后端服务后，
+            文章列表、搜索、点赞、浏览量和管理功能会恢复。
+          </p>
+
+          <div className="mt-5 rounded-sm bg-black/40 px-4 py-3 font-mono text-xs text-zinc-500 border border-zinc-900">
+            npm run dev only starts the frontend. Start the backend separately.
+          </div>
+        </div>
+      </div>
+    </PhysicsItem>
+  );
+}
+
 function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
@@ -84,6 +121,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [backendOffline, setBackendOffline] = useState(false);
 
   const editRef = useRef(null);
   const searchRef = useRef(null);
@@ -103,10 +141,16 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const [pendingLikes, setPendingLikes] = useState([]);
 
   const fetchPosts = useCallback(() => {
+    if (backendOffline) return;
+
     listArticles()
       .then((res) => {
+        setBackendOffline(false);
+
         const nextPosts = res.data.data ?? [];
+
         setPosts(nextPosts);
+
         setLikedPosts((prev) => {
           const legacyIds = new Set(nextPosts.map((post) => String(post.id)));
           const nextLiked = prev.filter((key) => !legacyIds.has(key));
@@ -121,13 +165,21 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         });
       })
       .catch((err) => {
+        if (isBackendOfflineError(err)) {
+          setBackendOffline(true);
+          setPosts([]);
+          setSearchResults([]);
+          setShowDropdown(false);
+          return;
+        }
+
         onNotify?.({
           variant: "error",
           title: "load-failed.",
           message: errorMessage(err, "文章列表加载失败。"),
         });
       });
-  }, [onNotify]);
+  }, [backendOffline, onNotify]);
 
   useEffect(() => {
     if (!selectedPost) {
@@ -136,34 +188,39 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   }, [selectedPost, fetchPosts]);
 
   useEffect(() => {
-    if (selectedPost?.id) {
-      recordArticleView(
-        selectedPost.id,
-        getVisitorId(),
-        `/blog/${selectedPost.id}`
-      )
-        .then((res) => {
-          const counters = res.data ?? {};
+    if (!selectedPost?.id || backendOffline) return;
 
-          setPosts((prev) =>
-            prev.map((p) =>
-              p.id === selectedPost.id ? applyCounterPatch(p, counters) : p
-            )
-          );
+    recordArticleView(
+      selectedPost.id,
+      getVisitorId(),
+      `/blog/${selectedPost.id}`
+    )
+      .then((res) => {
+        const counters = res.data ?? {};
 
-          setSelectedPost((prev) =>
-            prev?.id === selectedPost.id ? applyCounterPatch(prev, counters) : prev
-          );
-        })
-        .catch((err) => {
-          onNotify?.({
-            variant: "error",
-            title: "view-sync-failed.",
-            message: errorMessage(err, "浏览量同步失败。"),
-          });
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === selectedPost.id ? applyCounterPatch(p, counters) : p
+          )
+        );
+
+        setSelectedPost((prev) =>
+          prev?.id === selectedPost.id ? applyCounterPatch(prev, counters) : prev
+        );
+      })
+      .catch((err) => {
+        if (isBackendOfflineError(err)) {
+          setBackendOffline(true);
+          return;
+        }
+
+        onNotify?.({
+          variant: "error",
+          title: "view-sync-failed.",
+          message: errorMessage(err, "浏览量同步失败。"),
         });
-    }
-  }, [selectedPost?.id, onNotify]);
+      });
+  }, [selectedPost?.id, backendOffline, onNotify]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -173,10 +230,22 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
     };
 
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    return () => {
+      document.removeEventListener("mousedown", handler);
+    };
   }, []);
 
   const handleSearch = () => {
+    if (backendOffline) {
+      onNotify?.({
+        variant: "info",
+        title: "backend-offline.",
+        message: "当前未连接后端，搜索功能暂不可用。",
+      });
+      return;
+    }
+
     const q = searchQuery.trim();
 
     if (!q) {
@@ -191,6 +260,13 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         setShowDropdown(true);
       })
       .catch((err) => {
+        if (isBackendOfflineError(err)) {
+          setBackendOffline(true);
+          setSearchResults([]);
+          setShowDropdown(false);
+          return;
+        }
+
         onNotify?.({
           variant: "error",
           title: "search-failed.",
@@ -246,6 +322,16 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   const handleProtectedError = (err, fallback) => {
     const status = err.response?.status;
 
+    if (isBackendOfflineError(err)) {
+      setBackendOffline(true);
+      onNotify?.({
+        variant: "info",
+        title: "backend-offline.",
+        message: "当前未连接后端，此操作暂不可用。",
+      });
+      return;
+    }
+
     if (status === 401) {
       onLogout();
       onNotify?.({
@@ -265,6 +351,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   };
 
   const handleMenuAction = (action) => {
+    if (backendOffline && ["create", "save", "delete"].includes(action)) {
+      onNotify?.({
+        variant: "info",
+        title: "backend-offline.",
+        message: "当前未连接后端，文章管理功能暂不可用。",
+      });
+      return;
+    }
+
     if (action === "create") {
       setSelectedPost({
         id: null,
@@ -304,7 +399,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       const coverImage =
         editRef.current?.getCoverImage?.() ?? selectedPost.cover_image ?? "";
       const tags = editRef.current?.getTags() ?? selectedPost.tags ?? [];
-      const token = user?.token;
+      const token = user.token;
 
       if (isNewPost) {
         createArticle(
@@ -326,7 +421,9 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
               message: "文章已经创建并刷新缓存。",
             });
           })
-          .catch((err) => handleProtectedError(err, "创建失败。"));
+          .catch((err) => {
+            handleProtectedError(err, "创建失败。");
+          });
       } else {
         updateArticle(
           selectedPost.id,
@@ -347,7 +444,9 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
               message: "文章已经保存。",
             });
           })
-          .catch((err) => handleProtectedError(err, "更新失败。"));
+          .catch((err) => {
+            handleProtectedError(err, "更新失败。");
+          });
       }
     }
 
@@ -363,9 +462,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         return;
       }
 
-      const token = user?.token;
-
-      deleteArticle(selectedPost.id, token)
+      deleteArticle(selectedPost.id, user.token)
         .then(() => {
           closePost();
           onNotify?.({
@@ -374,12 +471,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
             message: "文章已标记为隐藏。",
           });
         })
-        .catch((err) => handleProtectedError(err, "删除失败。"));
+        .catch((err) => {
+          handleProtectedError(err, "删除失败。");
+        });
     }
 
     if (action === "discard") {
       if (isNewPost) {
         closePost();
+        return;
       }
 
       setIsEditing(false);
@@ -397,11 +497,21 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   ];
 
   const handleLike = async (postId) => {
+    if (backendOffline) {
+      onNotify?.({
+        variant: "info",
+        title: "backend-offline.",
+        message: "当前未连接后端，点赞功能暂不可用。",
+      });
+      return;
+    }
+
     const currentPost =
       posts.find((post) => post.id === postId) ||
       (selectedPost?.id === postId ? selectedPost : null);
 
     const currentLikeKey = likeStorageKey(currentPost);
+
     if (pendingLikesRef.current.has(postId)) return;
 
     pendingLikesRef.current.add(postId);
@@ -441,6 +551,11 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
         prev?.id === postId ? applyCounterPatch(prev, counters) : prev
       );
     } catch (err) {
+      if (isBackendOfflineError(err)) {
+        setBackendOffline(true);
+        return;
+      }
+
       onNotify?.({
         variant: "error",
         title: "like-failed.",
@@ -453,6 +568,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
   };
 
   const handleUploadImage = async (file) => {
+    if (backendOffline) {
+      onNotify?.({
+        variant: "info",
+        title: "backend-offline.",
+        message: "当前未连接后端，图片上传功能暂不可用。",
+      });
+      return "";
+    }
+
     if (!user?.token) {
       onNotify?.({
         variant: "error",
@@ -467,6 +591,11 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       const res = await uploadArticleImage(file, user.token);
       return res.data?.data?.url || "";
     } catch (err) {
+      if (isBackendOfflineError(err)) {
+        setBackendOffline(true);
+        return "";
+      }
+
       onNotify?.({
         variant: "error",
         title: "upload-failed.",
@@ -478,16 +607,16 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
   return (
     <div className="min-h-screen bg-black">
-      <GravityItem delay={0.02}>
+      <PhysicsItem strength={0.8}>
         <AppDrawer
           user={user}
           label="blog."
           items={blogDrawerItems}
           onOpenSignIn={onOpenSignIn}
         />
-      </GravityItem>
+      </PhysicsItem>
 
-      <GravityItem delay={0}>
+      <PhysicsItem strength={1}>
         <div className="border-t border-b border-zinc-800">
           <header className="px-[10%] py-20">
             <h1 className="text-5xl font-extrabold tracking-tighter text-white">
@@ -501,23 +630,32 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
             </span>
           </header>
         </div>
-      </GravityItem>
+      </PhysicsItem>
 
-      <GravityItem delay={0.04}>
+      <PhysicsItem strength={0.9}>
         <div className="border-t border-b border-zinc-800">
           <div className="px-[10%] py-12">
             <div className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1" ref={searchRef}>
                 <input
                   type="text"
-                  placeholder="search."
+                  placeholder={
+                    backendOffline ? "backend offline." : "search."
+                  }
                   value={searchQuery}
+                  disabled={backendOffline}
                   onChange={handleSearchInputChange}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  onFocus={() => {
-                    if (searchResults.length > 0) setShowDropdown(true);
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                    }
                   }}
-                  className="w-full bg-white/5 py-3 pl-5 pr-5 text-sm text-white placeholder:text-zinc-500 border border-zinc-800 focus:border-zinc-600 focus:outline-none transition-colors"
+                  onFocus={() => {
+                    if (searchResults.length > 0) {
+                      setShowDropdown(true);
+                    }
+                  }}
+                  className="w-full bg-white/5 py-3 pl-5 pr-5 text-sm text-white placeholder:text-zinc-500 border border-zinc-800 focus:border-zinc-600 focus:outline-none transition-colors disabled:cursor-not-allowed disabled:opacity-60"
                 />
 
                 {showDropdown && searchResults.length > 0 && (
@@ -542,93 +680,98 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
               <button
                 onClick={handleSearch}
-                className="bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/20 active:bg-white/5 transition-colors shrink-0"
+                disabled={backendOffline}
+                className="bg-white/10 px-7 py-3 text-base font-semibold text-white hover:bg-white/20 active:bg-white/5 transition-colors shrink-0 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 search.
               </button>
             </div>
           </div>
         </div>
-      </GravityItem>
+      </PhysicsItem>
 
-      <div className="px-[10%]">
-        <div className="divide-y divide-zinc-800">
-          {posts.map((post, index) => (
-            <GravityItem key={post.id} delay={0.08 + index * 0.025}>
-              <article className="py-16">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                  <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
-                    {formatDate(post.created_at)}
-                  </time>
-                  <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
-                    {formatAuthor(post)}
+      {backendOffline && <BackendOfflineNotice />}
+
+      {!backendOffline && (
+        <div className="px-[10%]">
+          <div className="divide-y divide-zinc-800">
+            {posts.map((post) => (
+              <PhysicsItem key={post.id} strength={1}>
+                <article className="py-16">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
+                      {formatDate(post.created_at)}
+                    </time>
+                    <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
+                      {formatAuthor(post)}
+                    </div>
                   </div>
-                </div>
 
-                <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
-                  {post.title}
-                </h2>
+                  <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
+                    {post.title}
+                  </h2>
 
-                <div className="mt-4 text-zinc-400 leading-relaxed prose prose-invert prose-sm max-w-none line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {post.content}
-                  </ReactMarkdown>
-                </div>
+                  <div className="mt-4 text-zinc-400 leading-relaxed prose prose-invert prose-sm max-w-none line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {post.content}
+                    </ReactMarkdown>
+                  </div>
 
-                <div className="mt-6 flex items-center justify-between">
-                  <button
-                    onClick={() => setSelectedPost(post)}
-                    className="inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
-                  >
-                    read-more,
-                  </button>
-
-                  <div className="flex items-center gap-4">
-                    <span className="text-xs font-mono text-zinc-500">
-                      {(post.view_count || 0).toLocaleString()} views
-                    </span>
-
-                    <span className="text-xs font-mono text-zinc-500">
-                      {(post.like_count || 0).toLocaleString()} likes
-                    </span>
-
+                  <div className="mt-6 flex items-center justify-between">
                     <button
-                      onClick={() => handleLike(post.id)}
-                      disabled={pendingLikes.includes(post.id)}
-                      className={`transition-colors ${
-                        pendingLikes.includes(post.id)
-                          ? "text-zinc-500 cursor-wait"
-                          : likedPosts.includes(likeStorageKey(post))
-                            ? "text-white"
-                            : "text-zinc-600 hover:text-zinc-400"
-                      }`}
-                      title={
-                        likedPosts.includes(likeStorageKey(post))
-                          ? "取消点赞"
-                          : "点赞"
-                      }
+                      onClick={() => setSelectedPost(post)}
+                      className="inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
                     >
-                      <Heart
-                        size={18}
-                        fill={
-                          likedPosts.includes(likeStorageKey(post))
-                            ? "currentColor"
-                            : "none"
-                        }
-                      />
+                      read-more,
                     </button>
+
+                    <div className="flex items-center gap-4">
+                      <span className="text-xs font-mono text-zinc-500">
+                        {(post.view_count || 0).toLocaleString()} views
+                      </span>
+
+                      <span className="text-xs font-mono text-zinc-500">
+                        {(post.like_count || 0).toLocaleString()} likes
+                      </span>
+
+                      <button
+                        onClick={() => handleLike(post.id)}
+                        disabled={pendingLikes.includes(post.id)}
+                        className={`transition-colors ${
+                          pendingLikes.includes(post.id)
+                            ? "text-zinc-500 cursor-wait"
+                            : likedPosts.includes(likeStorageKey(post))
+                              ? "text-white"
+                              : "text-zinc-600 hover:text-zinc-400"
+                        }`}
+                        title={
+                          likedPosts.includes(likeStorageKey(post))
+                            ? "取消点赞"
+                            : "点赞"
+                        }
+                      >
+                        <Heart
+                          size={18}
+                          fill={
+                            likedPosts.includes(likeStorageKey(post))
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              </article>
-            </GravityItem>
-          ))}
+                </article>
+              </PhysicsItem>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="h-24" />
 
       {selectedPost && (
-        <GravityItem delay={0}>
+        <PhysicsItem strength={1.15}>
           <BlogPost
             key={selectedPost.id ?? "new"}
             post={selectedPost}
@@ -637,7 +780,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
             onBack={closePost}
             onUploadImage={handleUploadImage}
           />
-        </GravityItem>
+        </PhysicsItem>
       )}
     </div>
   );
