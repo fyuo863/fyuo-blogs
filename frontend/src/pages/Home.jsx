@@ -1,6 +1,7 @@
 import FeatureCard from "../module/FeatureCard";
 import ProjectGrid from "../module/ProjectGrid";
 import AppDrawer from "../components/AppDrawer";
+import HalftoneTitle from "../components/HalftoneTitle";
 import PhysicsItem from "../physics/PhysicsItem";
 
 const PROJECTS = [
@@ -18,7 +19,7 @@ function Home({ user, onOpenSignIn, drawerItems }) {
       <PhysicsItem strength={0.75}>
         <section className="home-cover" aria-labelledby="home-title">
           <p className="cover-edition">fyuo / independent work / issue 01</p>
-          <h1 className="cover-title" id="home-title"><span>PROJECTS</span><span>&amp; NOTES</span></h1>
+          <HalftoneTitle id="home-title"><span>PROJECTS</span><span>&amp; NOTES</span></HalftoneTitle>
           <div className="cover-deck">
             <p>一组持续生长的工具、Agent 与技术笔记。</p>
             <a className="cover-link" href="#projects">view the index ↓</a>
