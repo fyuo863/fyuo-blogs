@@ -607,9 +607,9 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       <PhysicsItem strength={1}>
         <div>
           <header className="blog-hero">
-            <p className="blog-eyebrow">field notes / archive</p>
-            <h1 className="blog-title">Latest Updates</h1>
-            <p className="blog-lede">All the latest blogs, straight from fyuo.</p>
+            <p className="blog-eyebrow">journal / field notes</p>
+            <h1 className="blog-title">The Journal.</h1>
+            <p className="blog-lede">技术笔记、项目记录与持续写作。</p>
           </header>
         </div>
       </PhysicsItem>

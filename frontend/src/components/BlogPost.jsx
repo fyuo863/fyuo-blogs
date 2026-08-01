@@ -110,7 +110,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black overflow-y-auto">
+    <div className="article-sheet fixed inset-0 z-50 bg-black overflow-y-auto">
       {(!isEditing && post.cover_image) ? (
         <div className="relative h-[38vh] min-h-[260px] w-full overflow-hidden border-b border-zinc-800">
           <img

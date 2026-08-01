@@ -1,43 +1,81 @@
-# Design — fyuo-blogs.
+# Design — fyuo-blogs
+
+A locked custom editorial system for a personal portfolio and reading archive.
 
 ## Genre
 
-Playful graphic lab: a personal project archive with the tactility of printed matter, not a generic SaaS dashboard.
+Editorial — a digital magazine with the project index as its cover story.
 
 ## Macrostructure family
 
-- Project pages: Project Poster Wall — an asymmetric featured work panel followed by a deterministic collage.
-- Content pages: Long Document — a strong masthead, utility search strip, and calm reading list.
-- App surfaces: Utility rail — compact controls that never compete with content.
+- Portfolio pages: Portfolio Grid — a typographic cover followed by an asymmetric project index.
+- Content pages: Long Document — an issue masthead, utility search line, and reading ledger.
+- App surfaces: Newspaper masthead — functional controls live in a compact, ruled utility strip.
 
 ## Theme
 
-Dark indigo ink is the stable field. Acid green, coral, and cobalt act as small, purposeful collision points; dots and moire are texture, never content containers.
+Warm paper and ink carry the reading surface. Vermilion marks an action; cobalt marks the index. Both are small signal colours, never backgrounds for whole sections.
 
 ## Typography
 
-- Display: Archivo Black, normal.
-- Body: Space Grotesk.
-- Mono: DM Mono.
-- Headings remain roman; emphasis comes from colour and scale, never italics.
+- Display: Bricolage Grotesque, 800, roman.
+- Body: Newsreader, 400–600.
+- Metadata: IBM Plex Mono, 400–500.
+- Display is large, compact, and left-biased; prose remains calm and readable.
+
+## Spacing
+
+Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is structural, not filler.
 
 ## Motion
 
-- Generative field: the home masthead owns a fixed Canvas 2D halftone matrix with two low-opacity moire passes. Dot centres never move; their radius encodes a composed light field, with a local pointer lens on fine pointers.
-- Runtime guardrails: animation runs only while the masthead is visible and the tab is active; it pauses immediately when either condition changes.
-- Entry: a short opacity and translate reveal may use a native CSS view timeline when available, with the static composition as the baseline.
-- Exit: existing physics transition remains.
-- Reduced motion: the masthead retains a static generated texture; no pointer or spatial animation runs.
+- One quiet opacity/translate reveal for large desktop surfaces.
+- Links and cards use a short colour or 2px translate response only.
+- Reduced motion removes all spatial movement.
 
-## Interaction stance
+## Microinteractions stance
 
-- Cards lift by a small translate and reveal a contrasting rule.
-- Controls maintain a 44px touch target and instant visible focus.
-- No autoplay carousel, bounce, or scroll-triggered choreography.
+- Focus rings are instant and high contrast.
+- No splash screen, cursor effect, physics fall, carousel, or autoplay.
+- Controls stay rectangular and typographic; no glossy pills.
+
+## CTA voice
+
+- Primary: solid vermilion rectangle, black label, single-line verb.
+- Secondary: ink text with a fine underline/rule.
 
 ## Shared rules
 
-- All colours and font choices originate in `tokens.css`.
-- Decorative textures stay below 10% opacity and never obscure text.
-- Generated visual layers are `aria-hidden`, pointer-transparent, and never carry content or controls.
-- Project names, descriptions, routes, authentication, and API behavior remain unchanged.
+- Existing routes, project links, blog data, authentication, and admin controls remain unchanged.
+- Decorative illustration is not used; type, rules, image crops, and colour blocks do the work.
+- Every page uses this token system and shares the masthead/footer voice.
+
+## Exports
+
+### tokens.css
+
+The source of truth is `frontend/tokens.css`.
+
+### Tailwind v4 `@theme`
+
+```css
+@theme {
+  --color-paper: oklch(0.97 0.014 82);
+  --color-ink: oklch(0.19 0.014 55);
+  --color-accent: oklch(0.63 0.21 30);
+  --font-display: "Bricolage Grotesque", sans-serif;
+  --font-body: "Newsreader", serif;
+}
+```
+
+### DTCG `tokens.json`
+
+```json
+{"color":{"paper":{"$value":"oklch(0.97 0.014 82)","$type":"color"},"ink":{"$value":"oklch(0.19 0.014 55)","$type":"color"},"accent":{"$value":"oklch(0.63 0.21 30)","$type":"color"}}}
+```
+
+### shadcn/ui CSS variables
+
+```css
+:root { --background: 0.97 0.014 82; --foreground: 0.19 0.014 55; --primary: 0.63 0.21 30; --primary-foreground: 0.19 0.014 55; }
+```
