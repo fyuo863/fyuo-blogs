@@ -33,7 +33,7 @@ function Home({ user, onOpenSignIn, drawerItems }) {
 
       <PhysicsItem strength={1}>
         <section className="projects-section" id="projects" aria-labelledby="projects-title">
-          <header className="section-head"><div><p className="section-kicker">the index / 02—07</p><h2 className="section-title" id="projects-title"><span className="section-title__selected">S</span>elected work.</h2></div><p className="section-note">每一项都直接通往对应的 GitHub 项目。</p></header>
+          <header className="section-head"><div><p className="section-kicker">the index / 02—07</p><h2 className="section-title" id="projects-title"><span className="section-title__selected">Selected work.</span></h2></div><p className="section-note">每一项都直接通往对应的 GitHub 项目。</p></header>
           <ProjectGrid projects={PROJECTS} />
         </section>
       </PhysicsItem>

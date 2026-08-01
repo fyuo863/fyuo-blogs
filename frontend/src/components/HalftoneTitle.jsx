@@ -17,7 +17,7 @@ function HalftoneTitle({ id, children }) {
 
     const interval = window.setInterval(() => {
       setSelectedCharacter((current) => (current + 1) % selectableCount);
-    }, 1000);
+    }, 500);
 
     return () => window.clearInterval(interval);
   }, [selectableCount]);
