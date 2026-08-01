@@ -101,7 +101,7 @@ function HalftoneTitle({ id, children }) {
         const proximity = state.pointer.active ? Math.max(0, 1 - distance / revealRadius) : 0;
         const eased = proximity * proximity * (3 - 2 * proximity);
         const waveHeight = state.wave?.current[point.waveIndex] || 0;
-        const radius = cellSize * Math.max(0.12, Math.min(0.96, 0.78 - eased * 0.63 + waveHeight * 0.27));
+        const radius = cellSize * Math.max(0.12, Math.min(0.96, 0.39 - eased * 0.63 + waveHeight * 0.27));
         context.beginPath();
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
         context.fill();
