@@ -31,7 +31,7 @@ Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is s
 
 - One quiet opacity/translate reveal for large desktop surfaces.
 - The home cover title may use a fixed-centre paper-dot layer over cobalt; pointer proximity only reduces dot radius to reveal the lower colour.
-- A damped two-dimensional wave-heightfield injects stronger sources at randomized intervals along the left edge, so the title dots carry rightward-propagating ripples without moving their centres.
+- A damped two-dimensional wave-heightfield injects stronger sources at randomized intervals along the left edge; stronger wave peaks shrink the fixed-centre title dots to reveal more cobalt.
 - A vermilion typesetter mark advances through the home-title characters once per second; reduced motion pins it to the first character.
 - Links and cards use a short colour or 2px translate response only.
 - Reduced motion removes all spatial movement.
