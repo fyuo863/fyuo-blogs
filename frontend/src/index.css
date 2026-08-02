@@ -67,10 +67,8 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .project-grid { padding-block: var(--space-xl); border-top: var(--rule-hair) solid var(--color-ink); }
 .cover-flow { display: grid; gap: var(--space-lg); }
 .cover-flow__stage { position: relative; height: clamp(31.5rem, 69vw, 52.5rem); overflow: clip; isolation: isolate; background: var(--color-paper-2); perspective: 93rem; touch-action: pan-y; transform-style: preserve-3d; outline: 0; cursor: grab; }
-.cover-flow__moire { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.cover-flow__moire-layer { fill: none; stroke-width: var(--rule-hair); vector-effect: non-scaling-stroke; }
-.cover-flow__moire-layer--cobalt { stroke: var(--color-cobalt); }
-.cover-flow__moire-layer--vermilion { stroke: var(--color-accent); mix-blend-mode: multiply; }
+.cover-flow__wood-grain { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.cover-flow__wood-grain-line { fill: none; stroke: var(--color-ink-2); stroke-width: var(--rule-hair); vector-effect: non-scaling-stroke; }
 .cover-flow__stage.is-dragging { cursor: grabbing; }
 .cover-flow__stage:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: -0.18rem; }
 .cover-flow__item { position: absolute; top: 50%; left: 50%; display: grid; width: clamp(14.25rem, 31.5vw, 24rem); aspect-ratio: 1; place-items: center; padding: 0; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); cursor: pointer; transform-style: preserve-3d; transition: transform calc(var(--dur-medium) + 120ms) var(--ease-out); will-change: transform; }
@@ -82,7 +80,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__item img { width: 72%; max-height: 72%; object-fit: contain; pointer-events: none; user-select: none; -webkit-user-drag: none; filter: grayscale(1) contrast(1.15); }
 .cover-flow__reflection { position: absolute; top: calc(140% + var(--space-2xs)); left: 14%; width: 72%; height: 40%; overflow: clip; pointer-events: none; transform: scaleY(-1); transform-origin: top; background: var(--color-paper-2); -webkit-mask-image: linear-gradient(to bottom, var(--color-ink), transparent); mask-image: linear-gradient(to bottom, var(--color-ink), transparent); }
 .cover-flow__reflection img { width: 100%; height: 100%; max-height: none; object-fit: contain; filter: grayscale(1) contrast(1.15); }
-.cover-flow__reflection .cover-flow__moire { z-index: 1; mix-blend-mode: multiply; }
+.cover-flow__reflection .cover-flow__wood-grain { z-index: 1; mix-blend-mode: multiply; }
 .cover-flow__item-index { position: absolute; top: var(--space-sm); left: var(--space-sm); font-family: var(--font-outlier); font-size: var(--text-xs); }
 .cover-flow__caption { display: grid; gap: var(--space-sm); padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-ink); }
 .cover-flow__index { margin: 0; color: var(--color-cobalt); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.08em; }

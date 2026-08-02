@@ -2,31 +2,29 @@ import { useRef, useState } from "react";
 
 const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), maximum);
 
-const createMoireLine = (lineIndex, phase) => {
-  const baseline = lineIndex * 17 - 153;
+const createWoodGrainLine = (lineIndex) => {
+  const baseline = lineIndex * 15 - 165;
   const points = [];
 
   for (let x = -120; x <= 1320; x += 24) {
-    const warp = Math.sin(x * 0.014 + phase) * 32
-      + Math.sin(baseline * 0.28 + x * 0.009 + phase) * 20
-      + Math.cos(baseline * 0.11 - x * 0.005 - phase) * 6;
+    const knotDistance = Math.hypot((x - 600) * 0.78, baseline - 450);
+    const knot = Math.sin(knotDistance * 0.073) * 28 * Math.exp(-knotDistance / 245);
+    const warp = Math.sin(x * 0.012) * 28
+      + Math.sin(baseline * 0.31 + x * 0.007) * 16
+      + knot;
     points.push(`${x === -120 ? "M" : "L"} ${x} ${baseline + warp}`);
   }
 
   return points.join(" ");
 };
 
-const cobaltMoireLines = Array.from({ length: 78 }, (_, index) => createMoireLine(index, 0));
-const vermilionMoireLines = Array.from({ length: 78 }, (_, index) => createMoireLine(index, 0.62));
+const woodGrainLines = Array.from({ length: 86 }, (_, index) => createWoodGrainLine(index));
 
-function MoireField({ className = "cover-flow__moire" }) {
+function WoodGrainField({ className = "cover-flow__wood-grain" }) {
   return (
     <svg className={className} viewBox="0 0 1200 900" preserveAspectRatio="none" aria-hidden="true" focusable="false">
-      <g className="cover-flow__moire-layer cover-flow__moire-layer--cobalt">
-        {cobaltMoireLines.map((path, index) => <path d={path} key={`cobalt-${index}`} />)}
-      </g>
-      <g className="cover-flow__moire-layer cover-flow__moire-layer--vermilion" transform="rotate(1.2 600 450)">
-        {vermilionMoireLines.map((path, index) => <path d={path} key={`vermilion-${index}`} />)}
+      <g className="cover-flow__wood-grain-line">
+        {woodGrainLines.map((path, index) => <path d={path} key={`grain-${index}`} />)}
       </g>
     </svg>
   );
@@ -97,7 +95,7 @@ function ProjectGrid({ projects = [] }) {
   return (
     <section className="project-grid cover-flow" aria-label="Project cover flow">
       <div className={`cover-flow__stage${isDragging ? " is-dragging" : ""}`} role="region" aria-roledescription="Cover flow" aria-label="Project covers. Drag horizontally to browse quickly, or use left and right arrow keys." tabIndex="0" onKeyDown={onStageKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={finishDrag} onPointerCancel={(event) => finishDrag(event, true)}>
-        <MoireField />
+        <WoodGrainField />
         {projects.map((project, index) => {
           const offset = index - activeIndex;
           const distance = Math.abs(offset);
@@ -129,7 +127,7 @@ function ProjectGrid({ projects = [] }) {
               <img src={project.image} alt="" draggable="false" />
               <span className="cover-flow__reflection" aria-hidden="true">
                 <img src={project.image} alt="" draggable="false" />
-                <MoireField />
+                <WoodGrainField />
               </span>
               <span className="cover-flow__item-index">{String(index + 2).padStart(2, "0")}</span>
             </button>
