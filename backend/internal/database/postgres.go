@@ -54,6 +54,7 @@ func InitPostgres(cfg *config.DatabaseConfig) error {
 		&model.Comment{},
 		&model.VisitRecord{},
 		&model.APIKey{},
+		&model.HomeContent{},
 	)
 	if err != nil {
 		log.Logger.Error("自动同步表结构失败", "error", err)

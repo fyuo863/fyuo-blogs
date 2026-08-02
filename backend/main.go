@@ -58,10 +58,12 @@ func main() {
 	)
 	userRepo := repository.NewUserRepository(database.DB)
 	articleRepo := repository.NewArticleRepository(database.DB)
+	homeContentRepo := repository.NewHomeContentRepository(database.DB)
 	visitRecordRepo := repository.NewVisitRecordRepository(database.DB)
 	apiKeyRepo := repository.NewAPIKeyRepository(database.DB)
 	authService := service.NewAuthService(userRepo, tokenManager)
 	articleService := service.NewArticleService(articleRepo)
+	homeContentService := service.NewHomeContentService(homeContentRepo)
 	visitRecordService := service.NewVisitRecordService(visitRecordRepo, articleRepo)
 	apiKeyService := service.NewAPIKeyService(apiKeyRepo, userRepo)
 	if err := authService.EnsureAdminAccount(
@@ -81,12 +83,14 @@ func main() {
 
 	router := router.NewRouter(router.Dependencies{
 		Articles:     handler.NewArticleHandler(articleService, authService),
+		HomeContent:  handler.NewHomeContentHandler(homeContentService),
 		Auth:         handler.NewAuthHandler(authService),
 		Counters:     handler.NewCounterHandler(visitRecordService),
 		VisitRecords: handler.NewVisitRecordHandler(visitRecordService),
 		APIKeys:      handler.NewAPIKeyHandler(apiKeyService, authService),
 		Uploads:      handler.NewUploadHandler(),
 		AuthorTokens: middleware.RequireRole(tokenManager, apiKeyService, "admin", "agent"),
+		AuthTokens:   middleware.RequireRole(tokenManager, apiKeyService),
 		AdminTokens:  middleware.RequireRole(tokenManager, apiKeyService, "admin"),
 	})
 

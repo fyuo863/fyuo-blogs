@@ -19,7 +19,7 @@ function AppLayout({ user, showSignIn, showAdmin, onOpenAdmin, onCloseAdmin, onO
       <Navbar visible />
       <main className="app-shell">
         <Routes>
-          <Route path="/" element={<Home user={user} onOpenSignIn={onOpenSignIn} drawerItems={drawerItems} />} />
+          <Route path="/" element={<Home user={user} onOpenSignIn={onOpenSignIn} onNotify={onNotify} drawerItems={drawerItems} />} />
           <Route path="/blog" element={<Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} />} />
         </Routes>
       </main>

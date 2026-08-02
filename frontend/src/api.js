@@ -126,6 +126,26 @@ export const getArticle = (id) => {
 };
 
 // ============================================================
+//  Home content
+// ============================================================
+
+export const getHomeContent = () => {
+  if (BACKEND_OFFLINE) {
+    return offlineResponse({ backendOffline: true });
+  }
+
+  return api.get("/home-content");
+};
+
+export const updateHomeContent = (data, token) => {
+  if (BACKEND_OFFLINE) {
+    return offlineUnavailable("Backend is offline. Home content cannot be updated.");
+  }
+
+  return api.put("/home-content", data, authConfig(token));
+};
+
+// ============================================================
 //  Articles (protected)
 // ============================================================
 

@@ -46,6 +46,27 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-link { display: inline-flex; min-height: 2.75rem; align-items: center; padding: var(--space-xs) var(--space-md); background: var(--color-accent); color: var(--color-accent-ink); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.05em; text-decoration: none; text-transform: uppercase; white-space: nowrap; transition: transform var(--dur-short) var(--ease-out); }
 .cover-link:hover { transform: translateY(-0.2rem); }
 .cover-link:active { transform: translateY(0); }
+.home-edit-bar { display: flex; align-items: center; justify-content: space-between; gap: var(--space-md); padding: var(--space-xs) clamp(var(--space-sm), 7vw, var(--space-4xl)); border-bottom: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); }
+.home-edit-bar p, .home-edit-trigger { margin: 0; font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; }
+.home-edit-trigger, .home-editor button { min-height: 2.5rem; padding: var(--space-2xs) var(--space-sm); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); cursor: pointer; font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.home-edit-trigger:hover, .home-editor button:hover { background: var(--color-accent); color: var(--color-accent-ink); }
+.home-edit-trigger:disabled, .home-editor button:disabled { border-color: var(--color-rule); background: var(--color-paper-2); color: var(--color-muted); cursor: not-allowed; }
+.home-editor { margin: var(--space-xl) clamp(var(--space-sm), 7vw, var(--space-4xl)); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); }
+.home-editor form { display: grid; gap: var(--space-lg); padding: var(--space-md); }
+.home-editor__head, .home-editor__project-head, .home-editor__actions { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); }
+.home-editor__head h2 { margin: var(--space-2xs) 0 0; font-family: var(--font-display); font-size: var(--text-3xl); font-style: normal; line-height: 0.95; }
+.home-editor__fieldset { display: grid; gap: var(--space-sm); margin: 0; padding: var(--space-md); border: var(--rule-hair) solid var(--color-ink); }
+.home-editor__fieldset legend { padding-inline: var(--space-2xs); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.08em; text-transform: uppercase; }
+.home-editor label { display: grid; gap: var(--space-3xs); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.05em; }
+.home-editor input, .home-editor textarea { width: 100%; min-height: 2.75rem; padding: var(--space-xs); border: var(--rule-hair) solid var(--color-ink); border-radius: 0; background: var(--color-paper); color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-sm); letter-spacing: 0; }
+.home-editor textarea { min-height: 5.5rem; resize: vertical; }
+.home-editor__projects { display: grid; gap: var(--space-sm); }
+.home-editor__project { display: grid; gap: var(--space-sm); padding: var(--space-sm); border: var(--rule-hair) solid var(--color-rule); background: var(--color-paper); }
+.home-editor__project-head strong { color: var(--color-cobalt); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.08em; }
+.home-editor__project-head button { min-height: 2rem; }
+.home-editor__add { justify-self: start; }
+.home-editor__actions { padding-top: var(--space-sm); border-top: var(--rule-hair) solid var(--color-ink); }
+.home-editor__actions button[type="submit"] { background: var(--color-accent); color: var(--color-accent-ink); }
 
 .home-feature { padding: clamp(var(--space-2xl), 8vw, var(--space-4xl)) clamp(var(--space-sm), 4vw, var(--space-xl)); }
 .feature-card { display: grid; grid-template-columns: minmax(0, 1fr); border-top: 0.4rem solid var(--color-cobalt); border-bottom: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); color: var(--color-ink); }
