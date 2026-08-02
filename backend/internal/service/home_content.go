@@ -1,11 +1,13 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"myblog/internal/model"
 	"myblog/internal/repository"
 	"strings"
+	"sync"
 
 	"gorm.io/gorm"
 )
@@ -27,12 +29,28 @@ type HomeContent struct {
 	Projects         []HomeProject `json:"projects"`
 }
 
+type HomeProjectInput struct {
+	LinkURL     string `json:"link_url"`
+	Description string `json:"description"`
+}
+
+type HomeContentInput struct {
+	CoverGitHubURL   string             `json:"cover_github_url"`
+	CoverDescription string             `json:"cover_description"`
+	Projects         []HomeProjectInput `json:"projects"`
+}
+
 type HomeContentService struct {
-	content *repository.HomeContentRepository
+	content  *repository.HomeContentRepository
+	resolver RepositoryMetadataResolver
 }
 
 func NewHomeContentService(content *repository.HomeContentRepository) *HomeContentService {
-	return &HomeContentService{content: content}
+	return newHomeContentService(content, NewGitHubRepositoryResolver(nil))
+}
+
+func newHomeContentService(content *repository.HomeContentRepository, resolver RepositoryMetadataResolver) *HomeContentService {
+	return &HomeContentService{content: content, resolver: resolver}
 }
 
 func DefaultHomeContent() HomeContent {
@@ -63,26 +81,73 @@ func (s *HomeContentService) Get() (HomeContent, error) {
 	return fromModel(stored)
 }
 
-func (s *HomeContentService) Update(input HomeContent) (HomeContent, error) {
-	normalized, err := normalizeHomeContent(input)
+func (s *HomeContentService) Update(ctx context.Context, input HomeContentInput) (HomeContent, error) {
+	normalized, err := normalizeHomeContentInput(input)
+	if err != nil {
+		return HomeContent{}, err
+	}
+	resolved, err := s.resolveHomeContent(ctx, normalized)
 	if err != nil {
 		return HomeContent{}, err
 	}
 
-	projects, err := json.Marshal(normalized.Projects)
+	projects, err := json.Marshal(resolved.Projects)
 	if err != nil {
 		return HomeContent{}, err
 	}
 	if err := s.content.Save(&model.HomeContent{
-		CoverImage:       normalized.CoverImage,
-		CoverTitle:       normalized.CoverTitle,
-		CoverGitHubURL:   normalized.CoverGitHubURL,
-		CoverDescription: normalized.CoverDescription,
+		CoverImage:       resolved.CoverImage,
+		CoverTitle:       resolved.CoverTitle,
+		CoverGitHubURL:   resolved.CoverGitHubURL,
+		CoverDescription: resolved.CoverDescription,
 		ProjectsJSON:     string(projects),
 	}); err != nil {
 		return HomeContent{}, err
 	}
-	return normalized, nil
+	return resolved, nil
+}
+
+func (s *HomeContentService) resolveHomeContent(ctx context.Context, input HomeContentInput) (HomeContent, error) {
+	urls := make([]string, 0, len(input.Projects)+1)
+	urls = append(urls, input.CoverGitHubURL)
+	for _, project := range input.Projects {
+		urls = append(urls, project.LinkURL)
+	}
+	resolved := make([]HomeProject, len(urls))
+	var firstErr error
+	var lock sync.Mutex
+	var group sync.WaitGroup
+	for index, repositoryURL := range urls {
+		group.Add(1)
+		go func(index int, repositoryURL string) {
+			defer group.Done()
+			project, err := s.resolver.Resolve(ctx, repositoryURL)
+			if err != nil {
+				lock.Lock()
+				if firstErr == nil {
+					firstErr = err
+				}
+				lock.Unlock()
+				return
+			}
+			resolved[index] = project
+		}(index, repositoryURL)
+	}
+	group.Wait()
+	if firstErr != nil {
+		return HomeContent{}, firstErr
+	}
+
+	for index := range input.Projects {
+		resolved[index+1].Description = input.Projects[index].Description
+	}
+	return HomeContent{
+		CoverImage:       resolved[0].Image,
+		CoverTitle:       resolved[0].Title,
+		CoverGitHubURL:   resolved[0].LinkURL,
+		CoverDescription: input.CoverDescription,
+		Projects:         resolved[1:],
+	}, nil
 }
 
 func fromModel(stored model.HomeContent) (HomeContent, error) {
@@ -115,6 +180,23 @@ func normalizeHomeContent(input HomeContent) (HomeContent, error) {
 		project.Description = strings.TrimSpace(project.Description)
 		if project.Image == "" || project.Title == "" || project.Description == "" {
 			return HomeContent{}, ErrInvalidHomeContent
+		}
+	}
+	return input, nil
+}
+
+func normalizeHomeContentInput(input HomeContentInput) (HomeContentInput, error) {
+	input.CoverGitHubURL = strings.TrimSpace(input.CoverGitHubURL)
+	input.CoverDescription = strings.TrimSpace(input.CoverDescription)
+	if input.CoverGitHubURL == "" || input.CoverDescription == "" || len(input.Projects) == 0 || len(input.Projects) > 24 {
+		return HomeContentInput{}, ErrInvalidHomeContent
+	}
+	for index := range input.Projects {
+		project := &input.Projects[index]
+		project.LinkURL = strings.TrimSpace(project.LinkURL)
+		project.Description = strings.TrimSpace(project.Description)
+		if project.LinkURL == "" || project.Description == "" {
+			return HomeContentInput{}, ErrInvalidHomeContent
 		}
 	}
 	return input, nil

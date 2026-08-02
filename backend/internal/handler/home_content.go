@@ -26,14 +26,18 @@ func (h *HomeContentHandler) Get(c *gin.Context) {
 }
 
 func (h *HomeContentHandler) Update(c *gin.Context) {
-	var req service.HomeContent
+	var req service.HomeContentInput
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的首页内容格式"})
 		return
 	}
-	content, err := h.content.Update(req)
+	content, err := h.content.Update(c.Request.Context(), req)
 	if errors.Is(err, service.ErrInvalidHomeContent) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "封面与每个项目都需要封面、标题和描述"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "封面与每个项目都需要 GitHub 仓库链接和简介"})
+		return
+	}
+	if errors.Is(err, service.ErrRepositoryMetadata) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无法从 GitHub README 获取仓库展示图，请确认链接公开且 README 包含非徽章图片"})
 		return
 	}
 	if err != nil {

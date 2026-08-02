@@ -21,16 +21,18 @@ const DEFAULT_HOME_CONTENT = {
   ],
 };
 
-const cloneContent = (content) => ({
-  ...content,
-  projects: content.projects.map((project) => ({ ...project })),
+const editorDraft = (content) => ({
+  cover_github_url: content.cover_github_url,
+  cover_description: content.cover_description,
+  projects: content.projects.map((project) => ({
+    link_url: project.link_url,
+    description: project.description,
+  })),
 });
 
 const newProject = () => ({
-  image: "/fyuo-blogs.svg",
-  title: "new project",
   link_url: "",
-  description: "项目简介。",
+  description: "",
 });
 
 function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
@@ -50,7 +52,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
     return () => { cancelled = true; };
   }, []);
 
-  const startEditing = () => setDraft(cloneContent(content));
+  const startEditing = () => setDraft(editorDraft(content));
   const cancelEditing = () => setDraft(null);
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
   const updateProject = (index, field, value) => {
@@ -120,9 +122,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
 
             <fieldset className="home-editor__fieldset">
               <legend>Cover Story</legend>
-              <label>封面地址<input value={draft.cover_image} onChange={(event) => updateDraft("cover_image", event.target.value)} required /></label>
-              <label>标题<input value={draft.cover_title} onChange={(event) => updateDraft("cover_title", event.target.value)} required /></label>
-              <label>GitHub 链接<input value={draft.cover_github_url} onChange={(event) => updateDraft("cover_github_url", event.target.value)} /></label>
+              <label>GitHub 仓库链接<input type="url" value={draft.cover_github_url} onChange={(event) => updateDraft("cover_github_url", event.target.value)} placeholder="https://github.com/owner/repository" required /></label>
               <label>简介<textarea value={draft.cover_description} onChange={(event) => updateDraft("cover_description", event.target.value)} required /></label>
             </fieldset>
 
@@ -130,11 +130,9 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
               <legend>Selected Work</legend>
               <div className="home-editor__projects">
                 {draft.projects.map((project, index) => (
-                  <article className="home-editor__project" key={`${project.title}-${index}`}>
+                  <article className="home-editor__project" key={`${project.link_url}-${index}`}>
                     <div className="home-editor__project-head"><strong>{String(index + 1).padStart(2, "0")}</strong>{draft.projects.length > 1 && <button type="button" onClick={() => removeProject(index)}>remove</button>}</div>
-                    <label>封面地址<input value={project.image} onChange={(event) => updateProject(index, "image", event.target.value)} required /></label>
-                    <label>标题<input value={project.title} onChange={(event) => updateProject(index, "title", event.target.value)} required /></label>
-                    <label>项目链接<input value={project.link_url} onChange={(event) => updateProject(index, "link_url", event.target.value)} /></label>
+                    <label>GitHub 仓库链接<input type="url" value={project.link_url} onChange={(event) => updateProject(index, "link_url", event.target.value)} placeholder="https://github.com/owner/repository" required /></label>
                     <label>简介<textarea value={project.description} onChange={(event) => updateProject(index, "description", event.target.value)} required /></label>
                   </article>
                 ))}
