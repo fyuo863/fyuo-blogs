@@ -111,6 +111,16 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
   const editRef = useRef(null);
   const searchRef = useRef(null);
+  const journalTitleRef = useRef(null);
+  const journalScatterRef = useRef({
+    active: false,
+    idleAngle: 0,
+    x: 8,
+    y: 0,
+    targetX: 8,
+    targetY: 0,
+    lastTime: null,
+  });
 
   const [likedPosts, setLikedPosts] = useState(() => {
     try {
@@ -125,6 +135,33 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
   const pendingLikesRef = useRef(new Set());
   const [pendingLikes, setPendingLikes] = useState([]);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
+
+    let animationFrame;
+    const tick = (time) => {
+      const scatter = journalScatterRef.current;
+      const elapsed = Math.min(32, time - (scatter.lastTime ?? time));
+      scatter.lastTime = time;
+
+      if (!scatter.active) {
+        scatter.idleAngle += (elapsed / 18000) * Math.PI * 2;
+        scatter.targetX = Math.cos(scatter.idleAngle) * 8;
+        scatter.targetY = Math.sin(scatter.idleAngle) * 8;
+      }
+
+      const blend = 1 - Math.exp(-elapsed / (scatter.active ? 90 : 180));
+      scatter.x += (scatter.targetX - scatter.x) * blend;
+      scatter.y += (scatter.targetY - scatter.y) * blend;
+      journalTitleRef.current?.style.setProperty("--journal-scatter-x", `${scatter.x}px`);
+      journalTitleRef.current?.style.setProperty("--journal-scatter-y", `${scatter.y}px`);
+      animationFrame = requestAnimationFrame(tick);
+    };
+
+    animationFrame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(animationFrame);
+  }, []);
 
   const fetchPosts = useCallback(() => {
     if (backendOffline) return;
@@ -610,6 +647,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
             <p className="blog-eyebrow">journal / field notes</p>
             <h1
               className="blog-title blog-title--oil"
+              ref={journalTitleRef}
               onPointerMove={(event) => {
                 const bounds = event.currentTarget.getBoundingClientRect();
                 const pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
@@ -620,18 +658,23 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
                 const pointerLength = Math.hypot(pointerX, pointerY) || 1;
                 const scatterX = (pointerX / pointerLength) * distance;
                 const scatterY = (pointerY / pointerLength) * distance;
-                event.currentTarget.dataset.pointerActive = "true";
+                const scatter = journalScatterRef.current;
+                scatter.active = true;
+                scatter.targetX = scatterX;
+                scatter.targetY = scatterY;
                 event.currentTarget.style.setProperty("--journal-refraction-x", `${x}px`);
                 event.currentTarget.style.setProperty("--journal-refraction-y", `${y}px`);
-                event.currentTarget.style.setProperty("--journal-scatter-x", `${scatterX}px`);
-                event.currentTarget.style.setProperty("--journal-scatter-y", `${scatterY}px`);
+                if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                  event.currentTarget.style.setProperty("--journal-scatter-x", `${scatterX}px`);
+                  event.currentTarget.style.setProperty("--journal-scatter-y", `${scatterY}px`);
+                }
               }}
               onPointerLeave={(event) => {
-                delete event.currentTarget.dataset.pointerActive;
+                const scatter = journalScatterRef.current;
+                scatter.active = false;
+                scatter.idleAngle = Math.atan2(scatter.y, scatter.x);
                 event.currentTarget.style.setProperty("--journal-refraction-x", "0px");
                 event.currentTarget.style.setProperty("--journal-refraction-y", "0px");
-                event.currentTarget.style.setProperty("--journal-scatter-x", "0px");
-                event.currentTarget.style.setProperty("--journal-scatter-y", "0px");
               }}
             >
               <span className="blog-title__ink" data-title="The Journal.">The Journal.</span>
