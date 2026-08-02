@@ -607,14 +607,6 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       <PhysicsItem strength={1}>
         <div>
           <header className="blog-hero">
-            <svg className="blog-oil-filter" aria-hidden="true" focusable="false">
-              <defs>
-                <filter id="blog-journal-oil" x="-10%" y="-25%" width="120%" height="150%">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.031 0.16" numOctaves="3" seed="17" result="noise" />
-                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="13" xChannelSelector="R" yChannelSelector="G" />
-                </filter>
-              </defs>
-            </svg>
             <p className="blog-eyebrow">journal / field notes</p>
             <h1
               className="blog-title blog-title--oil"
