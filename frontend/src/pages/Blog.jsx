@@ -620,12 +620,14 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
                 const pointerLength = Math.hypot(pointerX, pointerY) || 1;
                 const scatterX = (pointerX / pointerLength) * distance;
                 const scatterY = (pointerY / pointerLength) * distance;
+                event.currentTarget.dataset.pointerActive = "true";
                 event.currentTarget.style.setProperty("--journal-refraction-x", `${x}px`);
                 event.currentTarget.style.setProperty("--journal-refraction-y", `${y}px`);
                 event.currentTarget.style.setProperty("--journal-scatter-x", `${scatterX}px`);
                 event.currentTarget.style.setProperty("--journal-scatter-y", `${scatterY}px`);
               }}
               onPointerLeave={(event) => {
+                delete event.currentTarget.dataset.pointerActive;
                 event.currentTarget.style.setProperty("--journal-refraction-x", "0px");
                 event.currentTarget.style.setProperty("--journal-refraction-y", "0px");
                 event.currentTarget.style.setProperty("--journal-scatter-x", "0px");
