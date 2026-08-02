@@ -612,17 +612,25 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
               className="blog-title blog-title--oil"
               onPointerMove={(event) => {
                 const bounds = event.currentTarget.getBoundingClientRect();
-                const x = ((event.clientX - bounds.left) / bounds.width - 0.5) * 12;
-                const y = ((event.clientY - bounds.top) / bounds.height - 0.5) * 8;
+                const pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
+                const pointerY = (event.clientY - bounds.top) / bounds.height - 0.5;
+                const x = pointerX * 12;
+                const y = pointerY * 8;
+                const angle = Math.atan2(pointerY, pointerX) * (180 / Math.PI);
+                const distance = 6 + Math.min(10, Math.hypot(x, y) * 0.9);
                 event.currentTarget.style.setProperty("--journal-refraction-x", `${x}px`);
                 event.currentTarget.style.setProperty("--journal-refraction-y", `${y}px`);
+                event.currentTarget.style.setProperty("--journal-scatter-angle", `${angle}deg`);
+                event.currentTarget.style.setProperty("--journal-scatter-distance", `${distance}px`);
               }}
               onPointerLeave={(event) => {
                 event.currentTarget.style.setProperty("--journal-refraction-x", "0px");
                 event.currentTarget.style.setProperty("--journal-refraction-y", "0px");
+                event.currentTarget.style.setProperty("--journal-scatter-angle", "0deg");
+                event.currentTarget.style.setProperty("--journal-scatter-distance", "0px");
               }}
             >
-              <span className="blog-title__ink">The Journal.</span>
+              <span className="blog-title__ink" data-title="The Journal.">The Journal.</span>
             </h1>
             <p className="blog-lede">技术笔记、项目记录与持续写作。</p>
           </header>
