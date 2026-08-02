@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import GithubIcon from "./GithubIcon";
 
-function Navbar({ visible }) {
+function Navbar({ visible, selectedPages = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
   const menuRef = useRef(null);
@@ -23,11 +23,13 @@ function Navbar({ visible }) {
     setMenuOpen(false);
     if (path !== location.pathname) navigate(path);
   };
+  const isSelected = (page) => selectedPages.includes(page);
 
   const navigation = (
     <>
-      <button className="site-nav__link" type="button" aria-current={location.pathname === "/" ? "page" : undefined} onClick={() => navigateTo("/")}>index</button>
-      <button className="site-nav__link" type="button" aria-current={location.pathname === "/blog" ? "page" : undefined} onClick={() => navigateTo("/blog")}>journal</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("home") || undefined} aria-current={location.pathname === "/" ? "page" : undefined} onClick={() => navigateTo("/")}>index</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("blog") || undefined} aria-current={location.pathname === "/blog" ? "page" : undefined} onClick={() => navigateTo("/blog")}>journal</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("travel") || undefined} aria-current={location.pathname === "/travel" ? "page" : undefined} onClick={() => navigateTo("/travel")}>travel</button>
     </>
   );
 

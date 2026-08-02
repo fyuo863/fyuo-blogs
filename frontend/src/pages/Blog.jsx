@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Heart } from "lucide-react";
 import BlogPost from "../components/BlogPost";
 import AppDrawer from "../components/AppDrawer";
 import PhysicsItem from "../physics/PhysicsItem";
@@ -12,7 +11,6 @@ import {
   deleteArticle,
   searchArticles,
   recordArticleView,
-  incrementLike,
   uploadArticleImage,
   isBackendOfflineError,
 } from "../api";
@@ -30,12 +28,6 @@ function formatDate(iso) {
     hour12: false,
   });
   return `${date} ${time}`.toUpperCase();
-}
-
-function formatAuthor(post) {
-  const name = post?.publisher_name?.trim() || post?.author?.name?.trim();
-  if (!name) return "unknown";
-  return `by ${name}`;
 }
 
 function errorMessage(err, fallback) {
@@ -82,25 +74,26 @@ function getVisitorId() {
   return created;
 }
 
-function likeStorageKey(post) {
-  if (!post?.id) return "";
-  return `${post.id}:${post.created_at || ""}`;
-}
-
 function BackendOfflineNotice() {
   return (
     <PhysicsItem strength={0.75}>
-      <div className="blog-empty" role="status">
-        <div className="blog-empty__label">archive temporarily unavailable.</div>
-        <h2>文章服务暂不可用。</h2>
-        <p>文章列表、搜索、点赞、浏览量和管理功能会在服务恢复后自动可用。页面其余内容仍然可以正常浏览。</p>
-        <code>API service is unavailable. Please try again shortly.</code>
-      </div>
+      <article className="journal-entry journal-entry--offline" role="status">
+        <div className="journal-entry__meta">
+          <time dateTime={new Date().toISOString()}>{formatDate(new Date().toISOString())}</time>
+        </div>
+        <div className="journal-entry__content">
+          <h2>文章服务暂不可用。</h2>
+          <div className="journal-entry__preview">
+            <p>文章列表、搜索、点赞、浏览量和管理功能会在服务恢复后自动可用。页面其余内容仍然可以正常浏览。</p>
+            <code className="journal-entry__system-message">API service is unavailable. Please try again shortly.</code>
+          </div>
+        </div>
+      </article>
     </PhysicsItem>
   );
 }
 
-function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
+function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true }) {
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -121,20 +114,6 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
     targetY: 0,
     lastTime: null,
   });
-
-  const [likedPosts, setLikedPosts] = useState(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem("liked_articles") || "[]");
-      return Array.isArray(saved)
-        ? saved.filter((item) => typeof item === "string")
-        : [];
-    } catch {
-      return [];
-    }
-  });
-
-  const pendingLikesRef = useRef(new Set());
-  const [pendingLikes, setPendingLikes] = useState([]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
@@ -174,18 +153,6 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
         setPosts(nextPosts);
 
-        setLikedPosts((prev) => {
-          const legacyIds = new Set(nextPosts.map((post) => String(post.id)));
-          const nextLiked = prev.filter((key) => !legacyIds.has(key));
-
-          try {
-            localStorage.setItem("liked_articles", JSON.stringify(nextLiked));
-          } catch {
-            // localStorage can be unavailable in restricted browser modes.
-          }
-
-          return nextLiked;
-        });
       })
       .catch((err) => {
         if (isBackendOfflineError(err)) {
@@ -521,77 +488,6 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
     ...drawerItems,
   ];
 
-  const handleLike = async (postId) => {
-    if (backendOffline) {
-      onNotify?.({
-        variant: "info",
-        title: "backend-offline.",
-        message: "当前未连接后端，点赞功能暂不可用。",
-      });
-      return;
-    }
-
-    const currentPost =
-      posts.find((post) => post.id === postId) ||
-      (selectedPost?.id === postId ? selectedPost : null);
-
-    const currentLikeKey = likeStorageKey(currentPost);
-
-    if (pendingLikesRef.current.has(postId)) return;
-
-    pendingLikesRef.current.add(postId);
-    setPendingLikes(Array.from(pendingLikesRef.current));
-
-    try {
-      const res = await incrementLike(postId);
-      const counters = res.data ?? {};
-
-      if (typeof counters.liked !== "boolean" || !isCount(counters.like_count)) {
-        throw new Error("Invalid like response");
-      }
-
-      setLikedPosts((prev) => {
-        const next = counters.liked
-          ? prev.includes(currentLikeKey)
-            ? prev
-            : currentLikeKey
-              ? [...prev, currentLikeKey]
-              : prev
-          : prev.filter((key) => key !== currentLikeKey);
-
-        try {
-          localStorage.setItem("liked_articles", JSON.stringify(next));
-        } catch {
-          // localStorage can be unavailable in restricted browser modes.
-        }
-
-        return next;
-      });
-
-      setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? applyCounterPatch(p, counters) : p))
-      );
-
-      setSelectedPost((prev) =>
-        prev?.id === postId ? applyCounterPatch(prev, counters) : prev
-      );
-    } catch (err) {
-      if (isBackendOfflineError(err)) {
-        setBackendOffline(true);
-        return;
-      }
-
-      onNotify?.({
-        variant: "error",
-        title: "like-failed.",
-        message: errorMessage(err, "点赞操作失败。"),
-      });
-    } finally {
-      pendingLikesRef.current.delete(postId);
-      setPendingLikes(Array.from(pendingLikesRef.current));
-    }
-  };
-
   const handleUploadImage = async (file) => {
     if (backendOffline) {
       onNotify?.({
@@ -632,14 +528,16 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
 
   return (
     <div className="blog-page">
-      <PhysicsItem strength={0.8}>
-        <AppDrawer
-          user={user}
-          label="blog."
-          items={blogDrawerItems}
-          onOpenSignIn={onOpenSignIn}
-        />
-      </PhysicsItem>
+      {showDrawer && (
+        <PhysicsItem strength={0.8}>
+          <AppDrawer
+            user={user}
+            label="blog."
+            items={blogDrawerItems}
+            onOpenSignIn={onOpenSignIn}
+          />
+        </PhysicsItem>
+      )}
 
       <PhysicsItem strength={1}>
         <div>
@@ -745,72 +643,33 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       {backendOffline && <BackendOfflineNotice />}
 
       {!backendOffline && (
-        <div className="px-[10%]">
-          <div className="divide-y divide-zinc-800">
+        <div className="journal-index">
+          <div className="journal-index__list">
             {posts.map((post) => (
               <PhysicsItem key={post.id} strength={1}>
-                <article className="py-16">
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                <article className="journal-entry">
+                  <div className="journal-entry__meta">
                     <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
                       {formatDate(post.created_at)}
                     </time>
-                    <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
-                      {formatAuthor(post)}
-                    </div>
                   </div>
 
-                  <h2 className="mt-4 text-2xl font-bold tracking-tight text-white">
-                    {post.title}
-                  </h2>
-
-                  <div className="mt-4 text-zinc-400 leading-relaxed prose prose-invert prose-sm max-w-none line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {post.content}
-                    </ReactMarkdown>
-                  </div>
-
-                  <div className="mt-6 flex items-center justify-between">
-                    <button
-                      onClick={() => setSelectedPost(post)}
-                      className="inline-block text-white font-semibold hover:text-zinc-300 transition-colors"
-                    >
-                      read-more,
-                    </button>
-
-                    <div className="flex items-center gap-4">
-                      <span className="text-xs font-mono text-zinc-500">
-                        {(post.view_count || 0).toLocaleString()} views
-                      </span>
-
-                      <span className="text-xs font-mono text-zinc-500">
-                        {(post.like_count || 0).toLocaleString()} likes
-                      </span>
-
-                      <button
-                        onClick={() => handleLike(post.id)}
-                        disabled={pendingLikes.includes(post.id)}
-                        className={`transition-colors ${
-                          pendingLikes.includes(post.id)
-                            ? "text-zinc-500 cursor-wait"
-                            : likedPosts.includes(likeStorageKey(post))
-                              ? "text-white"
-                              : "text-zinc-600 hover:text-zinc-400"
-                        }`}
-                        title={
-                          likedPosts.includes(likeStorageKey(post))
-                            ? "取消点赞"
-                            : "点赞"
-                        }
-                      >
-                        <Heart
-                          size={18}
-                          fill={
-                            likedPosts.includes(likeStorageKey(post))
-                              ? "currentColor"
-                              : "none"
-                          }
-                        />
+                  <div className="journal-entry__content">
+                    <h2>
+                      <button type="button" onClick={() => setSelectedPost(post)}>
+                        {post.title}
                       </button>
+                    </h2>
+                    <div className="journal-entry__preview">
+                      {post.cover_image ? (
+                        <img className="journal-entry__thumbnail" src={post.cover_image} alt="" />
+                      ) : (
+                        <div className="journal-entry__excerpt prose prose-invert prose-sm line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {post.content}
+                        </ReactMarkdown>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </article>

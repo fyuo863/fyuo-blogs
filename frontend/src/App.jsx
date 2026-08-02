@@ -1,27 +1,96 @@
-import { useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Home from "./pages/Home";
 import Blog from "./pages/Blog";
+import Travel from "./pages/Travel";
 import Navbar from "./module/Navbar";
 import Footer from "./module/Footer";
 import SignInModal from "./components/SignInModal";
 import InfoModal from "./components/InfoModal";
 import AdminPanel from "./components/AdminPanel";
 
+const PAGE_ORDER = ["home", "blog", "travel"];
+const PAGE_PATHS = { home: "/", blog: "/blog", travel: "/travel" };
+
+function pageKeyForPath(pathname) {
+  return Object.entries(PAGE_PATHS).find(([, path]) => path === pathname)?.[0] ?? "home";
+}
+
+function useWideSpread() {
+  const query = "(min-width: 72rem)";
+  const [isWide, setIsWide] = useState(() => window.matchMedia(query).matches);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    const update = () => setIsWide(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
+  return isWide;
+}
+
+function PageContent({ page, user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer }) {
+  if (page === "home") {
+    return <Home user={user} onOpenSignIn={onOpenSignIn} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer} />;
+  }
+
+  if (page === "blog") {
+    return <Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer} />;
+  }
+
+  return <Travel />;
+}
+
+function MobileRoutes(props) {
+  return (
+    <Routes>
+      <Route path="/" element={<PageContent {...props} page="home" showDrawer />} />
+      <Route path="/blog" element={<PageContent {...props} page="blog" showDrawer />} />
+      <Route path="/travel" element={<PageContent {...props} page="travel" showDrawer={false} />} />
+    </Routes>
+  );
+}
+
+function MagazineSpread(props) {
+  const location = useLocation();
+  const pageKeys = PAGE_ORDER;
+  const spreadStart = pageKeyForPath(location.pathname) === "travel" ? 1 : 0;
+  const visibleKeys = pageKeys.slice(spreadStart, spreadStart + 2);
+  const drawerPage = visibleKeys.includes("blog") ? "blog" : visibleKeys.includes("home") ? "home" : null;
+
+  return (
+    <div className="magazine-spread" aria-label="Two-page magazine reader">
+      <div className="magazine-spread__track" style={{ "--spread-offset": `${spreadStart * -33.333333}%` }}>
+        {pageKeys.map((page, index) => (
+          <section className={`magazine-spread__page${index < spreadStart || index > spreadStart + 1 ? " is-buffer" : ""}`} aria-label={`${page} page`} aria-hidden={index < spreadStart || index > spreadStart + 1} inert={index < spreadStart || index > spreadStart + 1 ? "" : undefined} key={page}>
+            <PageContent {...props} page={page} showDrawer={page === drawerPage} />
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AppLayout({ user, showSignIn, showAdmin, onOpenAdmin, onCloseAdmin, onOpenSignIn, onCloseSignIn, onLogin, onLogout, onNotify }) {
   const drawerItems = user
     ? [...(user.role === "admin" ? [{ label: "admin.", onClick: onOpenAdmin }] : []), { label: "exit.", onClick: onLogout }]
     : [];
+  const isWideSpread = useWideSpread();
+  const location = useLocation();
+  const pageProps = { user, onOpenSignIn, onLogout, onNotify, drawerItems };
+  const currentPage = pageKeyForPath(location.pathname);
+  const selectedPages = isWideSpread
+    ? PAGE_ORDER.slice(currentPage === "travel" ? 1 : 0, (currentPage === "travel" ? 1 : 0) + 2)
+    : [currentPage];
 
   return (
     <>
-      <Navbar visible />
+      <Navbar visible selectedPages={selectedPages} />
       <main className="app-shell">
-        <Routes>
-          <Route path="/" element={<Home user={user} onOpenSignIn={onOpenSignIn} onNotify={onNotify} drawerItems={drawerItems} />} />
-          <Route path="/blog" element={<Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} />} />
-        </Routes>
+        {isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
       </main>
       <Footer />
       <SignInModal open={showSignIn} onClose={onCloseSignIn} onLogin={onLogin} onNotify={onNotify} />

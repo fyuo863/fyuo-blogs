@@ -1,5 +1,38 @@
 [
   {
+    "date": "2026-08-02",
+    "scope": "wide-screen page reader",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Bidirectional Two-Page Reader",
+    "enrichment": "none",
+    "brief": "Use the shortest available direction between the Index/Journal and Journal/Travel spreads; hide wide-screen scrollbars."
+  },
+  {
+    "date": "2026-08-02",
+    "scope": "wide-screen page reader",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Continuous Two-Page Reader",
+    "enrichment": "none",
+    "brief": "Show adjacent Index and Journal pages on wide screens, then shift the ordered spread left to Travel."
+  },
+  {
+    "date": "2026-08-02",
+    "scope": "travel archive",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Long Document",
+    "enrichment": "none",
+    "brief": "Personal travel archive with a chronological ledger and place index"
+  },
+  {
     "date": "2026-08-01",
     "scope": "app",
     "genre": "editorial",

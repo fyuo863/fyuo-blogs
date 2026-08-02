@@ -35,7 +35,7 @@ const newProject = () => ({
   description: "",
 });
 
-function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
+function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) {
   const [content, setContent] = useState(DEFAULT_HOME_CONTENT);
   const [draft, setDraft] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -92,7 +92,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
           <p className="cover-edition">fyuo / independent work / issue 01</p>
           <HalftoneTitle id="home-title"><span>PROJECTS</span><span>&amp; NOTES</span></HalftoneTitle>
           <div className="cover-deck">
-            <p>一组持续生长的工具、Agent 与技术笔记。</p>
+            <p>我的个人主页。</p>
             <a className="cover-link" href="#projects">view the index ↓</a>
           </div>
         </section>
@@ -107,7 +107,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
 
       <PhysicsItem strength={1}>
         <section className="projects-section" id="projects" aria-labelledby="projects-title">
-          <header className="section-head"><div><p className="section-kicker">the index / 02—07</p><h2 className="section-title" id="projects-title"><span className="section-title__selected">Selected work.</span></h2></div><p className="section-note">每一项都直接通往对应的 GitHub 项目。</p></header>
+          <header className="section-head"><div><p className="section-kicker">the index / 02—07</p><h2 className="section-title" id="projects-title"><span className="section-title__selected">Selected work.</span></h2></div><p className="section-note">精选项目</p></header>
           <ProjectGrid projects={content.projects.map(({ link_url, ...project }) => ({ ...project, linkUrl: link_url }))} />
         </section>
       </PhysicsItem>
@@ -148,7 +148,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems }) {
         </section>
       )}
 
-      <PhysicsItem strength={0.8}><AppDrawer user={user} label="account." items={drawerItems} onOpenSignIn={onOpenSignIn} /></PhysicsItem>
+      {showDrawer && <PhysicsItem strength={0.8}><AppDrawer user={user} label="account." items={drawerItems} onOpenSignIn={onOpenSignIn} /></PhysicsItem>}
     </div>
   );
 }

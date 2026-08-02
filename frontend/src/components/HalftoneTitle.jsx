@@ -35,6 +35,8 @@ function HalftoneTitle({ id, children }) {
       cobalt: rootStyles.getPropertyValue("--color-cobalt").trim(),
     };
     const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
+    const baseRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-base-radius")) || 0.78;
+    const titleDotScale = Number.parseFloat(rootStyles.getPropertyValue("--halftone-title-dot-scale")) || 0.5;
     const revealRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-reveal-radius")) || 180;
     const waveIntervalMin = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-interval-min")) || 460;
     const waveIntervalMax = Number.parseFloat(rootStyles.getPropertyValue("--halftone-wave-interval-max")) || 1540;
@@ -155,16 +157,13 @@ function HalftoneTitle({ id, children }) {
         const row = Math.max(1, Math.min(rows - 2, Math.round((y - cellSize / 2) / cellSize) + 1));
         for (let x = cellSize / 2; x < state.width + cellSize; x += cellSize) {
           const withinTitle = x >= state.titleBounds.x && x <= state.titleBounds.x + state.titleBounds.width && y >= state.titleBounds.y && y <= state.titleBounds.y + state.titleBounds.height;
-          if (withinTitle) continue;
           const column = Math.max(1, Math.min(columns - 2, Math.round((x - cellSize / 2) / cellSize) + 1));
-          state.points.push({ x, y, baseRadius: 0.78, waveIndex: row * columns + column });
-        }
-      }
-      for (let y = state.titleBounds.y + cellSize / 2; y < state.titleBounds.y + state.titleBounds.height; y += cellSize) {
-        const row = Math.max(1, Math.min(rows - 2, Math.round((y - cellSize / 2) / cellSize) + 1));
-        for (let x = state.titleBounds.x + cellSize / 2; x < state.titleBounds.x + state.titleBounds.width; x += cellSize) {
-          const column = Math.max(1, Math.min(columns - 2, Math.round((x - cellSize / 2) / cellSize) + 1));
-          state.points.push({ x, y, baseRadius: 0.39, waveIndex: row * columns + column });
+          state.points.push({
+            x,
+            y,
+            baseRadius: baseRadius * (withinTitle ? titleDotScale : 1),
+            waveIndex: row * columns + column,
+          });
         }
       }
       draw();
