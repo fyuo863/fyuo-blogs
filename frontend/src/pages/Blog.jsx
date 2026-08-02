@@ -607,8 +607,31 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems }) {
       <PhysicsItem strength={1}>
         <div>
           <header className="blog-hero">
+            <svg className="blog-oil-filter" aria-hidden="true" focusable="false">
+              <defs>
+                <filter id="blog-journal-oil" x="-10%" y="-25%" width="120%" height="150%">
+                  <feTurbulence type="fractalNoise" baseFrequency="0.018 0.11" numOctaves="2" seed="17" result="noise" />
+                  <feDisplacementMap in="SourceGraphic" in2="noise" scale="7" xChannelSelector="R" yChannelSelector="G" />
+                </filter>
+              </defs>
+            </svg>
             <p className="blog-eyebrow">journal / field notes</p>
-            <h1 className="blog-title">The Journal.</h1>
+            <h1
+              className="blog-title blog-title--oil"
+              onPointerMove={(event) => {
+                const bounds = event.currentTarget.getBoundingClientRect();
+                const x = ((event.clientX - bounds.left) / bounds.width - 0.5) * 12;
+                const y = ((event.clientY - bounds.top) / bounds.height - 0.5) * 8;
+                event.currentTarget.style.setProperty("--journal-refraction-x", `${x}px`);
+                event.currentTarget.style.setProperty("--journal-refraction-y", `${y}px`);
+              }}
+              onPointerLeave={(event) => {
+                event.currentTarget.style.setProperty("--journal-refraction-x", "0px");
+                event.currentTarget.style.setProperty("--journal-refraction-y", "0px");
+              }}
+            >
+              <span className="blog-title__ink">The Journal.</span>
+            </h1>
             <p className="blog-lede">技术笔记、项目记录与持续写作。</p>
           </header>
         </div>

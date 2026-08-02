@@ -37,6 +37,7 @@ Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is s
 ## Motion
 
 - One quiet opacity/translate reveal for large desktop surfaces.
+- The Journal masthead may use a pointer-reactive oil-glass treatment: a warm-paper lens refracts by a few pixels, with restrained cobalt/vermilion chromatic edges, displaced line-grain scatter, and a fine rim. It is decorative, preserves the readable ink title, and becomes static under reduced motion.
 - The home cover title may use a fixed-centre paper-dot layer over cobalt; pointer proximity only reduces dot radius to reveal the lower colour.
 - The halftone canvas fills the warm-paper home cover without scaling the title pattern: the title keeps an independently anchored 0.39-cell grid, while the surrounding cover receives an added 0.78-cell grid. A damped two-dimensional wave-heightfield injects stronger sources at randomized intervals along the left edge, and pointer presses inject a local ripple; stronger wave peaks shrink the fixed-centre dots to reveal more cobalt.
 - A vermilion typesetter mark advances through the home-title characters every half-second; reduced motion pins it to the first character.
