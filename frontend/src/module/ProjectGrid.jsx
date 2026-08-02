@@ -1,16 +1,17 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), maximum);
 
-const createWoodGrainLine = (lineIndex) => {
+const createWoodGrainLine = (lineIndex, phase) => {
   const baseline = lineIndex * 15 - 165;
   const points = [];
 
   for (let x = -120; x <= 1320; x += 24) {
-    const knotDistance = Math.hypot((x - 600) * 0.78, baseline - 450);
+    const knotDistance = Math.hypot((x - 600 + Math.sin(phase * 0.26) * 38) * 0.78, baseline - 450);
     const knot = Math.sin(knotDistance * 0.073) * 28 * Math.exp(-knotDistance / 245);
-    const warp = Math.sin(x * 0.012) * 28
-      + Math.sin(baseline * 0.31 + x * 0.007) * 16
+    const warp = Math.sin(x * 0.012 + phase * 0.22) * 28
+      + Math.sin(baseline * 0.31 + x * 0.007 + phase * 0.48) * 16
+      + Math.sin(x * 0.008 - baseline * 0.09 + phase * 0.74) * 5
       + knot;
     points.push(`${x === -120 ? "M" : "L"} ${x} ${baseline + warp}`);
   }
@@ -18,13 +19,55 @@ const createWoodGrainLine = (lineIndex) => {
   return points.join(" ");
 };
 
-const woodGrainLines = Array.from({ length: 86 }, (_, index) => createWoodGrainLine(index));
+const createWoodGrainFrame = (phase = 0) => Array.from({ length: 86 }, (_, index) => ({
+  path: createWoodGrainLine(index, phase),
+  width: 0.52 + ((Math.sin(index * 1.91 + phase * 1.08) + 1) / 2) ** 2 * 1.18,
+}));
 
-function WoodGrainField({ className = "cover-flow__wood-grain" }) {
+const useWoodGrainFrame = () => {
+  const [frame, setFrame] = useState(() => createWoodGrainFrame());
+
+  useEffect(() => {
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let animationFrame = 0;
+    let lastUpdate = 0;
+    let startTime = performance.now();
+
+    const renderFrame = (time) => {
+      if (!motionQuery.matches && time - lastUpdate >= 1000 / 18) {
+        setFrame(createWoodGrainFrame((time - startTime) / 1000));
+        lastUpdate = time;
+      }
+      animationFrame = window.requestAnimationFrame(renderFrame);
+    };
+
+    const resetForMotionPreference = () => {
+      window.cancelAnimationFrame(animationFrame);
+      if (motionQuery.matches) {
+        setFrame(createWoodGrainFrame());
+        return;
+      }
+      startTime = performance.now();
+      lastUpdate = 0;
+      animationFrame = window.requestAnimationFrame(renderFrame);
+    };
+
+    resetForMotionPreference();
+    motionQuery.addEventListener("change", resetForMotionPreference);
+    return () => {
+      window.cancelAnimationFrame(animationFrame);
+      motionQuery.removeEventListener("change", resetForMotionPreference);
+    };
+  }, []);
+
+  return frame;
+};
+
+function WoodGrainField({ lines, className = "cover-flow__wood-grain" }) {
   return (
     <svg className={className} viewBox="0 0 1200 900" preserveAspectRatio="none" aria-hidden="true" focusable="false">
       <g className="cover-flow__wood-grain-line">
-        {woodGrainLines.map((path, index) => <path d={path} key={`grain-${index}`} />)}
+        {lines.map((line, index) => <path d={line.path} key={`grain-${index}`} strokeWidth={line.width} />)}
       </g>
     </svg>
   );
@@ -33,6 +76,7 @@ function WoodGrainField({ className = "cover-flow__wood-grain" }) {
 function ProjectGrid({ projects = [] }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const woodGrainLines = useWoodGrainFrame();
   const dragRef = useRef(null);
   const suppressClickRef = useRef(false);
   if (!projects.length) return null;
@@ -95,7 +139,7 @@ function ProjectGrid({ projects = [] }) {
   return (
     <section className="project-grid cover-flow" aria-label="Project cover flow">
       <div className={`cover-flow__stage${isDragging ? " is-dragging" : ""}`} role="region" aria-roledescription="Cover flow" aria-label="Project covers. Drag horizontally to browse quickly, or use left and right arrow keys." tabIndex="0" onKeyDown={onStageKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={finishDrag} onPointerCancel={(event) => finishDrag(event, true)}>
-        <WoodGrainField />
+        <WoodGrainField lines={woodGrainLines} />
         {projects.map((project, index) => {
           const offset = index - activeIndex;
           const distance = Math.abs(offset);
@@ -127,7 +171,7 @@ function ProjectGrid({ projects = [] }) {
               <img src={project.image} alt="" draggable="false" />
               <span className="cover-flow__reflection" aria-hidden="true">
                 <img src={project.image} alt="" draggable="false" />
-                <WoodGrainField />
+                <WoodGrainField lines={woodGrainLines} />
               </span>
               <span className="cover-flow__item-index">{String(index + 2).padStart(2, "0")}</span>
             </button>
