@@ -1,93 +1,239 @@
-const TRAVEL_RECORDS = [
-  // Add verified personal records here:
-  // {
-  //   id: "2026-example",
-  //   date: "2026-01-01",
-  //   location: "City, Country",
-  //   title: "Entry title",
-  //   excerpt: "A short note about the journey.",
-  //   image: "/path-to-image.jpg",
-  // },
-];
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  createTravelPlace,
+  deleteTravelPlace,
+  isBackendOfflineError,
+  listTravelPlaces,
+  updateTravelPlace,
+} from "../api";
 
-function formatDate(date) {
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(date));
+const TravelGlobe = lazy(() => import("../components/TravelGlobe"));
+
+const emptyDraft = {
+  id: null,
+  name: "",
+  latitude: "",
+  longitude: "",
+  gallery: "",
+  route: "",
+};
+
+function draftFromPlace(place) {
+  if (!place) return emptyDraft;
+  return {
+    id: place.id,
+    name: place.name,
+    latitude: String(place.latitude),
+    longitude: String(place.longitude),
+    gallery: (place.gallery || []).join("\n"),
+    route: (place.route || []).map((point) => `${point.latitude}, ${point.longitude}`).join("\n"),
+  };
 }
 
-function groupByYear(records) {
-  return records.reduce((groups, record) => {
-    const year = new Date(record.date).getFullYear();
-    if (!groups[year]) groups[year] = [];
-    groups[year].push(record);
-    return groups;
-  }, {});
+function placeInputFromDraft(draft) {
+  const route = draft.route
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [latitude, longitude] = line.split(",").map((value) => Number(value.trim()));
+      return { latitude, longitude };
+    });
+
+  return {
+    name: draft.name.trim(),
+    latitude: Number(draft.latitude),
+    longitude: Number(draft.longitude),
+    gallery: draft.gallery.split("\n").map((value) => value.trim()).filter(Boolean),
+    route,
+  };
 }
 
-function Travel() {
-  const records = [...TRAVEL_RECORDS].sort((left, right) => new Date(right.date) - new Date(left.date));
-  const recordsByYear = groupByYear(records);
-  const years = Object.keys(recordsByYear).sort((left, right) => Number(right) - Number(left));
-  const places = [...new Set(records.map((record) => record.location))];
+function coordinateText(place) {
+  return `${Number(place.latitude).toFixed(4)}°, ${Number(place.longitude).toFixed(4)}°`;
+}
+
+function Travel({ user, onOpenSignIn, onNotify }) {
+  const [places, setPlaces] = useState([]);
+  const [selectedId, setSelectedId] = useState(null);
+  const [draft, setDraft] = useState(emptyDraft);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  const selectedPlace = useMemo(
+    () => places.find((place) => place.id === selectedId) || null,
+    [places, selectedId]
+  );
+
+  const loadPlaces = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const response = await listTravelPlaces();
+      const nextPlaces = response.data?.data || [];
+      setPlaces(nextPlaces);
+      setSelectedId((current) => current ?? nextPlaces[0]?.id ?? null);
+    } catch (requestError) {
+      setError(isBackendOfflineError(requestError) ? "Travel records are waiting for the backend connection." : "Locations could not be loaded right now.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const loadTimer = window.setTimeout(() => {
+      void loadPlaces();
+    }, 0);
+    return () => window.clearTimeout(loadTimer);
+  }, [loadPlaces]);
+
+  const selectPlace = useCallback((place) => {
+    setSelectedId(place.id);
+    setDraft(draftFromPlace(place));
+  }, []);
+
+  const startNewPlace = () => {
+    setSelectedId(null);
+    setDraft(emptyDraft);
+    setError("");
+  };
+
+  const updateDraft = (event) => {
+    const { name, value } = event.target;
+    setDraft((current) => ({ ...current, [name]: value }));
+  };
+
+  const savePlace = async (event) => {
+    event.preventDefault();
+    if (!user) {
+      onOpenSignIn();
+      return;
+    }
+
+    const payload = placeInputFromDraft(draft);
+    if (!payload.name || !Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) {
+      setError("A name plus valid latitude and longitude are required.");
+      return;
+    }
+    if (payload.route.some((point) => !Number.isFinite(point.latitude) || !Number.isFinite(point.longitude))) {
+      setError("Each route waypoint needs a latitude and longitude, separated by a comma.");
+      return;
+    }
+
+    setSaving(true);
+    setError("");
+    try {
+      const response = draft.id
+        ? await updateTravelPlace(draft.id, payload, user.token)
+        : await createTravelPlace(payload, user.token);
+      const saved = response.data?.data;
+      setPlaces((current) => draft.id ? current.map((place) => (place.id === saved.id ? saved : place)) : [saved, ...current]);
+      selectPlace(saved);
+    } catch (requestError) {
+      const message = isBackendOfflineError(requestError)
+        ? "The backend is unavailable, so this location was not saved."
+        : requestError?.response?.data?.error || "This location could not be saved.";
+      setError(message);
+      onNotify?.({ title: "travel edit unavailable.", message });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const removePlace = async () => {
+    if (!draft.id || !user) return;
+    const previous = places;
+    setPlaces((current) => current.filter((place) => place.id !== draft.id));
+    setSelectedId(null);
+    setDraft(emptyDraft);
+    try {
+      await deleteTravelPlace(draft.id, user.token);
+    } catch (requestError) {
+      setPlaces(previous);
+      setSelectedId(draft.id);
+      const message = isBackendOfflineError(requestError)
+        ? "The backend is unavailable, so the location was restored."
+        : requestError?.response?.data?.error || "The location could not be deleted and was restored.";
+      setError(message);
+      onNotify?.({ title: "travel deletion unavailable.", message });
+    }
+  };
 
   return (
-    <div className="travel-page">
-      <header className="travel-masthead">
-        <p className="travel-masthead__edition">FYUO863 / TRAVEL ARCHIVE</p>
-        <h1>Field Notes.</h1>
-        <p className="travel-masthead__lede">A growing record of routes, places, and the moments kept between them.</p>
+    <div className="travel-page travel-page--globe">
+      <header className="travel-globe-masthead">
+        <p className="travel-globe-masthead__edition">FYUO863 / GEO ARCHIVE</p>
+        <h1>Earth, marked.</h1>
+        <div className="travel-globe-masthead__footer">
+          <p>Every pin starts with a coordinate. Routes are optional; the globe is the index.</p>
+          {user && <button className="travel-globe__action" type="button" onClick={startNewPlace}>new location.</button>}
+        </div>
       </header>
 
-      <div className="travel-ledger">
-        <section className="travel-timeline" aria-labelledby="travel-timeline-title">
-          <header className="travel-section-head">
-            <h2 id="travel-timeline-title">Timeline.</h2>
-            <p>Journeys are kept in the order they happened.</p>
+      <section className="travel-globe-stage" aria-labelledby="travel-globe-title">
+        <div className="travel-globe-stage__caption">
+          <p id="travel-globe-title">Drag to rotate. Select a red point to inspect it.</p>
+          <div>
+            <span>{loading ? "loading coordinates…" : `${places.length} saved ${places.length === 1 ? "location" : "locations"}`}</span>
+            <span>NASA Blue + Black Marble / celestial ink field</span>
+          </div>
+        </div>
+        <Suspense fallback={<div className="travel-globe__fallback" role="status" aria-label="Loading globe." />}>
+          <TravelGlobe places={places} onSelectPlace={selectPlace} />
+        </Suspense>
+
+        {selectedPlace ? (
+          <article className="travel-globe-note" aria-live="polite">
+            <p className="travel-globe-note__index">PIN {String(places.indexOf(selectedPlace) + 1).padStart(2, "0")}</p>
+            <h2>{selectedPlace.name}</h2>
+            <p>{coordinateText(selectedPlace)}</p>
+            {selectedPlace.gallery?.[0] && (
+              <img src={selectedPlace.gallery[0]} alt={`${selectedPlace.name} travel record`} loading="lazy" />
+            )}
+          </article>
+        ) : (
+          <p className="travel-globe-stage__empty" role="status">{error || "No coordinates have been indexed yet."}</p>
+        )}
+      </section>
+
+      {user && (
+        <section className="travel-place-editor" aria-labelledby="travel-place-editor-title">
+          <header>
+            <p>AUTHORISED FIELD EDITOR</p>
+            <h2 id="travel-place-editor-title">{draft.id ? "Adjust a pin." : "Mark a place."}</h2>
           </header>
-
-          {years.length > 0 ? (
-            <div className="travel-timeline__years">
-              {years.map((year) => (
-                <section className="travel-year" key={year} aria-labelledby={`travel-year-${year}`}>
-                  <h3 id={`travel-year-${year}`}>{year}</h3>
-                  <ol className="travel-year__entries">
-                    {recordsByYear[year].map((record) => (
-                      <li className="travel-entry" id={`travel-${record.id}`} key={record.id}>
-                        <time dateTime={record.date}>{formatDate(record.date)}</time>
-                        <div className="travel-entry__copy">
-                          <p className="travel-entry__place">{record.location}</p>
-                          <h4>{record.title}</h4>
-                          {record.excerpt && <p>{record.excerpt}</p>}
-                        </div>
-                        {record.image && <img src={record.image} alt={`${record.title} — ${record.location}`} loading="lazy" />}
-                      </li>
-                    ))}
-                  </ol>
-                </section>
-              ))}
+          <form onSubmit={savePlace}>
+            <label>
+              Name
+              <input name="name" value={draft.name} onChange={updateDraft} required placeholder="Kyoto" />
+            </label>
+            <label>
+              Latitude
+              <input name="latitude" value={draft.latitude} onChange={updateDraft} required inputMode="decimal" placeholder="35.0116" />
+            </label>
+            <label>
+              Longitude
+              <input name="longitude" value={draft.longitude} onChange={updateDraft} required inputMode="decimal" placeholder="135.7681" />
+            </label>
+            <label className="travel-place-editor__wide">
+              Gallery URLs
+              <textarea name="gallery" value={draft.gallery} onChange={updateDraft} placeholder="https://…/frame-01.jpg\nhttps://…/frame-02.jpg" />
+              <small>One image URL per line. The first image becomes the pin preview.</small>
+            </label>
+            <label className="travel-place-editor__wide">
+              Route waypoints
+              <textarea name="route" value={draft.route} onChange={updateDraft} placeholder="35.0116, 135.7681\n35.0200, 135.7750" />
+              <small>Optional. One “latitude, longitude” pair per line.</small>
+            </label>
+            {error && <p className="travel-place-editor__error" role="alert">{error}</p>}
+            <div className="travel-place-editor__actions">
+              <button className="travel-globe__action" type="submit" disabled={saving}>{saving ? "saving…" : draft.id ? "save pin." : "add pin."}</button>
+              {draft.id && <button className="travel-globe__action travel-globe__action--quiet" type="button" onClick={removePlace}>delete pin.</button>}
             </div>
-          ) : (
-            <p className="travel-empty" role="status">The first record is waiting for its coordinates.</p>
-          )}
+          </form>
         </section>
-
-        <aside className="travel-places" aria-labelledby="travel-places-title">
-          <h2 id="travel-places-title">Places.</h2>
-          {places.length > 0 ? (
-            <ol>
-              {places.map((place) => {
-                const firstRecord = records.find((record) => record.location === place);
-                return <li key={place}><a href={`#travel-${firstRecord.id}`}>{place}</a></li>;
-              })}
-            </ol>
-          ) : (
-            <p>No places indexed yet.</p>
-          )}
-        </aside>
-      </div>
+      )}
     </div>
   );
 }

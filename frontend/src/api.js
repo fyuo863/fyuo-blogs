@@ -146,6 +146,42 @@ export const updateHomeContent = (data, token) => {
 };
 
 // ============================================================
+//  Travel places
+// ============================================================
+
+export const listTravelPlaces = () => {
+  if (BACKEND_OFFLINE) {
+    return offlineResponse({ data: [], backendOffline: true });
+  }
+
+  return api.get("/travel-places");
+};
+
+export const createTravelPlace = (data, token) => {
+  if (BACKEND_OFFLINE) {
+    return offlineUnavailable("Backend is offline. Travel places cannot be created.");
+  }
+
+  return api.post("/travel-places", data, authConfig(token));
+};
+
+export const updateTravelPlace = (id, data, token) => {
+  if (BACKEND_OFFLINE) {
+    return offlineUnavailable("Backend is offline. Travel places cannot be updated.");
+  }
+
+  return api.put(`/travel-places/${id}`, data, authConfig(token));
+};
+
+export const deleteTravelPlace = (id, token) => {
+  if (BACKEND_OFFLINE) {
+    return offlineUnavailable("Backend is offline. Travel places cannot be deleted.");
+  }
+
+  return api.delete(`/travel-places/${id}`, authConfig(token));
+};
+
+// ============================================================
 //  Articles (protected)
 // ============================================================
 

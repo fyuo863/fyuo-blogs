@@ -1,5 +1,27 @@
 [
   {
+    "date": "2026-08-04",
+    "scope": "travel globe material",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, tactile print earth",
+    "macrostructure": "Map / Diagram",
+    "enrichment": "NASA Blue Marble texture with a screen-level procedural CMY inkjet pass",
+    "brief": "Keep a real earth material and apply the tactile inkjet treatment only to the final globe render."
+  },
+  {
+    "date": "2026-08-03",
+    "scope": "travel archive",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Map / Diagram",
+    "enrichment": "interactive procedural WebGL globe",
+    "brief": "Replace the chronological ledger and place index with a draggable three-dimensional globe and authenticated coordinate, gallery, and route editing."
+  },
+  {
     "date": "2026-08-02",
     "scope": "wide-screen page reader",
     "genre": "editorial",

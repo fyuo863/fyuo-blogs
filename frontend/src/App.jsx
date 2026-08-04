@@ -41,7 +41,7 @@ function PageContent({ page, user, onOpenSignIn, onLogout, onNotify, drawerItems
     return <Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer} />;
   }
 
-  return <Travel />;
+  return <Travel user={user} onOpenSignIn={onOpenSignIn} onNotify={onNotify} />;
 }
 
 function MobileRoutes(props) {
