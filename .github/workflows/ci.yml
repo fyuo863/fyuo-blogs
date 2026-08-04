@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "1.26" # 换成你实际的 Go 版本
+          go-version: "1.26.2"
 
       - name: Install dependencies
         run: |
@@ -32,9 +32,8 @@ jobs:
           cd backend
           go build -v ./...
 
-      # 如果你写了单元测试，解开下面这行的注释即可自动跑测试
-      # - name: Run Backend Tests
-      #   run: cd backend && go test ./...
+      - name: Run backend tests
+        run: cd backend && go test ./...
 
   # 2. 前端 React 代码质量检查
   frontend-check:
@@ -52,6 +51,11 @@ jobs:
         run: |
           cd frontend
           npm ci # 相比 npm install，ci 速度更快且更适合自动化环境
+
+      - name: Lint frontend
+        run: |
+          cd frontend
+          npm run lint
 
       # 核心：检查代码是否能成功打包（能揪出绝大多数未定义的变量、类型错误等）
       - name: Test frontend compilation
