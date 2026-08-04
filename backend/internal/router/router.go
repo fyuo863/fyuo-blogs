@@ -9,12 +9,15 @@ import (
 
 type Dependencies struct {
 	Articles     *handler.ArticleHandler
+	HomeContent  *handler.HomeContentHandler
 	Auth         *handler.AuthHandler
 	Counters     *handler.CounterHandler
 	VisitRecords *handler.VisitRecordHandler
 	APIKeys      *handler.APIKeyHandler
+	TravelPlaces *handler.TravelPlaceHandler
 	Uploads      *handler.UploadHandler
 	AuthorTokens gin.HandlerFunc
+	AuthTokens   gin.HandlerFunc
 	AdminTokens  gin.HandlerFunc
 }
 
@@ -42,6 +45,17 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		api.GET("/articles/:id", deps.Articles.GetBlog)
 		api.POST("/articles/:id/view", deps.Counters.IncrementView)
 		api.POST("/articles/:id/like", handler.ToggleLike)
+		api.GET("/home-content", deps.HomeContent.Get)
+		api.GET("/travel-places", deps.TravelPlaces.List)
+	}
+
+	authenticated := api.Group("")
+	authenticated.Use(deps.AuthTokens)
+	{
+		authenticated.PUT("/home-content", deps.HomeContent.Update)
+		authenticated.POST("/travel-places", deps.TravelPlaces.Create)
+		authenticated.PUT("/travel-places/:id", deps.TravelPlaces.Update)
+		authenticated.DELETE("/travel-places/:id", deps.TravelPlaces.Delete)
 	}
 
 	authorProtected := api.Group("")

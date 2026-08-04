@@ -1,132 +1,51 @@
-import { useRef, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import GithubIcon from "./GithubIcon";
 
-function Navbar({ visible }) {
+function Navbar({ visible, selectedPages = [] }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const isHome = location.pathname === "/";
+  const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const homeRef = useRef(null);
-  const blogsRef = useRef(null);
-  const menuRef = useRef(null);
-  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
-
   useEffect(() => {
-    const activeEl = isHome ? homeRef.current : blogsRef.current;
-    if (!activeEl) return;
-    const { offsetLeft, offsetWidth } = activeEl;
-    const barWidth = offsetWidth * 0.6;
-    const barLeft = offsetLeft + (offsetWidth - barWidth) / 2;
-    setIndicatorStyle({ left: barLeft, width: barWidth });
-  }, [isHome]);
-
-  useEffect(() => {
-    const handler = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
+    const closeOnOutsidePress = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
         setMenuOpen(false);
       }
     };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
+
+    document.addEventListener("pointerdown", closeOnOutsidePress);
+    return () => document.removeEventListener("pointerdown", closeOnOutsidePress);
   }, []);
 
-  const handleNav = (path) => {
+  const navigateTo = (path) => {
     setMenuOpen(false);
-    navigate(path);
+    if (path !== location.pathname) navigate(path);
   };
+  const isSelected = (page) => selectedPages.includes(page);
+
+  const navigation = (
+    <>
+      <button className="site-nav__link" type="button" data-selected={isSelected("home") || undefined} aria-current={location.pathname === "/" ? "page" : undefined} onClick={() => navigateTo("/")}>index</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("blog") || undefined} aria-current={location.pathname === "/blog" ? "page" : undefined} onClick={() => navigateTo("/blog")}>journal</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("travel") || undefined} aria-current={location.pathname === "/travel" ? "page" : undefined} onClick={() => navigateTo("/travel")}>travel</button>
+    </>
+  );
 
   return (
-    <div
-      className={`fixed top-0 left-0 right-0 z-[110] px-4 py-6 sm:px-6 lg:px-8 transition-opacity duration-500 ease-out ${
-        visible ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
-    >
-      <div
-        className="absolute inset-0 backdrop-blur-md"
-        style={{
-          maskImage: "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
-          WebkitMaskImage: "linear-gradient(to bottom, black 0%, black 50%, transparent 100%)",
-        }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent" />
-
-      <div className="relative flex items-center justify-between">
-        {/* 左侧：fyuo-blogs. */}
-        <button
-          onClick={() => handleNav("/")}
-          className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors italic shrink-0"
-        >
-          fyuo-blogs.
-        </button>
-
-        {/* 中间：导航栏（宽屏）或 menu. 下拉（窄屏） */}
-        <div className="absolute left-1/2 -translate-x-1/2">
-          {/* 宽屏：直接显示导航 */}
-          <nav className="hidden md:flex relative items-center gap-6">
-            <button
-              ref={homeRef}
-              onClick={() => handleNav("/")}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors"
-            >
-              home.
-            </button>
-            <button
-              ref={blogsRef}
-              onClick={() => handleNav("/blog")}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors"
-            >
-              blogs.
-            </button>
-            <div
-              className="absolute -bottom-1 h-[3px] bg-white transition-all duration-300 ease-out"
-              style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
-            />
-          </nav>
-
-          {/* 窄屏：menu. 按钮 + 下拉 */}
-          <div className="md:hidden relative" ref={menuRef}>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="text-lg font-bold tracking-tight text-white hover:text-zinc-300 transition-colors"
-            >
-              menu.
-            </button>
-            {menuOpen && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 bg-zinc-900 border border-zinc-700 shadow-2xl py-2 px-6 flex flex-col items-center gap-2 min-w-[120px]">
-                <button
-                  onClick={() => handleNav("/")}
-                  className={`text-lg font-bold tracking-tight transition-colors ${
-                    isHome ? "text-white" : "text-zinc-500 hover:text-white"
-                  }`}
-                >
-                  home.
-                </button>
-                <button
-                  onClick={() => handleNav("/blog")}
-                  className={`text-lg font-bold tracking-tight transition-colors ${
-                    !isHome ? "text-white" : "text-zinc-500 hover:text-white"
-                  }`}
-                >
-                  blogs.
-                </button>
-              </div>
-            )}
-          </div>
+    <header className={`site-nav transition-opacity duration-300 ${visible ? "opacity-100" : "pointer-events-none opacity-0"}`}>
+      <span className="site-nav__edition">fyuo<sub className="brand-subscript">863</sub> / 2026</span>
+      <button className="site-wordmark" type="button" onClick={() => navigateTo("/")}>FYUO<sub className="brand-subscript">863</sub></button>
+      <div className="site-nav__actions">
+        <nav className="site-nav__rail" aria-label="Primary navigation">{navigation}</nav>
+        <div className="relative" ref={menuRef}>
+          <button className="site-nav__menu" type="button" aria-expanded={menuOpen} aria-controls="site-menu" onClick={() => setMenuOpen((open) => !open)}>menu</button>
+          {menuOpen && <nav className="site-nav__sheet" id="site-menu" aria-label="Mobile navigation">{navigation}</nav>}
         </div>
-
-        {/* 右侧：GitHub 图标（始终显示） */}
-        <a
-          href="https://github.com/fyuo863"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-zinc-500 hover:text-white transition-colors shrink-0"
-        >
-          <GithubIcon size={20} />
-        </a>
+        <a className="site-nav__github" href="https://github.com/fyuo863" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><GithubIcon size={20} /></a>
       </div>
-    </div>
+    </header>
   );
 }
 

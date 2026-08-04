@@ -1,0 +1,83 @@
+[
+  {
+    "date": "2026-08-04",
+    "scope": "travel globe material",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, tactile print earth",
+    "macrostructure": "Map / Diagram",
+    "enrichment": "NASA Blue Marble texture with a screen-level procedural CMY inkjet pass",
+    "brief": "Keep a real earth material and apply the tactile inkjet treatment only to the final globe render."
+  },
+  {
+    "date": "2026-08-03",
+    "scope": "travel archive",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Map / Diagram",
+    "enrichment": "interactive procedural WebGL globe",
+    "brief": "Replace the chronological ledger and place index with a draggable three-dimensional globe and authenticated coordinate, gallery, and route editing."
+  },
+  {
+    "date": "2026-08-02",
+    "scope": "wide-screen page reader",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Bidirectional Two-Page Reader",
+    "enrichment": "none",
+    "brief": "Use the shortest available direction between the Index/Journal and Journal/Travel spreads; hide wide-screen scrollbars."
+  },
+  {
+    "date": "2026-08-02",
+    "scope": "wide-screen page reader",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Continuous Two-Page Reader",
+    "enrichment": "none",
+    "brief": "Show adjacent Index and Journal pages on wide screens, then shift the ordered spread left to Travel."
+  },
+  {
+    "date": "2026-08-02",
+    "scope": "travel archive",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Long Document",
+    "enrichment": "none",
+    "brief": "Personal travel archive with a chronological ledger and place index"
+  },
+  {
+    "date": "2026-08-01",
+    "scope": "app",
+    "genre": "editorial",
+    "theme": "custom",
+    "theme_axes": "light / display-heavy / warm",
+    "vibe": "magazine portfolio, generous whitespace, bold contrast",
+    "macrostructure": "Portfolio Grid / Long Document",
+    "brief": "Replace the graphic-lab system with a warm-paper editorial portfolio and journal while preserving project and blog functionality."
+  },
+  {
+    "date": "2026-08-01",
+    "scope": "home masthead",
+    "genre": "playful graphic lab",
+    "theme": "custom graphic lab",
+    "macrostructure": "Project Poster Wall / Long Document",
+    "brief": "Use a fixed-centre Canvas halftone matrix: dot radius, rather than position, encodes the static light field and a brief fine-pointer lens."
+  },
+  {
+    "date": "2026-08-01",
+    "scope": "app",
+    "genre": "playful graphic lab",
+    "theme": "custom graphic lab",
+    "macrostructure": "Project Poster Wall / Long Document",
+    "brief": "Preserve project and blog content while introducing controlled graphic texture and pointer-responsive motion."
+  }
+]
