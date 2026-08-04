@@ -93,7 +93,7 @@ jobs:
         with:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
-          password: ${{ secrets.ECS_PASSWORD }}
+          key: ${{ secrets.ECS_SSH_KEY }}
           source: "docker-compose.yml,nginx.conf"
           target: "/data/blog/"
 
@@ -108,7 +108,7 @@ jobs:
         with:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
-          password: ${{ secrets.ECS_PASSWORD }}
+          key: ${{ secrets.ECS_SSH_KEY }}
           envs: IMAGE_TAG,DEPLOY_ACTION,ALIYUN_REGISTRY,ALIYUN_REGISTRY_USER,ALIYUN_REGISTRY_PASSWORD
           script: |
             set -eu
