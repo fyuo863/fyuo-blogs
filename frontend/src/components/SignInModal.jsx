@@ -47,16 +47,11 @@ function SignInModal({ open, onClose, onLogin, onNotify }) {
     <div className="sign-in-modal" onClick={handleOverlayClick}>
       <div className="sign-in-modal__panel" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
         <aside className="sign-in-modal__masthead" aria-hidden="true">
-          <span>FYUO<sub>863</sub></span>
-          <strong>EDITOR<br />ACCESS</strong>
           <i />
         </aside>
         <div className="sign-in-modal__body">
           <header className="sign-in-modal__header">
-            <div>
-              <p>PRIVATE DESK / 01</p>
-              <h2 id="sign-in-title">log-in.</h2>
-            </div>
+            <h2 id="sign-in-title">log-in.</h2>
             <button type="button" onClick={onClose} className="sign-in-modal__close" aria-label="关闭登录窗口">
               <X size={19} strokeWidth={2.5} />
             </button>
@@ -94,11 +89,6 @@ function SignInModal({ open, onClose, onLogin, onNotify }) {
               <b aria-hidden="true">↗</b>
             </button>
           </form>
-
-          <footer className="sign-in-modal__footer">
-            <span>FYUO<sub>863</sub> / PRIVATE MODE</span>
-            <span aria-live="polite">{loading ? "PLEASE WAIT" : "READY"}</span>
-          </footer>
         </div>
       </div>
     </div>
