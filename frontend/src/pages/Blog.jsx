@@ -666,7 +666,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
                     </h2>
                     <div className="journal-entry__preview">
                       {post.cover_image ? (
-                        <img className="journal-entry__thumbnail" src={post.cover_image} alt="" />
+                        <img className="journal-entry__thumbnail" src={post.cover_image} alt="" loading="lazy" />
                       ) : (
                         <div className="journal-entry__excerpt prose prose-invert prose-sm line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
