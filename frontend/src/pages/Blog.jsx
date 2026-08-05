@@ -541,43 +541,47 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
 
       <PhysicsItem strength={1}>
         <div>
-          <header className="blog-hero">
+          <header
+            className="blog-hero"
+            onPointerMove={(event) => {
+              const bounds = event.currentTarget.getBoundingClientRect();
+              const pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
+              const pointerY = (event.clientY - bounds.top) / bounds.height - 0.5;
+              const x = pointerX * 12;
+              const y = pointerY * 8;
+              const distance = 6 + Math.min(10, Math.hypot(x, y) * 0.9);
+              const pointerLength = Math.hypot(pointerX, pointerY) || 1;
+              const scatterX = (pointerX / pointerLength) * distance;
+              const scatterY = (pointerY / pointerLength) * distance;
+              const scatter = journalScatterRef.current;
+              scatter.active = true;
+              scatter.targetX = scatterX;
+              scatter.targetY = scatterY;
+              const title = journalTitleRef.current;
+              title?.style.setProperty("--journal-refraction-x", `${x}px`);
+              title?.style.setProperty("--journal-refraction-y", `${y}px`);
+              if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                title?.style.setProperty("--journal-scatter-x", `${scatterX}px`);
+                title?.style.setProperty("--journal-scatter-y", `${scatterY}px`);
+              }
+            }}
+            onPointerLeave={() => {
+              const scatter = journalScatterRef.current;
+              scatter.active = false;
+              scatter.idleAngle = Math.atan2(scatter.y, scatter.x);
+              const title = journalTitleRef.current;
+              title?.style.setProperty("--journal-refraction-x", "0px");
+              title?.style.setProperty("--journal-refraction-y", "0px");
+            }}
+          >
             <p className="blog-eyebrow">journal / field notes</p>
             <h1
               className="blog-title blog-title--oil"
               ref={journalTitleRef}
-              onPointerMove={(event) => {
-                const bounds = event.currentTarget.getBoundingClientRect();
-                const pointerX = (event.clientX - bounds.left) / bounds.width - 0.5;
-                const pointerY = (event.clientY - bounds.top) / bounds.height - 0.5;
-                const x = pointerX * 12;
-                const y = pointerY * 8;
-                const distance = 6 + Math.min(10, Math.hypot(x, y) * 0.9);
-                const pointerLength = Math.hypot(pointerX, pointerY) || 1;
-                const scatterX = (pointerX / pointerLength) * distance;
-                const scatterY = (pointerY / pointerLength) * distance;
-                const scatter = journalScatterRef.current;
-                scatter.active = true;
-                scatter.targetX = scatterX;
-                scatter.targetY = scatterY;
-                event.currentTarget.style.setProperty("--journal-refraction-x", `${x}px`);
-                event.currentTarget.style.setProperty("--journal-refraction-y", `${y}px`);
-                if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-                  event.currentTarget.style.setProperty("--journal-scatter-x", `${scatterX}px`);
-                  event.currentTarget.style.setProperty("--journal-scatter-y", `${scatterY}px`);
-                }
-              }}
-              onPointerLeave={(event) => {
-                const scatter = journalScatterRef.current;
-                scatter.active = false;
-                scatter.idleAngle = Math.atan2(scatter.y, scatter.x);
-                event.currentTarget.style.setProperty("--journal-refraction-x", "0px");
-                event.currentTarget.style.setProperty("--journal-refraction-y", "0px");
-              }}
             >
               <span className="blog-title__ink" data-title="The Journal.">The Journal.</span>
             </h1>
-            <p className="blog-lede">技术笔记、项目记录与持续写作。</p>
+            <p className="blog-lede">个人博客</p>
           </header>
         </div>
       </PhysicsItem>
