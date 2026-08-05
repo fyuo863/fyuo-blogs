@@ -60,6 +60,7 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [editorOpen, setEditorOpen] = useState(false);
 
   const selectedPlace = useMemo(
     () => places.find((place) => place.id === selectedId) || null,
@@ -91,13 +92,21 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   const selectPlace = useCallback((place) => {
     setSelectedId(place.id);
     setDraft(draftFromPlace(place));
-  }, []);
+    setEditorOpen(Boolean(user?.token));
+  }, [user?.token]);
 
-  const startNewPlace = () => {
-    setSelectedId(null);
-    setDraft(emptyDraft);
-    setError("");
-  };
+  useEffect(() => {
+    const openEditor = () => {
+      if (!user?.token) return;
+      setSelectedId(null);
+      setDraft(emptyDraft);
+      setError("");
+      setEditorOpen(true);
+    };
+
+    window.addEventListener("fyuo:edit-place", openEditor);
+    return () => window.removeEventListener("fyuo:edit-place", openEditor);
+  }, [user?.token]);
 
   const updateDraft = (event) => {
     const { name, value } = event.target;
@@ -182,7 +191,6 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
         <h1>Earth, marked.</h1>
         <div className="travel-globe-masthead__footer">
           <p>Every pin starts with a coordinate. Routes are optional; the globe is the index.</p>
-          {user && <button className="travel-globe__action" type="button" onClick={startNewPlace}>new location.</button>}
         </div>
       </header>
 
@@ -212,7 +220,7 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
         )}
       </section>
 
-      {user && (
+      {user && editorOpen && (
         <section className="travel-place-editor" aria-labelledby="travel-place-editor-title">
           <header>
             <p>AUTHORISED FIELD EDITOR</p>

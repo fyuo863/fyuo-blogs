@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useNavigate } from "react-router-dom";
 import BlogPost from "../components/BlogPost";
 import AppDrawer from "../components/AppDrawer";
 import PhysicsItem from "../physics/PhysicsItem";
@@ -94,6 +95,7 @@ function BackendOfflineNotice() {
 }
 
 function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true }) {
+  const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -478,7 +480,11 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
 
   const blogDrawerItems = [
     ...(!isBlogView
-      ? [{ label: "create.", onClick: () => handleMenuAction("create") }]
+      ? [
+          { label: "create.", onClick: () => handleMenuAction("create") },
+          { label: "edit home.", onClick: () => { navigate("/"); window.setTimeout(() => window.dispatchEvent(new Event("fyuo:edit-home")), 0); } },
+          { label: "edit travel.", onClick: () => { navigate("/travel"); window.setTimeout(() => window.dispatchEvent(new Event("fyuo:edit-place")), 0); } },
+        ]
       : currentMenu.map((item) => ({
           label: item.label,
           // The editor ref is intentionally read only after this click.

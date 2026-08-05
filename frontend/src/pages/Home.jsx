@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import FeatureCard from "../module/FeatureCard";
 import ProjectGrid from "../module/ProjectGrid";
-import AppDrawer from "../components/AppDrawer";
 import HalftoneTitle from "../components/HalftoneTitle";
 import PhysicsItem from "../physics/PhysicsItem";
 import { getHomeContent, updateHomeContent } from "../api";
@@ -35,7 +34,7 @@ const newProject = () => ({
   description: "",
 });
 
-function Home({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true }) {
+function Home({ user, onOpenSignIn, onLogout, onNotify }) {
   const [content, setContent] = useState(DEFAULT_HOME_CONTENT);
   const [draft, setDraft] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -57,19 +56,18 @@ function Home({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
     return () => { cancelled = true; };
   }, []);
 
-  const startEditing = () => {
-    if (!user?.token) {
-      onNotify?.({ title: "login-required.", message: "请重新登录后再编辑首页内容。" });
-      onLogout?.();
-      onOpenSignIn?.();
-      return;
-    }
+  useEffect(() => {
+    const openEditor = () => {
+      if (!user?.token || isContentLoading) return;
+      setDraft(editorDraft(content));
+      requestAnimationFrame(() => {
+        editorRef.current?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+      });
+    };
 
-    setDraft(editorDraft(content));
-    requestAnimationFrame(() => {
-      editorRef.current?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
-    });
-  };
+    window.addEventListener("fyuo:edit-home", openEditor);
+    return () => window.removeEventListener("fyuo:edit-home", openEditor);
+  }, [content, isContentLoading, user?.token]);
   const cancelEditing = () => setDraft(null);
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
   const updateProject = (index, field, value) => {
@@ -129,7 +127,6 @@ function Home({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
 
       <PhysicsItem strength={1.05}>
         <section className="home-feature" aria-label="Featured project">
-          {user?.token && <div className="home-edit-bar"><p>authenticated / cover + index</p><button className="home-edit-trigger" type="button" onClick={startEditing} disabled={isContentLoading}>{isContentLoading ? "loading content…" : "edit home."}</button></div>}
           <FeatureCard image={content.cover_image} title={content.cover_title} githubUrl={content.cover_github_url} description={content.cover_description} />
         </section>
       </PhysicsItem>
@@ -176,8 +173,6 @@ function Home({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
           </form>
         </section>
       )}
-
-      {showDrawer && <PhysicsItem strength={0.8}><AppDrawer user={user} label="account." items={drawerItems} onOpenSignIn={onOpenSignIn} /></PhysicsItem>}
     </div>
   );
 }

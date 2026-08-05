@@ -116,10 +116,11 @@ export default function AppLayout({
 
       <main className="app-shell">
         {isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
-        {!user && <AppDrawer user={null} onOpenSignIn={onOpenSignIn} placement="frame" />}
       </main>
 
       <Footer />
+
+      {!user && <AppDrawer user={null} onOpenSignIn={onOpenSignIn} placement="frame" />}
 
       <SignInModal
         open={showSignIn}
