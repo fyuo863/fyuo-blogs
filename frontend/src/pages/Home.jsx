@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import FeatureCard from "../module/FeatureCard";
 import ProjectGrid from "../module/ProjectGrid";
 import AppDrawer from "../components/AppDrawer";
@@ -35,10 +35,12 @@ const newProject = () => ({
   description: "",
 });
 
-function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) {
+function Home({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true }) {
   const [content, setContent] = useState(DEFAULT_HOME_CONTENT);
   const [draft, setDraft] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isContentLoading, setIsContentLoading] = useState(true);
+  const editorRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,11 +50,26 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) 
       })
       .catch(() => {
         // The default content remains visible when the API is unavailable.
+      })
+      .finally(() => {
+        if (!cancelled) setIsContentLoading(false);
       });
     return () => { cancelled = true; };
   }, []);
 
-  const startEditing = () => setDraft(editorDraft(content));
+  const startEditing = () => {
+    if (!user?.token) {
+      onNotify?.({ title: "login-required.", message: "请重新登录后再编辑首页内容。" });
+      onLogout?.();
+      onOpenSignIn?.();
+      return;
+    }
+
+    setDraft(editorDraft(content));
+    requestAnimationFrame(() => {
+      editorRef.current?.scrollIntoView({ block: "start", behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    });
+  };
   const cancelEditing = () => setDraft(null);
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
   const updateProject = (index, field, value) => {
@@ -71,7 +88,13 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) 
 
   const saveContent = async (event) => {
     event.preventDefault();
-    if (!draft || !user?.token) return;
+    if (!draft) return;
+    if (!user?.token) {
+      onNotify?.({ title: "login-required.", message: "登录状态不可用，请重新登录后再保存。" });
+      onLogout?.();
+      onOpenSignIn?.();
+      return;
+    }
     setIsSaving(true);
     try {
       const response = await updateHomeContent(draft, user.token);
@@ -79,7 +102,13 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) 
       setDraft(null);
       onNotify?.({ title: "saved.", message: "首页内容已更新。" });
     } catch (error) {
-      onNotify?.({ title: "save failed.", message: error?.response?.data?.error || "首页内容暂时无法保存。" });
+      if (error?.response?.status === 401) {
+        onLogout?.();
+        onOpenSignIn?.();
+        onNotify?.({ title: "session-expired.", message: "登录已过期，请重新登录后再保存首页内容。" });
+      } else {
+        onNotify?.({ title: "save failed.", message: error?.response?.data?.error || "首页内容暂时无法保存。" });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -100,7 +129,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) 
 
       <PhysicsItem strength={1.05}>
         <section className="home-feature" aria-label="Featured project">
-          {user && <div className="home-edit-bar"><p>authenticated</p><button className="home-edit-trigger" type="button" onClick={startEditing}>edit home.</button></div>}
+          {user?.token && <div className="home-edit-bar"><p>authenticated / cover + index</p><button className="home-edit-trigger" type="button" onClick={startEditing} disabled={isContentLoading}>{isContentLoading ? "loading content…" : "edit home."}</button></div>}
           <FeatureCard image={content.cover_image} title={content.cover_title} githubUrl={content.cover_github_url} description={content.cover_description} />
         </section>
       </PhysicsItem>
@@ -113,7 +142,7 @@ function Home({ user, onOpenSignIn, onNotify, drawerItems, showDrawer = true }) 
       </PhysicsItem>
 
       {draft && (
-        <section className="home-editor" aria-labelledby="home-editor-title">
+        <section className="home-editor" ref={editorRef} aria-labelledby="home-editor-title" tabIndex="-1">
           <form onSubmit={saveContent}>
             <header className="home-editor__head">
               <div><p className="section-kicker">editor / authenticated</p><h2 id="home-editor-title">Home content.</h2></div>

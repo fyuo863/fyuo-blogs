@@ -53,7 +53,7 @@ function coordinateText(place) {
   return `${Number(place.latitude).toFixed(4)}°, ${Number(place.longitude).toFixed(4)}°`;
 }
 
-function Travel({ user, onOpenSignIn, onNotify }) {
+function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   const [places, setPlaces] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [draft, setDraft] = useState(emptyDraft);
@@ -106,7 +106,8 @@ function Travel({ user, onOpenSignIn, onNotify }) {
 
   const savePlace = async (event) => {
     event.preventDefault();
-    if (!user) {
+    if (!user?.token) {
+      onLogout?.();
       onOpenSignIn();
       return;
     }
@@ -131,6 +132,10 @@ function Travel({ user, onOpenSignIn, onNotify }) {
       setPlaces((current) => draft.id ? current.map((place) => (place.id === saved.id ? saved : place)) : [saved, ...current]);
       selectPlace(saved);
     } catch (requestError) {
+      if (requestError?.response?.status === 401) {
+        onLogout?.();
+        onOpenSignIn();
+      }
       const message = isBackendOfflineError(requestError)
         ? "The backend is unavailable, so this location was not saved."
         : requestError?.response?.data?.error || "This location could not be saved.";
@@ -142,7 +147,13 @@ function Travel({ user, onOpenSignIn, onNotify }) {
   };
 
   const removePlace = async () => {
-    if (!draft.id || !user) return;
+    if (!draft.id || !user?.token) {
+      if (!user?.token) {
+        onLogout?.();
+        onOpenSignIn();
+      }
+      return;
+    }
     const previous = places;
     setPlaces((current) => current.filter((place) => place.id !== draft.id));
     setSelectedId(null);
@@ -150,6 +161,10 @@ function Travel({ user, onOpenSignIn, onNotify }) {
     try {
       await deleteTravelPlace(draft.id, user.token);
     } catch (requestError) {
+      if (requestError?.response?.status === 401) {
+        onLogout?.();
+        onOpenSignIn();
+      }
       setPlaces(previous);
       setSelectedId(draft.id);
       const message = isBackendOfflineError(requestError)

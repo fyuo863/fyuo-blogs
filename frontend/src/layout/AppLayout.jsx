@@ -3,6 +3,7 @@ import { Routes, Route, useLocation } from "react-router-dom";
 
 import Navbar from "../module/Navbar";
 import Footer from "../module/Footer";
+import AppDrawer from "../components/AppDrawer";
 
 import SignInModal from "../components/SignInModal";
 import InfoModal from "../components/InfoModal";
@@ -11,8 +12,6 @@ import AdminPanel from "../components/AdminPanel";
 import Home from "../pages/Home";
 import Blog from "../pages/Blog";
 import Travel from "../pages/Travel";
-
-import { useSplash } from "../hooks/useSplash";
 
 const PAGE_ORDER = ["home", "blog", "travel"];
 const PAGE_PATHS = { home: "/", blog: "/blog", travel: "/travel" };
@@ -38,14 +37,14 @@ function useWideSpread() {
 
 function PageContent({ page, user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer }) {
   if (page === "home") {
-    return <Home user={user} onOpenSignIn={onOpenSignIn} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer} />;
+    return <Home user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer && Boolean(user)} />;
   }
 
   if (page === "blog") {
-    return <Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer} />;
+    return <Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer && Boolean(user)} />;
   }
 
-  return <Travel user={user} onOpenSignIn={onOpenSignIn} onNotify={onNotify} />;
+  return <Travel user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} />;
 }
 
 function MobileRoutes(props) {
@@ -95,10 +94,6 @@ export default function AppLayout({
   setInfo,
 }) {
   const location = useLocation();
-  const isHome = location.pathname === "/";
-
-  const { splashPhase, shouldShowSplash, showNav, finishSplash } =
-    useSplash(isHome);
   const isWideSpread = useWideSpread();
 
   const drawerItems = user
@@ -117,65 +112,13 @@ export default function AppLayout({
 
   return (
     <>
-      {/* Splash 背景遮罩 */}
-      {shouldShowSplash && (
-        <div
-          className={`fixed inset-0 z-[100] bg-black transition-opacity duration-[1000ms] ease-out ${
-            splashPhase === "exiting"
-              ? "opacity-0 pointer-events-none"
-              : "opacity-100"
-          }`}
-          onTransitionEnd={(e) => {
-            if (e.target === e.currentTarget) {
-              finishSplash();
-            }
-          }}
-        />
-      )}
-
-      {/* Splash 居中标题 */}
-      {shouldShowSplash && (
-        <div
-          className={`fixed z-[110] italic transition-all duration-[1000ms] ease-out ${
-            splashPhase === "exiting"
-              ? "top-0 left-0 px-4 py-4 sm:px-6 lg:px-8"
-              : "top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-          }`}
-        >
-          <span
-            className={`font-bold tracking-tight text-white select-none transition-all duration-[1000ms] ease-out ${
-              splashPhase === "exiting" ? "text-lg" : "text-7xl"
-            }`}
-          >
-            {"fyuo-blogs.".split("").map((char, i) => (
-              <span
-                key={`${char}-${i}`}
-                className={
-                  splashPhase === "visible"
-                    ? "inline-block animate-bounce"
-                    : "inline-block"
-                }
-                style={
-                  splashPhase === "visible"
-                    ? {
-                        animationDelay: `${i * 0.07}s`,
-                        transform: "translateY(-25%)",
-                      }
-                    : undefined
-                }
-              >
-                {char}
-              </span>
-            ))}
-          </span>
-        </div>
-      )}
-
-      <Navbar visible={showNav} selectedPages={selectedPages} />
+      <Navbar visible selectedPages={selectedPages} />
 
       <main className="app-shell">
         {isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
       </main>
+
+      {!user && <AppDrawer user={null} onOpenSignIn={onOpenSignIn} />}
 
       <Footer />
 

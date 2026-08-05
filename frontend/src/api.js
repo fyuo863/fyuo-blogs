@@ -142,7 +142,7 @@ export const updateHomeContent = (data, token) => {
     return offlineUnavailable("Backend is offline. Home content cannot be updated.");
   }
 
-  return api.put("/home-content", data, { ...authConfig(token), timeout: 10000 });
+  return api.put("/home-content", data, { ...authConfig(token), timeout: 30000 });
 };
 
 // ============================================================
