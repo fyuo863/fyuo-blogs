@@ -75,14 +75,29 @@ function WoodGrainField({ lines, className = "cover-flow__wood-grain" }) {
 
 function ProjectGrid({ projects = [] }) {
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [transitionDirection, setTransitionDirection] = useState("forward");
   const [isDragging, setIsDragging] = useState(false);
   const woodGrainLines = useWoodGrainFrame();
   const dragRef = useRef(null);
   const suppressClickRef = useRef(false);
+  const selectedIndexRef = useRef(0);
+  const activeIndex = clamp(selectedIndex, 0, Math.max(0, projects.length - 1));
+
+  useEffect(() => {
+    selectedIndexRef.current = activeIndex;
+  }, [activeIndex]);
+
   if (!projects.length) return null;
-  const activeIndex = selectedIndex % projects.length;
   const activeProject = projects[activeIndex];
-  const selectRelative = (direction) => setSelectedIndex((current) => Math.max(0, Math.min(projects.length - 1, current + direction)));
+  const selectProject = (nextIndex) => {
+    const targetIndex = clamp(nextIndex, 0, projects.length - 1);
+    const currentIndex = selectedIndexRef.current;
+    if (targetIndex === currentIndex) return;
+    selectedIndexRef.current = targetIndex;
+    setTransitionDirection(targetIndex > currentIndex ? "forward" : "backward");
+    setSelectedIndex(targetIndex);
+  };
+  const selectRelative = (direction) => selectProject(selectedIndexRef.current + direction);
 
   const onStageKeyDown = (event) => {
     if (event.key === "ArrowLeft") {
@@ -119,7 +134,7 @@ function ProjectGrid({ projects = [] }) {
     drag.lastX = event.clientX;
     drag.lastTime = event.timeStamp;
     const targetIndex = clamp(drag.startIndex - Math.round((event.clientX - drag.startX) / drag.step), 0, projects.length - 1);
-    setSelectedIndex((current) => current === targetIndex ? current : targetIndex);
+    selectProject(targetIndex);
   };
 
   const finishDrag = (event, cancelled = false) => {
@@ -130,7 +145,7 @@ function ProjectGrid({ projects = [] }) {
     const targetIndex = clamp(drag.startIndex - Math.round(projectedOffset / drag.step), 0, projects.length - 1);
     suppressClickRef.current = Math.abs(delta) > 8 || targetIndex !== drag.startIndex;
     if (suppressClickRef.current) window.setTimeout(() => { suppressClickRef.current = false; }, 0);
-    if (!cancelled) setSelectedIndex(targetIndex);
+    if (!cancelled) selectProject(targetIndex);
     setIsDragging(false);
     dragRef.current = null;
     if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
@@ -163,7 +178,7 @@ function ProjectGrid({ projects = [] }) {
                   suppressClickRef.current = false;
                   return;
                 }
-                setSelectedIndex(index);
+                selectProject(index);
               }}
               style={style}
               tabIndex={distance > 3 ? -1 : 0}
@@ -179,16 +194,31 @@ function ProjectGrid({ projects = [] }) {
       </div>
 
       <div className="cover-flow__caption" aria-live="polite">
-        <p className="cover-flow__index">{String(activeIndex + 2).padStart(2, "0")} / {String(projects.length + 1).padStart(2, "0")}</p>
-        <div>
-          <h3 className="cover-flow__title">{activeProject.title}</h3>
-          <p className="cover-flow__description">{activeProject.description}</p>
-          {activeProject.linkUrl && <a className="cover-flow__open" href={activeProject.linkUrl} target="_blank" rel="noopener noreferrer">open project ↗</a>}
-        </div>
-        <div className="cover-flow__controls" aria-label="Project navigation">
-          <button className="cover-flow__button" type="button" onClick={() => selectRelative(-1)} aria-label="Previous project" disabled={activeIndex === 0}>←</button>
-          <button className="cover-flow__button" type="button" onClick={() => selectRelative(1)} aria-label="Next project" disabled={activeIndex === projects.length - 1}>→</button>
-        </div>
+        <article className="project-postcard" data-direction={transitionDirection} key={`${activeIndex}-${transitionDirection}`}>
+          <div className="project-postcard__image-panel">
+            <img src={activeProject.image} alt="" draggable="false" />
+            <span className="project-postcard__edition">FYUO<sub>863</sub></span>
+            <span className="project-postcard__serial">{String(activeIndex + 2).padStart(2, "0")} / {String(projects.length + 1).padStart(2, "0")}</span>
+          </div>
+          <div className="project-postcard__message-panel">
+            <header className="project-postcard__header">
+              <p>Project correspondence</p>
+              <span aria-hidden="true">Selected work.</span>
+            </header>
+            <div className="project-postcard__copy">
+              <h3 className="cover-flow__title">{activeProject.title}</h3>
+              <p className="cover-flow__description">{activeProject.description}</p>
+              {activeProject.linkUrl && <a className="cover-flow__open" href={activeProject.linkUrl} target="_blank" rel="noopener noreferrer">open project ↗</a>}
+            </div>
+            <footer className="project-postcard__footer">
+              <p className="cover-flow__index">Archive {String(activeIndex + 2).padStart(2, "0")}</p>
+              <div className="cover-flow__controls" aria-label="Project navigation">
+                <button className="cover-flow__button" type="button" onClick={() => selectRelative(-1)} aria-label="Previous project" disabled={activeIndex === 0}>←</button>
+                <button className="cover-flow__button" type="button" onClick={() => selectRelative(1)} aria-label="Next project" disabled={activeIndex === projects.length - 1}>→</button>
+              </div>
+            </footer>
+          </div>
+        </article>
       </div>
     </section>
   );
