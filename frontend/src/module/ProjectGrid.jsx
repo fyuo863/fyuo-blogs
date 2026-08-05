@@ -171,7 +171,6 @@ function ProjectGrid({ projects = [] }) {
               <img src={project.image} alt="" draggable="false" />
               <span className="cover-flow__reflection" aria-hidden="true">
                 <img src={project.image} alt="" draggable="false" />
-                <WoodGrainField lines={woodGrainLines} />
               </span>
               <span className="cover-flow__item-index">{String(index + 2).padStart(2, "0")}</span>
             </button>
