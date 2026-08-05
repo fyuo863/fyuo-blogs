@@ -1,6 +1,4 @@
 import { useState, useRef, useEffect, useCallback } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { useNavigate } from "react-router-dom";
 import BlogPost from "../components/BlogPost";
 import AppDrawer from "../components/AppDrawer";
@@ -29,6 +27,20 @@ function formatDate(iso) {
     hour12: false,
   });
   return `${date} ${time}`.toUpperCase();
+}
+
+function getJournalExcerpt(content = "") {
+  const plainText = String(content ?? "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, "")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^#{1,6}\s*/gm, "")
+    .replace(/^[-*>|]+\s*/gm, "")
+    .replace(/[`*_~]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return plainText.slice(0, 120) || "文章摘要暂不可用。";
 }
 
 function errorMessage(err, fallback) {
@@ -674,11 +686,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
                       {post.cover_image ? (
                         <img className="journal-entry__thumbnail" src={post.cover_image} alt="" loading="lazy" />
                       ) : (
-                        <div className="journal-entry__excerpt prose prose-invert prose-sm line-clamp-4 [&_h1]:text-lg [&_h2]:text-base [&_h3]:text-sm">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                          {post.content}
-                        </ReactMarkdown>
-                        </div>
+                        <p className="journal-entry__excerpt">{getJournalExcerpt(post.content)}</p>
                       )}
                     </div>
                   </div>

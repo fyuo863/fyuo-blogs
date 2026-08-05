@@ -80,7 +80,7 @@ function BlockView({ block }) {
         6: "text-sm font-semibold",
       };
       return (
-        <div className={`${sizes[level] || sizes[1]} text-white leading-snug`}>
+        <div className={`markdown-block markdown-block--heading markdown-block--heading-${level} ${sizes[level] || sizes[1]} text-white leading-snug`}>
           <InlineMarkdown>{text}</InlineMarkdown>
         </div>
       );
@@ -88,7 +88,7 @@ function BlockView({ block }) {
 
     case "paragraph":
       return (
-        <div className="text-zinc-300 leading-relaxed">
+        <div className="markdown-block markdown-block--paragraph text-zinc-300 leading-relaxed">
           <InlineMarkdown>{content}</InlineMarkdown>
         </div>
       );
@@ -97,7 +97,7 @@ function BlockView({ block }) {
       const lang = content.split("\n")[0].replace(/```\s*/, "");
       const code = content.split("\n").slice(1, -1).join("\n");
       return (
-        <pre className="bg-white/5 border border-zinc-800 rounded-lg p-5 overflow-x-auto">
+        <pre className="markdown-block markdown-block--code bg-white/5 border border-zinc-800 rounded-lg p-5 overflow-x-auto">
           {lang && (
             <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wider">
               {lang}
@@ -112,7 +112,7 @@ function BlockView({ block }) {
 
     case "table":
       return (
-        <div className="overflow-x-auto [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-zinc-700 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:text-sm [&_th]:font-semibold [&_th]:text-white [&_th]:bg-white/[0.04] [&_td]:border [&_td]:border-zinc-800 [&_td]:px-4 [&_td]:py-2 [&_td]:text-sm [&_td]:text-zinc-300 [&_tr:nth-child(even)]:bg-white/[0.02]">
+        <div className="markdown-block markdown-block--table overflow-x-auto [&_table]:w-full [&_table]:border-collapse [&_th]:border [&_th]:border-zinc-700 [&_th]:px-4 [&_th]:py-2 [&_th]:text-left [&_th]:text-sm [&_th]:font-semibold [&_th]:text-white [&_th]:bg-white/[0.04] [&_td]:border [&_td]:border-zinc-800 [&_td]:px-4 [&_td]:py-2 [&_td]:text-sm [&_td]:text-zinc-300 [&_tr:nth-child(even)]:bg-white/[0.02]">
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {content}
           </ReactMarkdown>
@@ -137,7 +137,7 @@ function BlockView({ block }) {
 
     case "blockquote":
       return (
-        <blockquote className="border-l-2 border-zinc-600 pl-4 italic text-zinc-400 leading-relaxed">
+        <blockquote className="markdown-block markdown-block--quote border-l-2 border-zinc-600 pl-4 italic text-zinc-400 leading-relaxed">
           <InlineMarkdown>
             {content.split("\n").map((l) => l.replace(/^>\s?/, "")).join("\n")}
           </InlineMarkdown>
@@ -146,7 +146,7 @@ function BlockView({ block }) {
 
     case "list":
       return (
-        <div className="text-zinc-300 leading-relaxed">
+        <div className="markdown-block markdown-block--list text-zinc-300 leading-relaxed">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             allowedElements={[
@@ -164,7 +164,7 @@ function BlockView({ block }) {
 
     default:
       return (
-        <div className="text-zinc-300 leading-relaxed">
+        <div className="markdown-block markdown-block--paragraph text-zinc-300 leading-relaxed">
           <InlineMarkdown>{content}</InlineMarkdown>
         </div>
       );
@@ -258,7 +258,7 @@ export default function MarkdownEditor({
             sel.addRange(range);
           }
         }}
-        className="flex flex-col gap-4 focus:outline-none"
+        className="markdown-renderer flex flex-col gap-4 focus:outline-none"
         onCopy={(e) => {
           e.preventDefault();
           e.clipboardData.setData("text/plain", rebuild(blocks));

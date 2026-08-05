@@ -121,15 +121,15 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/35 to-black/90" />
         </div>
       ) : null}
-      <div className="px-[10%] py-16">
+      <div className="article-reader px-[10%] py-16">
         <button
           onClick={onBack}
-          className="text-lg font-mono text-white hover:text-white transition-colors mb-16"
+          className="article-reader__back text-lg font-mono text-white hover:text-white transition-colors mb-16"
         >
           back.
         </button>
 
-        <div className="ml-10 flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div className="article-reader__meta ml-10 flex flex-wrap items-center gap-x-4 gap-y-2">
           <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
             {formatDate(post.created_at)}
           </time>
@@ -178,13 +178,13 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
             value={editTitle}
             onChange={(e) => setEditTitle(e.target.value)}
             rows={1}
-            className="mt-4 w-full text-3xl font-bold tracking-tight text-white sm:text-4xl
+            className="article-reader__title mt-4 w-full text-3xl font-bold tracking-tight text-white sm:text-4xl
                        bg-transparent border-none focus:outline-none resize-none
                        overflow-hidden placeholder:text-zinc-600"
             placeholder="Article title..."
           />
         ) : (
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+          <h1 className="article-reader__title mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
             {post.title}
           </h1>
         )}
@@ -215,9 +215,9 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           )
         )}
 
-        <div className="mt-10 border-t border-zinc-800" />
+        <div className="article-reader__rule mt-10 border-t border-zinc-800" />
 
-        <div className="mt-10">
+        <div className="article-reader__body mt-10">
           <MarkdownEditor
             value={post.content}
             editing={isEditing}
