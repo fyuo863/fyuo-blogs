@@ -1,17 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
-  <rect width="1920" height="1080" fill="#ffffff" />
-  <text
-    x="960"
-    y="540"
-    text-anchor="middle"
-    dominant-baseline="central"
-    font-family="Georgia, 'Times New Roman', serif"
-    font-size="200"
-    font-style="italic"
-    font-weight="bold"
-    fill="#000000"
-    letter-spacing="-2"
-  >
-    fyuo-blogs.
-  </text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">FYUO blog</title>
+  <desc id="desc">A cobalt square with a nine by nine radial halftone field and a FYUO blog wordmark.</desc>
+  <rect width="512" height="512" fill="#2454C6" />
+  <g fill="#F8F3EA">
+    <circle cx="28.444" cy="28.444" r="44.072" /><circle cx="85.333" cy="28.444" r="41.774" /><circle cx="142.222" cy="28.444" r="37.705" /><circle cx="199.111" cy="28.444" r="32.457" /><circle cx="256" cy="28.444" r="26.619" /><circle cx="312.889" cy="28.444" r="20.780" /><circle cx="369.778" cy="28.444" r="15.532" /><circle cx="426.667" cy="28.444" r="11.463" /><circle cx="483.556" cy="28.444" r="9.162" />
+    <circle cx="28.444" cy="85.333" r="44.198" /><circle cx="85.333" cy="85.333" r="42.192" /><circle cx="142.222" cy="85.333" r="38.415" /><circle cx="199.111" cy="85.333" r="33.456" /><circle cx="256" cy="85.333" r="27.906" /><circle cx="312.889" cy="85.333" r="22.352" /><circle cx="369.778" cy="85.333" r="17.380" /><circle cx="426.667" cy="85.333" r="13.568" /><circle cx="483.556" cy="85.333" r="11.463" />
+    <circle cx="28.444" cy="142.222" r="44.348" /><circle cx="85.333" cy="142.222" r="42.913" /><circle cx="142.222" cy="142.222" r="39.702" /><circle cx="199.111" cy="142.222" r="35.301" /><circle cx="256" cy="142.222" r="30.296" /><circle cx="312.889" cy="142.222" r="25.266" /><circle cx="369.778" cy="142.222" r="20.780" /><circle cx="426.667" cy="142.222" r="17.380" /><circle cx="483.556" cy="142.222" r="15.532" />
+    <circle cx="28.444" cy="199.111" r="44.373" /><circle cx="85.333" cy="199.111" r="43.716" /><circle cx="142.222" cy="199.111" r="41.316" /><circle cx="199.111" cy="199.111" r="37.705" /><circle cx="256" cy="199.111" r="33.456" /><circle cx="312.889" cy="199.111" r="29.131" /><circle cx="369.778" cy="199.111" r="25.266" /><circle cx="426.667" cy="199.111" r="22.352" /><circle cx="483.556" cy="199.111" r="20.780" />
+    <circle cx="28.444" cy="256" r="44.373" /><circle cx="85.333" cy="256" r="44.290" /><circle cx="142.222" cy="256" r="42.913" /><circle cx="199.111" cy="256" r="40.281" /><circle cx="256" cy="256" r="36.951" /><circle cx="312.889" cy="256" r="33.456" /><circle cx="369.778" cy="256" r="30.296" /><circle cx="426.667" cy="256" r="27.906" /><circle cx="483.556" cy="256" r="26.619" />
+    <circle cx="28.444" cy="312.889" r="44.373" /><circle cx="85.333" cy="312.889" r="44.373" /><circle cx="142.222" cy="312.889" r="44.072" /><circle cx="199.111" cy="312.889" r="42.571" /><circle cx="256" cy="312.889" r="40.281" /><circle cx="312.889" cy="312.889" r="37.705" /><circle cx="369.778" cy="312.889" r="35.301" /><circle cx="426.667" cy="312.889" r="33.456" /><circle cx="483.556" cy="312.889" r="32.457" />
+    <circle cx="28.444" cy="369.778" r="44.373" /><circle cx="85.333" cy="369.778" r="44.373" /><circle cx="142.222" cy="369.778" r="44.373" /><circle cx="199.111" cy="369.778" r="44.072" /><circle cx="256" cy="369.778" r="42.913" /><circle cx="312.889" cy="369.778" r="41.316" /><circle cx="369.778" cy="369.778" r="39.702" /><circle cx="426.667" cy="369.778" r="38.415" /><circle cx="483.556" cy="369.778" r="37.705" />
+    <circle cx="28.444" cy="426.667" r="44.373" /><circle cx="85.333" cy="426.667" r="44.373" /><circle cx="142.222" cy="426.667" r="44.373" /><circle cx="199.111" cy="426.667" r="44.373" /><circle cx="256" cy="426.667" r="44.290" /><circle cx="312.889" cy="426.667" r="43.716" /><circle cx="369.778" cy="426.667" r="42.913" /><circle cx="426.667" cy="426.667" r="42.192" /><circle cx="483.556" cy="426.667" r="41.774" />
+    <circle cx="28.444" cy="483.556" r="44.373" /><circle cx="85.333" cy="483.556" r="44.373" /><circle cx="142.222" cy="483.556" r="44.373" /><circle cx="199.111" cy="483.556" r="44.373" /><circle cx="256" cy="483.556" r="44.373" /><circle cx="312.889" cy="483.556" r="44.373" /><circle cx="369.778" cy="483.556" r="44.348" /><circle cx="426.667" cy="483.556" r="44.198" /><circle cx="483.556" cy="483.556" r="44.072" />
+  </g>
+  <rect x="0" y="416" width="166" height="72" fill="#F04432" />
+  <g fill="#191411" font-family="Arial Black, Arial, sans-serif" font-weight="900">
+    <text x="52" y="282" font-size="118" letter-spacing="-12">FYUO</text>
+    <text x="353" y="326" font-family="IBM Plex Mono, monospace" font-size="52" letter-spacing="-5">blog</text>
+  </g>
 </svg>
