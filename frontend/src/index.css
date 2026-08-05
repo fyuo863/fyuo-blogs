@@ -30,16 +30,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .sign-in-modal__masthead, .sign-in-modal__body { position: relative; isolation: isolate; overflow: clip; }
 .sign-in-modal__masthead { display: grid; min-height: 100%; align-items: end; padding: var(--space-md) var(--space-sm); background: var(--color-cobalt); }
 .sign-in-modal__halftone { position: absolute; z-index: -1; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-.sign-in-modal__masthead i { position: relative; z-index: 1; display: block; width: 1rem; height: 1rem; background: var(--color-accent); }
 .sign-in-modal__body { display: grid; min-width: 0; grid-template-rows: auto 1fr; }
 .sign-in-modal__header { position: relative; z-index: 0; display: flex; align-items: start; justify-content: space-between; gap: var(--space-sm); padding: var(--space-md); }
-.sign-in-modal__header::after, .sign-in-modal__form::before { content: ""; position: absolute; right: var(--space-md); bottom: 0; left: var(--space-md); height: .75rem; pointer-events: none; background-image: radial-gradient(circle, color-mix(in oklch, var(--color-cobalt) 56%, transparent) 0 .09rem, transparent .11rem); background-size: .65rem .65rem; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
 .sign-in-modal__field > span:first-child, .sign-in-modal__error span { margin: 0; font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: .08em; text-transform: uppercase; }
 .sign-in-modal__header h2 { margin: 0; font-family: var(--font-display); font-size: clamp(2.75rem, 7vw, 4.5rem); font-style: normal; font-weight: 800; letter-spacing: -.09em; line-height: .78; }
 .sign-in-modal__close { display: grid; width: 2.75rem; min-width: 2.75rem; min-height: 2.75rem; place-items: center; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); cursor: pointer; transition: transform var(--dur-short) var(--ease-out), background var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out); }
 .sign-in-modal__close:active { transform: rotate(90deg) scale(.94); }
 .sign-in-modal__form { position: relative; display: grid; align-content: center; gap: var(--space-md); padding: clamp(var(--space-md), 5vw, var(--space-2xl)); }
-.sign-in-modal__form::before { top: 0; bottom: auto; }
 .sign-in-modal__field { display: grid; gap: var(--space-2xs); color: var(--color-ink-2); }
 .sign-in-modal__input-wrap { position: relative; display: flex; align-items: center; min-width: 0; border-bottom: var(--rule-hair) solid var(--color-ink); color: var(--color-cobalt); transition: border-color var(--dur-short) var(--ease-out); }
 .sign-in-modal__input-wrap:focus-within { border-color: var(--color-cobalt); box-shadow: 0 .18rem 0 -.02rem var(--color-cobalt); }

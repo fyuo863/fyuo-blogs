@@ -94,7 +94,6 @@ function SignInModal({ open, onClose, onLogin, onNotify }) {
       <div className="sign-in-modal__panel" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
         <aside className="sign-in-modal__masthead" aria-hidden="true">
           <LoginHalftoneField />
-          <i />
         </aside>
         <div className="sign-in-modal__body">
           <header className="sign-in-modal__header">
