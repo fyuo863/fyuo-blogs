@@ -8,15 +8,18 @@
 /* Hallmark · genre: editorial · tone: warm, display-heavy, geographic · anchor hue: cobalt · macrostructure: Map / Diagram
  * pre-emit critique: P5 H5 E5 S5 R5 V5 · variation: real-earth raster field + screen-level CMY inkjet pass · contrast: pass (40–41) · nav: N6 · footer: Ft1 · slop: pass (42–45) · mobile: pass (34, 49, 50–57)
  */
-html, body { overflow-x: clip; background: var(--color-paper); }
+html, body, #root { height: 100%; overflow: hidden; background: var(--color-paper); }
 body { margin: 0; color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-md); }
 * { box-sizing: border-box; }
 ::selection { color: var(--color-accent-ink); background: var(--color-accent); }
 a, button, input, textarea { -webkit-tap-highlight-color: transparent; }
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: 0.2rem; }
 
-.app-shell { min-height: 100dvh; }
+.app-frame { position: relative; display: grid; height: 100dvh; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.app-shell { position: relative; min-height: 0; overflow: hidden; }
 .page-shell { min-height: 100dvh; }
+.single-page-reader { height: 100%; overflow-x: clip; overflow-y: auto; overscroll-behavior: contain; -ms-overflow-style: none; scrollbar-width: none; }
+.single-page-reader::-webkit-scrollbar { display: none; }
 .sign-in-modal { position: fixed; z-index: 100; inset: 0; display: grid; place-items: center; padding: var(--space-sm); background: color-mix(in oklch, var(--color-ink) 72%, transparent); -webkit-backdrop-filter: blur(0.45rem); backdrop-filter: blur(0.45rem); }
 .sign-in-modal__panel { display: grid; width: min(100%, 48rem); min-height: min(37rem, calc(100dvh - var(--space-lg))); grid-template-columns: minmax(8.75rem, .34fr) minmax(0, 1fr); overflow: clip; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); box-shadow: 0.75rem 0.75rem 0 var(--color-ink); }
 .sign-in-modal__masthead { display: flex; min-height: 100%; flex-direction: column; justify-content: space-between; padding: var(--space-md) var(--space-sm); background: var(--color-cobalt); color: var(--color-paper); font-family: var(--font-outlier); }
@@ -267,7 +270,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
  */
 @media (min-width: 72rem) {
   .app-shell { min-width: 0; background: var(--color-paper); }
-  .magazine-spread { height: calc(100dvh - 4.25rem); overflow: clip; border-bottom: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); }
+  .magazine-spread { height: 100%; overflow: clip; border-bottom: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); }
   .magazine-spread__track { display: flex; width: 150%; height: 100%; transform: translate3d(var(--spread-offset), 0, 0); transition: transform var(--dur-short) var(--ease-in-out); will-change: transform; }
   .magazine-spread__page { flex: 0 0 calc(100% / 3); min-width: 0; height: 100%; overflow-x: clip; overflow-y: auto; overscroll-behavior: contain; border-inline-end: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); -ms-overflow-style: none; scrollbar-width: none; }
   .magazine-spread__page::-webkit-scrollbar { display: none; }
@@ -275,6 +278,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .app-drawer { position: fixed; right: var(--space-sm); bottom: var(--space-sm); z-index: 40; }
+.app-drawer--frame { position: absolute; }
 .drawer-menu { display: grid; gap: var(--space-3xs); margin-bottom: var(--space-2xs); padding: var(--space-2xs); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); }
 .drawer-toggle, .drawer-item { min-height: 2.75rem; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); cursor: pointer; white-space: nowrap; }
 .drawer-toggle:hover, .drawer-item:hover { background: var(--color-accent); }

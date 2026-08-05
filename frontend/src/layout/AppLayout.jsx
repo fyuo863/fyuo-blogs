@@ -50,9 +50,9 @@ function PageContent({ page, user, onOpenSignIn, onLogout, onNotify, drawerItems
 function MobileRoutes(props) {
   return (
     <Routes>
-      <Route path="/" element={<PageContent {...props} page="home" showDrawer />} />
-      <Route path="/blog" element={<PageContent {...props} page="blog" showDrawer />} />
-      <Route path="/travel" element={<PageContent {...props} page="travel" showDrawer={false} />} />
+      <Route path="/" element={<section className="single-page-reader"><PageContent {...props} page="home" showDrawer /></section>} />
+      <Route path="/blog" element={<section className="single-page-reader"><PageContent {...props} page="blog" showDrawer /></section>} />
+      <Route path="/travel" element={<section className="single-page-reader"><PageContent {...props} page="travel" showDrawer={false} /></section>} />
     </Routes>
   );
 }
@@ -111,14 +111,13 @@ export default function AppLayout({
     : [currentPage];
 
   return (
-    <>
+    <div className="app-frame">
       <Navbar visible selectedPages={selectedPages} />
 
       <main className="app-shell">
         {isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
+        {!user && <AppDrawer user={null} onOpenSignIn={onOpenSignIn} placement="frame" />}
       </main>
-
-      {!user && <AppDrawer user={null} onOpenSignIn={onOpenSignIn} />}
 
       <Footer />
 
@@ -143,6 +142,6 @@ export default function AppLayout({
         variant={info?.variant}
         onClose={() => setInfo(null)}
       />
-    </>
+    </div>
   );
 }
