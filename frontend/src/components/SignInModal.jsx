@@ -1,6 +1,52 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X, User, Lock, Eye, EyeOff } from "lucide-react";
 import { signIn } from "../api";
+
+function LoginHalftoneField() {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const surface = canvas?.parentElement;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !surface || !context) return undefined;
+
+    const draw = () => {
+      const bounds = surface.getBoundingClientRect();
+      const rootStyles = getComputedStyle(document.documentElement);
+      const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
+      const baseRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-base-radius")) || 0.78;
+      const scale = Math.min(window.devicePixelRatio || 1, 1.5);
+      const width = Math.max(1, bounds.width);
+      const height = Math.max(1, bounds.height);
+      const paper = rootStyles.getPropertyValue("--color-paper").trim();
+
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = paper;
+
+      for (let y = cellSize / 2; y < height + cellSize; y += cellSize) {
+        for (let x = cellSize / 2; x < width + cellSize; x += cellSize) {
+          const towardDivider = Math.max(0, Math.min(1, x / width));
+          const radius = cellSize * baseRadius * Math.pow(towardDivider, 1.45);
+          if (radius < 0.35) continue;
+          context.beginPath();
+          context.arc(x, y, radius, 0, Math.PI * 2);
+          context.fill();
+        }
+      }
+    };
+
+    const observer = new ResizeObserver(draw);
+    observer.observe(surface);
+    draw();
+    return () => observer.disconnect();
+  }, []);
+
+  return <canvas ref={canvasRef} className="sign-in-modal__halftone" aria-hidden="true" />;
+}
 
 function SignInModal({ open, onClose, onLogin, onNotify }) {
   const [username, setUsername] = useState("");
@@ -47,6 +93,7 @@ function SignInModal({ open, onClose, onLogin, onNotify }) {
     <div className="sign-in-modal" onClick={handleOverlayClick}>
       <div className="sign-in-modal__panel" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
         <aside className="sign-in-modal__masthead" aria-hidden="true">
+          <LoginHalftoneField />
           <i />
         </aside>
         <div className="sign-in-modal__body">
