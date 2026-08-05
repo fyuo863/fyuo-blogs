@@ -137,8 +137,9 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__item:nth-child(4n) { background: var(--color-paper-3); }
 .cover-flow__item[aria-pressed="true"] { background: var(--color-paper); }
 .cover-flow__item > img { position: relative; z-index: 1; width: 100%; height: 100%; max-height: none; object-fit: cover; pointer-events: none; user-select: none; -webkit-user-drag: none; }
-.cover-flow__reflection { position: absolute; z-index: 0; top: calc(100% + 0.35rem); left: 0; width: 100%; height: 100%; overflow: clip; pointer-events: none; -webkit-mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 36%, transparent 100%); mask-image: linear-gradient(to bottom, #000 0%, rgba(0, 0, 0, 0.8) 36%, transparent 100%); }
-.cover-flow__reflection img { display: block; width: 100%; height: auto; aspect-ratio: 1; max-height: none; object-fit: cover; transform: translateY(100%) scaleY(-1); transform-origin: top; }
+.cover-flow__reflection { position: absolute; z-index: 0; top: calc(100% + 0.35rem); left: 0; width: 100%; height: 100%; overflow: clip; isolation: isolate; pointer-events: none; }
+.cover-flow__reflection::after { content: ""; position: absolute; z-index: 1; inset: 0; background: color-mix(in oklch, var(--color-paper-3) 68%, transparent); pointer-events: none; }
+.cover-flow__reflection img { position: relative; z-index: 0; display: block; width: 100%; height: auto; aspect-ratio: 1; max-height: none; object-fit: cover; transform: translateY(100%) scaleY(-1); transform-origin: top; }
 .cover-flow__item-index { position: absolute; z-index: 2; top: var(--space-sm); left: var(--space-sm); font-family: var(--font-outlier); font-size: var(--text-xs); }
 .cover-flow__caption { display: grid; gap: var(--space-sm); padding-top: var(--space-lg); border-top: var(--rule-hair) solid var(--color-ink); }
 .cover-flow__index { margin: 0; color: var(--color-cobalt); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.08em; }
