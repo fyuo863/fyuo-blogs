@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import BlogPost from "../components/BlogPost";
+import ConstructionNotice from "../components/ConstructionNotice";
 import AppDrawer from "../components/AppDrawer";
 import PhysicsItem from "../physics/PhysicsItem";
 import {
@@ -546,6 +547,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
 
   return (
     <div className="blog-page">
+      <ConstructionNotice />
       {showDrawer && (
         <PhysicsItem strength={0.8}>
           <AppDrawer

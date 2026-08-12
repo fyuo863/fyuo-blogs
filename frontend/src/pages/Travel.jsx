@@ -6,6 +6,7 @@ import {
   listTravelPlaces,
   updateTravelPlace,
 } from "../api";
+import ConstructionNotice from "../components/ConstructionNotice";
 
 const TravelGlobe = lazy(() => import("../components/TravelGlobe"));
 
@@ -186,6 +187,7 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
 
   return (
     <div className="travel-page travel-page--globe">
+      <ConstructionNotice />
       <header className="travel-globe-masthead">
         <p className="travel-globe-masthead__edition">FYUO863 / GEO ARCHIVE</p>
         <h1>Earth, marked.</h1>

@@ -68,6 +68,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .site-nav__sheet { position: absolute; z-index: 30; top: calc(100% + 1px); right: 0; display: grid; gap: var(--space-sm); min-width: 10rem; padding: var(--space-md); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); }
 
 .home-page, .blog-page, .travel-page { padding-bottom: var(--space-4xl); }
+/* Hallmark · component: construction notice · genre: editorial · theme: locked custom
+ * states: display-only · pre-emit critique: P5 H5 E5 S5 R5 V4 · contrast: pass (40–41)
+ */
+.construction-notice { position: sticky; z-index: 25; top: 50%; height: 0; margin: 0; pointer-events: none; }
+.construction-notice__band { position: absolute; inset-inline: 0; top: 0; display: grid; min-height: clamp(4.5rem, 9cqi, 7rem); place-items: center; overflow: visible; background: repeating-linear-gradient(45deg, var(--color-print-yellow) 0 1.25rem, var(--color-print-black) 1.25rem 2.5rem); box-shadow: 0 0.35rem 0 color-mix(in oklch, var(--color-print-black) 50%, transparent); transform: translateY(-50%); }
+.construction-notice__clearance { position: absolute; width: min(72%, 34rem); height: calc(100% + var(--space-md)); border-radius: 50%; background: var(--color-print-yellow); }
+.construction-notice__band strong { position: relative; z-index: 1; color: var(--color-print-black); font-family: var(--font-display); font-size: clamp(2.5rem, 7cqi, 5.5rem); font-style: normal; font-weight: 800; letter-spacing: -.09em; line-height: .8; white-space: nowrap; }
 .home-cover { position: relative; isolation: isolate; display: grid; grid-template-columns: 1fr; min-height: min(48rem, calc(100dvh - 4.25rem)); padding-inline: clamp(var(--space-xl), 7vw, var(--space-4xl)); padding-block-start: clamp(var(--space-xl), 7vw, var(--space-3xl)); padding-block-end: var(--space-4xl); border-bottom: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); }
 .home-cover > :not(.cover-title) { position: relative; z-index: 1; }
 .cover-edition, .section-kicker, .feature-card__label, .blog-eyebrow { margin: 0; font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: 0.1em; text-transform: uppercase; }
