@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"myblog/internal/model"
 	"myblog/internal/repository"
 	"strings"
@@ -86,7 +87,11 @@ func (s *HomeContentService) Update(ctx context.Context, input HomeContentInput)
 	if err != nil {
 		return HomeContent{}, err
 	}
-	resolved, err := s.resolveHomeContent(ctx, normalized)
+	current, err := s.Get()
+	if err != nil {
+		return HomeContent{}, err
+	}
+	resolved, err := s.resolveHomeContent(ctx, normalized, current)
 	if err != nil {
 		return HomeContent{}, err
 	}
@@ -107,13 +112,14 @@ func (s *HomeContentService) Update(ctx context.Context, input HomeContentInput)
 	return resolved, nil
 }
 
-func (s *HomeContentService) resolveHomeContent(ctx context.Context, input HomeContentInput) (HomeContent, error) {
+func (s *HomeContentService) resolveHomeContent(ctx context.Context, input HomeContentInput, current HomeContent) (HomeContent, error) {
 	urls := make([]string, 0, len(input.Projects)+1)
 	urls = append(urls, input.CoverGitHubURL)
 	for _, project := range input.Projects {
 		urls = append(urls, project.LinkURL)
 	}
 	resolved := make([]HomeProject, len(urls))
+	cachedByURL := homeProjectsByURL(current)
 	var firstErr error
 	var lock sync.Mutex
 	var group sync.WaitGroup
@@ -123,9 +129,14 @@ func (s *HomeContentService) resolveHomeContent(ctx context.Context, input HomeC
 			defer group.Done()
 			project, err := s.resolver.Resolve(ctx, repositoryURL)
 			if err != nil {
+				if cached, ok := cachedByURL[repositoryURL]; ok {
+					cached.LinkURL = repositoryURL
+					resolved[index] = cached
+					return
+				}
 				lock.Lock()
 				if firstErr == nil {
-					firstErr = err
+					firstErr = fmt.Errorf("%w: %s (%v)", ErrRepositoryMetadata, repositoryURL, err)
 				}
 				lock.Unlock()
 				return
@@ -148,6 +159,23 @@ func (s *HomeContentService) resolveHomeContent(ctx context.Context, input HomeC
 		CoverDescription: input.CoverDescription,
 		Projects:         resolved[1:],
 	}, nil
+}
+
+func homeProjectsByURL(content HomeContent) map[string]HomeProject {
+	projects := make(map[string]HomeProject, len(content.Projects)+1)
+	if content.CoverGitHubURL != "" && content.CoverImage != "" && content.CoverTitle != "" {
+		projects[content.CoverGitHubURL] = HomeProject{
+			Image:   content.CoverImage,
+			Title:   content.CoverTitle,
+			LinkURL: content.CoverGitHubURL,
+		}
+	}
+	for _, project := range content.Projects {
+		if project.LinkURL != "" && project.Image != "" && project.Title != "" {
+			projects[project.LinkURL] = project
+		}
+	}
+	return projects
 }
 
 func fromModel(stored model.HomeContent) (HomeContent, error) {

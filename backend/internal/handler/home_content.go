@@ -4,6 +4,7 @@ import (
 	"errors"
 	"myblog/internal/service"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +38,8 @@ func (h *HomeContentHandler) Update(c *gin.Context) {
 		return
 	}
 	if errors.Is(err, service.ErrRepositoryMetadata) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无法从 GitHub README 获取仓库展示图，请确认链接公开且 README 包含非徽章图片"})
+		detail := strings.TrimPrefix(err.Error(), service.ErrRepositoryMetadata.Error()+": ")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无法从 GitHub README 获取新仓库展示图：" + detail + "。请确认链接公开且 README 包含非徽章图片。"})
 		return
 	}
 	if err != nil {

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import BlogPost from "../components/BlogPost";
 import ConstructionNotice from "../components/ConstructionNotice";
@@ -548,15 +549,15 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
   return (
     <div className="blog-page">
       <ConstructionNotice />
-      {showDrawer && (
-        <PhysicsItem strength={0.8}>
-          <AppDrawer
-            user={user}
-            label="blog."
-            items={blogDrawerItems}
-            onOpenSignIn={onOpenSignIn}
-          />
-        </PhysicsItem>
+      {showDrawer && createPortal(
+        <AppDrawer
+          user={user}
+          label="blog."
+          items={blogDrawerItems}
+          onOpenSignIn={onOpenSignIn}
+          placement="frame"
+        />,
+        document.getElementById("root"),
       )}
 
       <PhysicsItem strength={1}>

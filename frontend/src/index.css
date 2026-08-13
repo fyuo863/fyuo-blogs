@@ -9,14 +9,14 @@
  * pre-emit critique: P5 H5 E5 S5 R5 V5 · variation: real-earth raster field + screen-level CMY inkjet pass · contrast: pass (40–41) · nav: N6 · footer: Ft1 · slop: pass (42–45) · mobile: pass (34, 49, 50–57)
  */
 html, body { height: 100%; overflow-x: clip; overflow-y: hidden; background: var(--color-paper); }
-#root { height: 100%; overflow: hidden; background: var(--color-paper); }
+#root { position: relative; isolation: isolate; height: 100%; overflow: hidden; background: var(--color-paper); }
 body { margin: 0; color: var(--color-ink); font-family: var(--font-body); font-size: var(--text-md); }
 * { box-sizing: border-box; }
 ::selection { color: var(--color-accent-ink); background: var(--color-accent); }
 a, button, input, textarea { -webkit-tap-highlight-color: transparent; }
 a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: 0.2rem; }
 
-.app-frame { position: relative; display: grid; height: 100dvh; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
+.app-frame { position: relative; isolation: isolate; display: grid; height: 100dvh; min-height: 0; grid-template-rows: auto minmax(0, 1fr) auto; overflow: hidden; }
 .app-shell { position: relative; min-height: 0; overflow: hidden; }
 .page-shell { min-height: 100dvh; }
 .single-page-reader { height: 100%; overflow-x: clip; overflow-y: auto; overscroll-behavior: contain; -ms-overflow-style: none; scrollbar-width: none; }
@@ -335,7 +335,11 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 }
 
 .app-drawer { position: fixed; right: var(--space-sm); bottom: var(--space-sm); z-index: 40; }
-.app-drawer--frame { position: absolute; right: var(--space-sm); bottom: var(--space-sm); }
+/* Hallmark · component: frame drawer · genre: editorial · theme: locked custom
+ * states: default · hover · focus · active · disabled · loading · error · success
+ * contrast: pass (40–41)
+ */
+.app-drawer--frame { position: absolute; inset-inline-end: var(--space-sm); inset-block-end: var(--space-sm); z-index: 60; }
 .drawer-menu { display: grid; gap: var(--space-3xs); margin-bottom: var(--space-2xs); padding: var(--space-2xs); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); }
 .drawer-toggle, .drawer-item { min-height: 2.75rem; padding-inline: var(--space-sm); border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper); color: var(--color-ink); cursor: pointer; white-space: nowrap; }
 .drawer-toggle:hover, .drawer-item:hover { background: var(--color-accent); }
