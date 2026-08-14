@@ -734,8 +734,8 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
 
       <div className="h-24" />
 
-      {selectedPost && (
-        <PhysicsItem strength={1.15}>
+      {selectedPost &&
+        createPortal(
           <BlogPost
             key={selectedPost.id ?? "new"}
             post={selectedPost}
@@ -743,9 +743,9 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
             editRef={editRef}
             onBack={closePost}
             onUploadImage={handleUploadImage}
-          />
-        </PhysicsItem>
-      )}
+          />,
+          document.body,
+        )}
     </div>
   );
 }
