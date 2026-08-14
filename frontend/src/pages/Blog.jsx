@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import BlogPost from "../components/BlogPost";
 import ConstructionNotice from "../components/ConstructionNotice";
 import AppDrawer from "../components/AppDrawer";
@@ -110,6 +110,7 @@ function BackendOfflineNotice() {
 
 function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [posts, setPosts] = useState([]);
   const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -130,6 +131,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
     targetY: 0,
     lastTime: null,
   });
+  const handledDeskRequest = useRef("");
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
@@ -492,19 +494,49 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
     }
   };
 
+  useEffect(() => {
+    const parameters = new URLSearchParams(location.search);
+    const request = parameters.get("desk");
+    if (!user?.token || !request || handledDeskRequest.current === location.search) return;
+
+    const timer = window.setTimeout(() => {
+      if (request === "new") {
+        setSelectedPost({
+          id: null,
+          title: "New Article",
+          content: "",
+          cover_image: "",
+          stage: "published",
+          vol: 1,
+          tags: [],
+          created_at: new Date().toISOString(),
+        });
+        setIsEditing(true);
+        handledDeskRequest.current = location.search;
+        return;
+      }
+
+      const requestedID = Number(parameters.get("id"));
+      const post = posts.find((item) => item.id === requestedID);
+      if (request === "edit" && post) {
+        setSelectedPost(post);
+        setIsEditing(true);
+        handledDeskRequest.current = location.search;
+      }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [location.search, posts, user?.token]);
+
   const blogDrawerItems = [
-    ...(!isBlogView
-      ? [
-          { label: "create.", onClick: () => handleMenuAction("create") },
-          { label: "edit home.", onClick: () => { navigate("/"); window.setTimeout(() => window.dispatchEvent(new Event("fyuo:edit-home")), 0); } },
-          { label: "edit travel.", onClick: () => { navigate("/travel"); window.setTimeout(() => window.dispatchEvent(new Event("fyuo:edit-place")), 0); } },
-        ]
-      : currentMenu.map((item) => ({
+    { label: "content desk.", onClick: () => navigate("/desk") },
+    ...(isBlogView
+      ? currentMenu.map((item) => ({
           label: item.label,
           // The editor ref is intentionally read only after this click.
           // eslint-disable-next-line react-hooks/refs
           onClick: () => handleMenuAction(item.action),
-        }))),
+        }))
+      : []),
     ...drawerItems,
   ];
 

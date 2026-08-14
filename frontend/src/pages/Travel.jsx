@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
   createTravelPlace,
   deleteTravelPlace,
@@ -55,6 +56,7 @@ function coordinateText(place) {
 }
 
 function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
+  const location = useLocation();
   const [places, setPlaces] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [draft, setDraft] = useState(emptyDraft);
@@ -62,6 +64,7 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
+  const handledDeskRequest = useRef("");
 
   const selectedPlace = useMemo(
     () => places.find((place) => place.id === selectedId) || null,
@@ -108,6 +111,31 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
     window.addEventListener("fyuo:edit-place", openEditor);
     return () => window.removeEventListener("fyuo:edit-place", openEditor);
   }, [user?.token]);
+
+  useEffect(() => {
+    const parameters = new URLSearchParams(location.search);
+    const request = parameters.get("desk");
+    if (!user?.token || !request || handledDeskRequest.current === location.search) return;
+
+    const timer = window.setTimeout(() => {
+    if (request === "new") {
+      setSelectedId(null);
+      setDraft(emptyDraft);
+      setError("");
+      setEditorOpen(true);
+      handledDeskRequest.current = location.search;
+      return;
+    }
+
+    const requestedID = Number(parameters.get("id"));
+    const place = places.find((item) => item.id === requestedID);
+    if (request === "edit" && place) {
+      selectPlace(place);
+      handledDeskRequest.current = location.search;
+    }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [location.search, places, selectPlace, user?.token]);
 
   const updateDraft = (event) => {
     const { name, value } = event.target;

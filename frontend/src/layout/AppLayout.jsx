@@ -12,9 +12,10 @@ import AdminPanel from "../components/AdminPanel";
 import Home from "../pages/Home";
 import Blog from "../pages/Blog";
 import Travel from "../pages/Travel";
+import ContentDesk from "../pages/ContentDesk";
 
 const PAGE_ORDER = ["home", "blog", "travel"];
-const PAGE_PATHS = { home: "/", blog: "/blog", travel: "/travel" };
+const PAGE_PATHS = { home: "/", blog: "/blog", travel: "/travel", desk: "/desk" };
 
 function pageKeyForPath(pathname) {
   return Object.entries(PAGE_PATHS).find(([, path]) => path === pathname)?.[0] ?? "home";
@@ -53,6 +54,7 @@ function MobileRoutes(props) {
       <Route path="/" element={<section className="single-page-reader"><PageContent {...props} page="home" showDrawer /></section>} />
       <Route path="/blog" element={<section className="single-page-reader"><PageContent {...props} page="blog" showDrawer /></section>} />
       <Route path="/travel" element={<section className="single-page-reader"><PageContent {...props} page="travel" showDrawer={false} /></section>} />
+      <Route path="/desk" element={<section className="single-page-reader"><ContentDesk user={props.user} onOpenSignIn={props.onOpenSignIn} /></section>} />
     </Routes>
   );
 }
@@ -115,7 +117,7 @@ export default function AppLayout({
       <Navbar visible selectedPages={selectedPages} />
 
       <main className="app-shell">
-        {isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
+        {currentPage === "desk" ? <section className="single-page-reader"><ContentDesk user={user} onOpenSignIn={onOpenSignIn} /></section> : isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
       </main>
 
       <Footer />

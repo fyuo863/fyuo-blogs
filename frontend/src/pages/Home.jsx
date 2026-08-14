@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import FeatureCard from "../module/FeatureCard";
 import ProjectGrid from "../module/ProjectGrid";
 import HalftoneTitle from "../components/HalftoneTitle";
@@ -35,11 +36,13 @@ const newProject = () => ({
 });
 
 function Home({ user, onOpenSignIn, onLogout, onNotify }) {
+  const location = useLocation();
   const [content, setContent] = useState(DEFAULT_HOME_CONTENT);
   const [draft, setDraft] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isContentLoading, setIsContentLoading] = useState(true);
   const editorRef = useRef(null);
+  const handledDeskRequest = useRef("");
 
   useEffect(() => {
     let cancelled = false;
@@ -68,6 +71,11 @@ function Home({ user, onOpenSignIn, onLogout, onNotify }) {
     window.addEventListener("fyuo:edit-home", openEditor);
     return () => window.removeEventListener("fyuo:edit-home", openEditor);
   }, [content, isContentLoading, user?.token]);
+  useEffect(() => {
+    if (!user?.token || isContentLoading || new URLSearchParams(location.search).get("desk") !== "home" || handledDeskRequest.current === location.search) return;
+    setDraft(editorDraft(content));
+    handledDeskRequest.current = location.search;
+  }, [content, isContentLoading, location.search, user?.token]);
   const cancelEditing = () => setDraft(null);
   const updateDraft = (field, value) => setDraft((current) => ({ ...current, [field]: value }));
   const updateProject = (index, field, value) => {

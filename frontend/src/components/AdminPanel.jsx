@@ -449,16 +449,17 @@ function AdminPanel({ open, onClose, user, onNotify }) {
   const activeItem = NAV_ITEMS.find((item) => item.key === activeKey) ?? NAV_ITEMS[0];
 
   return (
-    <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/75 px-4 py-8 backdrop-blur-sm">
-      <div className="relative flex h-[min(82vh,920px)] w-full max-w-7xl overflow-hidden border border-zinc-800 bg-zinc-950 shadow-2xl shadow-black/60">
+    <div className="admin-panel" role="dialog" aria-modal="true" aria-label="Admin control panel">
+      <div className="admin-panel__surface">
         <button
           onClick={onClose}
-          className="absolute right-5 top-5 z-10 flex h-10 w-10 items-center justify-center border border-zinc-800 bg-black/60 text-zinc-400 transition-colors hover:text-white"
+          className="admin-panel__close"
+          aria-label="Close admin panel"
         >
           <X size={18} />
         </button>
 
-        <div className="hidden w-[320px] flex-col justify-between border-r border-zinc-800 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_50%),linear-gradient(180deg,_rgba(255,255,255,0.04),_rgba(255,255,255,0.01))] p-8 lg:flex">
+        <aside className="admin-panel__rail">
           <div>
             <div className="flex items-center gap-3 text-white">
               <div className="flex h-11 w-11 items-center justify-center border border-zinc-700 bg-white/5">
@@ -474,7 +475,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
               </div>
             </div>
 
-            <div className="mt-10 space-y-3">
+            <div className="admin-panel__nav-list">
               {NAV_ITEMS.map((item) => {
                 const Icon = item.icon;
                 const active = item.key === activeKey;
@@ -482,11 +483,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
                   <button
                     key={item.key}
                     onClick={() => setActiveKey(item.key)}
-                    className={`group flex w-full items-center justify-between border px-4 py-4 text-left transition-all ${
-                      active
-                        ? "border-white bg-white text-black"
-                        : "border-zinc-800 bg-black/30 text-zinc-300 hover:border-zinc-600 hover:text-white"
-                    }`}
+                    className={`admin-panel__nav-item${active ? " is-active" : ""}`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon size={16} />
@@ -501,7 +498,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
             </div>
           </div>
 
-          <div className="border-t border-zinc-800 pt-6">
+          <div className="admin-panel__identity">
             <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
               signed in
             </div>
@@ -510,10 +507,10 @@ function AdminPanel({ open, onClose, user, onNotify }) {
             </div>
             <div className="mt-1 text-sm text-zinc-500">{user?.role || "-"}</div>
           </div>
-        </div>
+        </aside>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <div className="border-b border-zinc-800 bg-black/40 px-6 py-5 lg:hidden">
+        <div className="admin-panel__content">
+          <div className="admin-panel__mobile-nav">
             <div className="text-xs uppercase tracking-[0.35em] text-zinc-500">
               admin center
             </div>
@@ -522,11 +519,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
                 <button
                   key={item.key}
                   onClick={() => setActiveKey(item.key)}
-                  className={`border px-3 py-2 text-sm ${
-                    item.key === activeKey
-                      ? "border-white bg-white text-black"
-                      : "border-zinc-800 text-zinc-300"
-                  }`}
+                  className={`admin-panel__mobile-nav-item${item.key === activeKey ? " is-active" : ""}`}
                 >
                   {item.label}
                 </button>
@@ -534,7 +527,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
             </div>
           </div>
 
-          <div className="border-b border-zinc-800 px-8 py-6">
+          <div className="admin-panel__heading">
             <div className="text-xs uppercase tracking-[0.35em] text-zinc-500">
               {activeItem.description}
             </div>
