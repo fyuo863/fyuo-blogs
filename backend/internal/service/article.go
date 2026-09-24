@@ -54,6 +54,16 @@ func NewArticleService(articles *repository.ArticleRepository) *ArticleService {
 }
 
 func (s *ArticleService) Create(ctx context.Context, author model.User, input ArticleInput) (model.Article, error) {
+	finish, err := beginArticleWrite(ctx)
+	if err != nil {
+		return model.Article{}, err
+	}
+	defer func() {
+		finish()
+		if ctx.Err() == nil {
+			_, _ = s.List(ctx, 1, 10)
+		}
+	}()
 	article := model.Article{
 		Title:         input.Title,
 		Content:       input.Content,
@@ -70,30 +80,22 @@ func (s *ArticleService) Create(ctx context.Context, author model.User, input Ar
 	if err := s.articles.Create(&article); err != nil {
 		return article, err
 	}
-	s.refreshListCache(ctx)
 	return s.articles.GetByID(article.ID)
 }
 
 func (s *ArticleService) List(ctx context.Context, page, pageSize int) (ArticleListResult, error) {
 	page, pageSize = normalizePagination(page, pageSize)
-	cacheKey := articleListCacheKey(page, pageSize)
-
-	if cached, ok := s.readListCache(ctx, cacheKey); ok {
-		cached.Data = ApplyCounts(ctx, cached.Data)
-		return cached, nil
-	}
-
-	articles, total, err := s.articles.ListVisible(page, pageSize)
+	b, err := cachedRead(ctx, articleListCacheKey(page, pageSize), func(ctx context.Context) (any, error) {
+		articles, total, err := repository.NewArticleRepository(database.DB.WithContext(ctx)).ListVisible(page, pageSize)
+		return ArticleListResult{Data: articles, Total: total, Page: page, PageSize: pageSize}, err
+	})
+	var result ArticleListResult
 	if err != nil {
-		return ArticleListResult{}, err
+		return result, err
 	}
-	result := ArticleListResult{
-		Data:     articles,
-		Total:    total,
-		Page:     page,
-		PageSize: pageSize,
+	if err = json.Unmarshal(b, &result); err != nil {
+		return result, err
 	}
-	s.writeListCache(ctx, cacheKey, result, listCacheTTL(page, pageSize))
 	result.Data = ApplyCounts(ctx, result.Data)
 	return result, nil
 }
@@ -107,7 +109,7 @@ func (s *ArticleService) Search(ctx context.Context, query string) ([]model.Arti
 }
 
 func (s *ArticleService) Get(ctx context.Context, id uint) (model.Article, error) {
-	article, err := s.articles.GetVisible(id)
+	article, err := cachedArticle(ctx, id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return article, ErrArticleNotFound
 	}
@@ -118,6 +120,16 @@ func (s *ArticleService) Get(ctx context.Context, id uint) (model.Article, error
 }
 
 func (s *ArticleService) Update(ctx context.Context, actor model.User, id uint, update ArticleUpdate) (model.Article, error) {
+	finish, err := beginArticleWrite(ctx)
+	if err != nil {
+		return model.Article{}, err
+	}
+	defer func() {
+		finish()
+		if ctx.Err() == nil {
+			_, _ = s.List(ctx, 1, 10)
+		}
+	}()
 	existing, err := s.articles.GetByID(id)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return model.Article{}, ErrArticleNotFound
@@ -146,11 +158,20 @@ func (s *ArticleService) Update(ctx context.Context, actor model.User, id uint, 
 	if err != nil {
 		return article, err
 	}
-	s.refreshListCache(ctx)
 	return applyCountsToArticle(ctx, article), nil
 }
 
 func (s *ArticleService) Delete(ctx context.Context, id uint) error {
+	finish, err := beginArticleWrite(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		finish()
+		if ctx.Err() == nil {
+			_, _ = s.List(ctx, 1, 10)
+		}
+	}()
 	deleted, err := s.articles.SoftDelete(id)
 	if err != nil {
 		return err
@@ -158,7 +179,6 @@ func (s *ArticleService) Delete(ctx context.Context, id uint) error {
 	if !deleted {
 		return ErrArticleNotFound
 	}
-	s.refreshListCache(ctx)
 	return nil
 }
 

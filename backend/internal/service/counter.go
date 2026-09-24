@@ -80,6 +80,12 @@ type LikeResult struct {
 
 // IncrementView verifies the article exists, then atomically increments its Redis view counter.
 func IncrementView(ctx context.Context, articleID uint) (CountSnapshot, error) {
+	if Visits != nil {
+		eventID := NewEventID()
+		ms, _ := strconv.ParseInt(eventID[:13], 10, 64)
+		receipt, err := Visits.Accept(ctx, VisitEvent{EventID: eventID, ArticleID: articleID, OccurredAt: time.UnixMilli(ms)})
+		return receipt.CountSnapshot, err
+	}
 	base, err := articleBaseCounts(ctx, articleID)
 	if err != nil {
 		return CountSnapshot{}, err
@@ -109,6 +115,8 @@ func ToggleLike(ctx context.Context, articleID uint, ipHash string) (LikeResult,
 
 // ApplyCounts overlays live Redis counters onto DB article snapshots before sending responses.
 func ApplyCounts(ctx context.Context, articles []model.Article) []model.Article {
+	ctx, cancel := context.WithTimeout(ctx, 150*time.Millisecond)
+	defer cancel()
 	if database.RDB == nil || len(articles) == 0 {
 		return articles
 	}
@@ -117,7 +125,11 @@ func ApplyCounts(ctx context.Context, articles []model.Article) []model.Article 
 	viewCmds := make([]*redis.StringCmd, len(articles))
 	likeCmds := make([]*redis.StringCmd, len(articles))
 	for i, article := range articles {
-		viewCmds[i] = pipe.Get(ctx, fmt.Sprintf(viewCounterKey, article.ID))
+		viewKey := viewCounterKey
+		if Visits != nil {
+			viewKey = liveViewKey
+		}
+		viewCmds[i] = pipe.Get(ctx, fmt.Sprintf(viewKey, article.ID))
 		likeCmds[i] = pipe.Get(ctx, fmt.Sprintf(likeCounterKey, article.ID))
 	}
 	_, _ = pipe.Exec(ctx)
@@ -148,7 +160,7 @@ func SyncCountsToDB(ctx context.Context) {
 
 	for id := range ids {
 		updates := map[string]interface{}{}
-		if viewRaw, err := database.RDB.Get(ctx, fmt.Sprintf(viewCounterKey, id)).Int(); err == nil {
+		if viewRaw, err := database.RDB.Get(ctx, fmt.Sprintf(viewCounterKey, id)).Int(); Visits == nil && err == nil {
 			updates["view_count"] = viewRaw
 		}
 		if likeRaw, err := database.RDB.Get(ctx, fmt.Sprintf(likeCounterKey, id)).Int(); err == nil {
@@ -176,18 +188,16 @@ func StartSyncScheduler(ctx context.Context) {
 			SyncCountsToDB(ctx)
 		case <-ctx.Done():
 			log.Logger.Info("counter sync scheduler stopped")
-			SyncCountsToDB(context.Background())
+			shutdown, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			SyncCountsToDB(shutdown)
+			cancel()
 			return
 		}
 	}
 }
 
 func articleBaseCounts(ctx context.Context, articleID uint) (CountSnapshot, error) {
-	var article model.Article
-	err := database.DB.WithContext(ctx).
-		Select("id", "view_count", "like_count").
-		Where("id = ? AND stage != ?", articleID, "hidden").
-		First(&article).Error
+	article, err := cachedArticle(ctx, articleID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return CountSnapshot{}, ErrArticleNotFound
 	}

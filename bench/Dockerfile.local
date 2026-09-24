@@ -1,0 +1,5 @@
+FROM blog-backend:local
+WORKDIR /app
+COPY bench/backend-linux /app/main
+COPY backend/configs /app/configs
+CMD ["./main"]

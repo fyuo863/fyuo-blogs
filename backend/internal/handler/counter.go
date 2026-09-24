@@ -6,6 +6,7 @@ import (
 	"myblog/log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,6 +23,45 @@ func (h *CounterHandler) IncrementView(c *gin.Context) {
 	id, err := strconv.ParseUint(c.Param("id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid article id"})
+		return
+	}
+
+	if service.Visits != nil {
+		eventID := c.GetHeader("X-Event-Id")
+		if eventID == "" {
+			eventID = service.NewEventID()
+		}
+		var ms int64
+		if len(eventID) >= 13 {
+			ms, _ = strconv.ParseInt(eventID[:13], 10, 64)
+		}
+		visitor := c.GetHeader("X-Visitor-Id")
+		if visitor == "" {
+			visitor = service.HashIP(c.ClientIP() + "|" + c.Request.UserAgent())
+		}
+		receipt, e := service.Visits.Accept(c.Request.Context(), service.VisitEvent{EventID: eventID, ArticleID: uint(id), OccurredAt: time.UnixMilli(ms), VisitorID: visitor, IPAddress: c.ClientIP()})
+		if e != nil {
+			status := http.StatusServiceUnavailable
+			if errors.Is(e, service.ErrVisitInvalid) {
+				status = http.StatusBadRequest
+			}
+			if errors.Is(e, service.ErrArticleNotFound) {
+				status = http.StatusNotFound
+			}
+			if errors.Is(e, service.ErrVisitRate) {
+				status = http.StatusTooManyRequests
+			}
+			if status == 503 || status == 429 {
+				c.Header("Retry-After", "2")
+			}
+			acceptance := "unknown"
+			if status == 400 || status == 404 || status == 429 || errors.Is(e, service.ErrVisitFull) || errors.Is(e, service.ErrCounterUnavailable) {
+				acceptance = "not_accepted"
+			}
+			c.JSON(status, gin.H{"error": e.Error(), "acceptance": acceptance, "retryable": status == 503 || status == 429})
+			return
+		}
+		c.JSON(http.StatusOK, receipt)
 		return
 	}
 

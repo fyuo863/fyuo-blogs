@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"myblog/internal/auth"
 	"myblog/internal/config"
 	"myblog/internal/database"
@@ -11,7 +12,10 @@ import (
 	"myblog/internal/router"
 	"myblog/internal/service"
 	"myblog/log"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 	_ "time/tzdata"
 )
@@ -38,7 +42,29 @@ func main() {
 	defer database.ClosePostgres()
 
 	// 启动浏览/点赞计数定时同步（每 10 分钟 Redis → DB）
-	go service.StartSyncScheduler(context.Background())
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	if os.Getenv("VISIT_STREAM_ENABLED") != "true" && database.DB.Migrator().HasTable("visit_migrations") {
+		var active int64
+		if e := database.DB.Table("visit_migrations").Where("name = ?", "stream-v2").Count(&active).Error; e != nil {
+			panic(e)
+		}
+		if active != 0 {
+			panic("stream-v2 baseline exists: disabling streams requires an explicit offline rollback")
+		}
+	}
+	if os.Getenv("VISIT_STREAM_ENABLED") == "true" {
+		opts, e := service.VisitOptionsFromEnv()
+		if e != nil {
+			panic(e)
+		}
+		service.Visits = &service.VisitPipeline{Options: opts}
+		if e = service.Visits.Start(ctx); e != nil {
+			panic(e)
+		}
+	}
+	syncDone := make(chan struct{})
+	go func() { defer close(syncDone); service.StartSyncScheduler(ctx) }()
 
 	// newArticle := model.Article{
 	// 	Title:   "我的第一篇 Postgres 博客",
@@ -97,5 +123,19 @@ func main() {
 		AdminTokens:  middleware.RequireRole(tokenManager, apiKeyService, "admin"),
 	})
 
-	router.Run(cfg.Server.ServeAddr()) // listens on 0.0.0.0:8090 by default
+	server := &http.Server{Addr: cfg.Server.ServeAddr(), Handler: router, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second, MaxHeaderBytes: 16 << 10}
+	go func() {
+		if e := server.ListenAndServe(); e != nil && !errors.Is(e, http.ErrServerClosed) {
+			log.Logger.Error("HTTP server failed", "error", e)
+			stop()
+		}
+	}()
+	<-ctx.Done()
+	shutdown, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	_ = server.Shutdown(shutdown)
+	if service.Visits != nil {
+		service.Visits.Wait()
+	}
+	<-syncDone
 }

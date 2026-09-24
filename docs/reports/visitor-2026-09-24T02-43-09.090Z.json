@@ -1,0 +1,320 @@
+{
+  "started_at": "2026-09-24T02:43:09.095Z",
+  "status": "stopped_on_errors",
+  "runs": [
+    {
+      "repeat": 1,
+      "concurrency": 10,
+      "elapsed_s": 10.0542088,
+      "started": 859,
+      "completed": 859,
+      "completed_flows_per_second": 85.43685705035288,
+      "failed_fraction": 0,
+      "successful_flow_ms": {
+        "n": 859,
+        "p50": 103.28189999999995,
+        "p95": 201.09529999999995,
+        "p99": 247.15079999999944
+      },
+      "stages": {
+        "list": {
+          "success": 859,
+          "n": 859,
+          "p50": 4.589899999999943,
+          "p95": 13.088500000000295,
+          "p99": 23.71010000000024
+        },
+        "detail": {
+          "success": 859,
+          "n": 859,
+          "p50": 32.81410000000142,
+          "p95": 66.32429999999931,
+          "p99": 90.33820000000014
+        },
+        "view": {
+          "success": 859,
+          "n": 859,
+          "p50": 64.79240000000027,
+          "p95": 126.09600000000046,
+          "p99": 164.0002999999997
+        }
+      },
+      "errors": {}
+    },
+    {
+      "repeat": 1,
+      "concurrency": 50,
+      "elapsed_s": 12.159621099999999,
+      "started": 602,
+      "completed": 602,
+      "completed_flows_per_second": 49.50812159763761,
+      "failed_fraction": 0,
+      "successful_flow_ms": {
+        "n": 602,
+        "p50": 833.936700000002,
+        "p95": 1863.3247999999985,
+        "p99": 2380.862100000002
+      },
+      "stages": {
+        "list": {
+          "success": 602,
+          "n": 602,
+          "p50": 11.821799999997893,
+          "p95": 106.66820000000007,
+          "p99": 114.75009999999929
+        },
+        "detail": {
+          "success": 602,
+          "n": 602,
+          "p50": 231.60360000000037,
+          "p95": 585.8611999999994,
+          "p99": 852.5389999999989
+        },
+        "view": {
+          "success": 602,
+          "n": 602,
+          "p50": 527.7356,
+          "p95": 1436.1823000000004,
+          "p99": 1971.6202000000012
+        }
+      },
+      "errors": {}
+    },
+    {
+      "repeat": 1,
+      "concurrency": 100,
+      "elapsed_s": 10.6104977,
+      "started": 465,
+      "completed": 464,
+      "completed_flows_per_second": 43.730276667417776,
+      "failed_fraction": 0.002150537634408602,
+      "successful_flow_ms": {
+        "n": 464,
+        "p50": 1829.3186999999998,
+        "p95": 4107.153900000001,
+        "p99": 4548.069199999998
+      },
+      "stages": {
+        "list": {
+          "success": 465,
+          "n": 465,
+          "p50": 20.047999999998865,
+          "p95": 353.61239999999816,
+          "p99": 403.08710000000065
+        },
+        "detail": {
+          "success": 465,
+          "n": 465,
+          "p50": 582.4995999999992,
+          "p95": 2435.9552000000003,
+          "p99": 2618.488400000002
+        },
+        "view": {
+          "success": 464,
+          "n": 465,
+          "p50": 1030.7915999999968,
+          "p95": 3265.854800000001,
+          "p99": 3457.960500000001
+        }
+      },
+      "errors": {
+        "view: HTTP 500": 1
+      }
+    },
+    {
+      "repeat": 1,
+      "concurrency": 200,
+      "elapsed_s": 11.980641199999997,
+      "started": 1378,
+      "completed": 882,
+      "completed_flows_per_second": 73.61876424443795,
+      "failed_fraction": 0.3599419448476052,
+      "successful_flow_ms": {
+        "n": 882,
+        "p50": 2231.6721000000034,
+        "p95": 2867.084200000005,
+        "p99": 3100.356399999997
+      },
+      "stages": {
+        "list": {
+          "success": 1378,
+          "n": 1378,
+          "p50": 17.698800000005576,
+          "p95": 115.88840000000346,
+          "p99": 157.97929999999906
+        },
+        "detail": {
+          "success": 1000,
+          "n": 1378,
+          "p50": 663.4478999999992,
+          "p95": 1187.0380000000005,
+          "p99": 1461.792800000003
+        },
+        "view": {
+          "success": 882,
+          "n": 1000,
+          "p50": 1360.5796000000046,
+          "p95": 1992.6440999999977,
+          "p99": 2170.3773999999976
+        }
+      },
+      "errors": {
+        "detail: HTTP 500": 378,
+        "view: HTTP 500": 118
+      }
+    }
+  ],
+  "method": "Closed-loop list -> detail -> view; no think time; deterministic rotation over first-page articles. Shared host, no browser rendering/static assets/Nginx/TLS. No retries. Existing isolated synthetic dataset.",
+  "environment": {
+    "cpu": "AMD Ryzen 5 7500F 6-Core Processor             ",
+    "cpus": 12,
+    "memory": 33865719808,
+    "node": "v24.14.1"
+  },
+  "git": "84f11d508a1b0217e5b46f60ee2fd5919917ec1e",
+  "docker": {
+    "cpus": 12,
+    "memory": 16524722176,
+    "version": "29.4.3"
+  },
+  "image": "sha256:67b7a638cc945a340d59a74100445b5b1b01444c585c4067ca0455aeb2349c44",
+  "article_ids": [
+    1000,
+    999,
+    998,
+    997,
+    996,
+    995,
+    994,
+    993,
+    992,
+    991
+  ],
+  "before": {
+    "counts": {
+      "991": 392,
+      "992": 395,
+      "993": 388,
+      "994": 394,
+      "995": 399,
+      "996": 395,
+      "997": 398,
+      "998": 398,
+      "999": 395,
+      "1000": 7570
+    },
+    "errors": {}
+  },
+  "acknowledged": {
+    "991": 280,
+    "992": 289,
+    "993": 281,
+    "994": 290,
+    "995": 289,
+    "996": 283,
+    "997": 278,
+    "998": 272,
+    "999": 270,
+    "1000": 275
+  },
+  "attempted": {
+    "991": 290,
+    "992": 302,
+    "993": 295,
+    "994": 295,
+    "995": 298,
+    "996": 293,
+    "997": 293,
+    "998": 287,
+    "999": 285,
+    "1000": 288
+  },
+  "stop_reason": "More than 5% flows failed; higher/repeated load skipped",
+  "after": {
+    "counts": {
+      "991": 672,
+      "992": 684,
+      "993": 669,
+      "994": 684,
+      "995": 688,
+      "996": 678,
+      "997": 676,
+      "998": 670,
+      "999": 665,
+      "1000": 7845
+    },
+    "errors": {}
+  },
+  "counter": [
+    {
+      "id": 1000,
+      "acknowledged": 275,
+      "attempted": 288,
+      "delta": 275,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 999,
+      "acknowledged": 270,
+      "attempted": 285,
+      "delta": 270,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 998,
+      "acknowledged": 272,
+      "attempted": 287,
+      "delta": 272,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 997,
+      "acknowledged": 278,
+      "attempted": 293,
+      "delta": 278,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 996,
+      "acknowledged": 283,
+      "attempted": 293,
+      "delta": 283,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 995,
+      "acknowledged": 289,
+      "attempted": 298,
+      "delta": 289,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 994,
+      "acknowledged": 290,
+      "attempted": 295,
+      "delta": 290,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 993,
+      "acknowledged": 281,
+      "attempted": 295,
+      "delta": 281,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 992,
+      "acknowledged": 289,
+      "attempted": 302,
+      "delta": 289,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 991,
+      "acknowledged": 280,
+      "attempted": 290,
+      "delta": 280,
+      "verdict": "inconclusive"
+    }
+  ]
+}

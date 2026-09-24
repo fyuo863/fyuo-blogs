@@ -1,0 +1,12 @@
+backend-1  | INFO starting counter sync
+backend-1  | INFO visitor pipeline backlog=0 oldest_ms=0 pending=0 accepted=205040 duplicates=0 persisted=205040 failures=0 dead=0 cache_hits=615061 cache_misses=80 origin_rejected=0 db_pool="{MaxOpenConnections:24 OpenConnections:1 InUse:0 Idle:1 WaitCount:0 WaitDuration:0s MaxIdleClosed:0 MaxIdleTimeClosed:3 MaxLifetimeClosed:1}"
+backend-1  | [GIN] 2026/09/24 - 03:30:51 | 200 | 371.929µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:30:53 | 200 |   6.62ms |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:30:55 | 200 | 579.758µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:30:57 | 200 | 458.848µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | INFO blog list cache invalidated keys_deleted=1
+backend-1  | INFO counter sync completed articles=1000
+backend-1  | [GIN] 2026/09/24 - 03:30:59 | 200 | 731.464µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:31:01 | 200 | 790.447µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | INFO counter sync scheduler stopped
+backend-1  | INFO starting counter sync

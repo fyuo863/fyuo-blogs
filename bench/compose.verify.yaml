@@ -1,0 +1,21 @@
+name: blog-visitor-verify
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench-local-only
+      POSTGRES_DB: bench
+    ports: ['127.0.0.1:15439:5432']
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U bench -d bench']
+      interval: 1s
+      retries: 30
+  redis:
+    image: redis:8-alpine
+    command: [redis-server, --appendonly, 'yes', --appendfsync, everysec, --maxmemory-policy, noeviction]
+    ports: ['127.0.0.1:16389:6379']
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 1s
+      retries: 30

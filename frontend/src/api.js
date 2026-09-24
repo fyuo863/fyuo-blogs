@@ -255,7 +255,7 @@ export const incrementLike = (id) => {
   return api.post(`/articles/${id}/like`);
 };
 
-export const recordArticleView = (id, visitorId, contentPath) => {
+export const recordArticleView = (id, visitorId, contentPath, eventId) => {
   if (BACKEND_OFFLINE) {
     return offlineResponse({
       view_count: 0,
@@ -269,6 +269,7 @@ export const recordArticleView = (id, visitorId, contentPath) => {
   return api.post(`/articles/${id}/view`, null, {
     headers: {
       "X-Visitor-Id": visitorId,
+      "X-Event-Id": eventId,
       "X-Content-Path": contentPath,
     },
   });

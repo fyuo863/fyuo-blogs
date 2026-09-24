@@ -1,0 +1,13 @@
+Window: 2026-09-24 03:19:30--03:22:00 UTC
+Matches: 1088
+First ten matching log lines:
+postgres-1  | 2026-09-24 03:20:04.947 UTC [17431] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.947 UTC [17432] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.949 UTC [17433] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.952 UTC [17434] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.954 UTC [17437] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.957 UTC [17438] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.970 UTC [17443] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:04.971 UTC [17436] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:05.431 UTC [18313] FATAL:  sorry, too many clients already
+postgres-1  | 2026-09-24 03:20:05.435 UTC [18315] FATAL:  sorry, too many clients already

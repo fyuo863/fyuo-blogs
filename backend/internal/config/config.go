@@ -22,16 +22,17 @@ type ServerConfig struct {
 }
 
 type DatabaseConfig struct {
-	Host            string `yaml:"host"`
-	Port            int    `yaml:"port"`
-	User            string `yaml:"user"`
-	Password        string `yaml:"password"`
-	DBName          string `yaml:"dbname"`
-	SSLMode         string `yaml:"sslmode"`
-	TimeZone        string `yaml:"timezone"`
-	MaxIdleConns    int    `yaml:"max_idle_conns"`
-	MaxOpenConns    int    `yaml:"max_open_conns"`
-	ConnMaxLifetime int    `yaml:"conn_max_lifetime"`
+	Host            string        `mapstructure:"host"`
+	Port            int           `mapstructure:"port"`
+	User            string        `mapstructure:"user"`
+	Password        string        `mapstructure:"password"`
+	DBName          string        `mapstructure:"dbname"`
+	SSLMode         string        `mapstructure:"sslmode"`
+	TimeZone        string        `mapstructure:"timezone"`
+	MaxIdleConns    int           `mapstructure:"max_idle_conns"`
+	MaxOpenConns    int           `mapstructure:"max_open_conns"`
+	ConnMaxLifetime int           `mapstructure:"conn_max_lifetime"`
+	QueryTimeout    time.Duration `mapstructure:"query_timeout"`
 }
 
 type RedisConfig struct {
@@ -49,6 +50,7 @@ type AuthConfig struct {
 }
 
 func Load(configPath string) (*Config, error) {
+	viper := viper.New()
 	viper.SetConfigFile(configPath)
 	viper.SetConfigType("yaml")
 	// 绑定 .env / .env.local 中的变量名到配置键
@@ -87,6 +89,21 @@ func Load(configPath string) (*Config, error) {
 		cfg.Auth.TokenSecret = "dev-only-change-me"
 	}
 
+	if cfg.Database.MaxOpenConns <= 0 {
+		cfg.Database.MaxOpenConns = 24
+	}
+	if cfg.Database.MaxIdleConns <= 0 {
+		cfg.Database.MaxIdleConns = 8
+	}
+	if cfg.Database.MaxIdleConns > cfg.Database.MaxOpenConns {
+		cfg.Database.MaxIdleConns = cfg.Database.MaxOpenConns
+	}
+	if cfg.Database.ConnMaxLifetime <= 0 {
+		cfg.Database.ConnMaxLifetime = 300
+	}
+	if cfg.Database.QueryTimeout <= 0 {
+		cfg.Database.QueryTimeout = 3 * time.Second
+	}
 	return &cfg, nil
 }
 

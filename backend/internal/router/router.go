@@ -23,6 +23,7 @@ type Dependencies struct {
 
 func NewRouter(deps Dependencies) *gin.Engine {
 	r := gin.New()
+	_ = r.SetTrustedProxies(nil)
 	r.Use(
 		gin.Logger(),
 		gin.Recovery(),
@@ -31,7 +32,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
-	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
+	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-Event-Id", "X-Visitor-Id", "X-Content-Path"}
 	r.Use(cors.New(config))
 	r.GET("/healthz", handler.Health)
 

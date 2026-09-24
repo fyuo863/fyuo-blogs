@@ -78,7 +78,8 @@ func (h *ArticleHandler) ListBlogs(c *gin.Context) {
 	result, err := h.articles.List(c.Request.Context(), page, pageSize)
 	if err != nil {
 		log.Logger.Error("查询文章列表失败", "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询文章列表失败"})
+		c.Header("Retry-After", "1")
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "查询文章列表暂不可用"})
 		return
 	}
 
@@ -115,7 +116,8 @@ func (h *ArticleHandler) GetBlog(c *gin.Context) {
 	}
 	if err != nil {
 		log.Logger.Error("查询文章失败", "id", id, "error", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "查询文章失败"})
+		c.Header("Retry-After", "1")
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "查询文章暂不可用"})
 		return
 	}
 

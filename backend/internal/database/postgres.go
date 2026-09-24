@@ -21,8 +21,8 @@ func InitPostgres(cfg *config.DatabaseConfig) error {
 
 	// 1. 拼接 DSN (Data Source Name)
 	dsn := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s",
-		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode, cfg.TimeZone,
+		"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s TimeZone=%s connect_timeout=3 statement_timeout=%d",
+		cfg.Host, cfg.User, cfg.Password, cfg.DBName, cfg.Port, cfg.SSLMode, cfg.TimeZone, cfg.QueryTimeout.Milliseconds(),
 	)
 
 	log.Logger.Info("正在连接 PostgreSQL...", "host", cfg.Host, "port", cfg.Port, "dbname", cfg.DBName)
@@ -46,6 +46,9 @@ func InitPostgres(cfg *config.DatabaseConfig) error {
 	sqlDB.SetMaxOpenConns(cfg.MaxOpenConns)
 	sqlDB.SetConnMaxLifetime(time.Duration(cfg.ConnMaxLifetime) * time.Second)
 
+	sqlDB.SetConnMaxIdleTime(60 * time.Second)
+	log.Logger.Info("database pool configured", "max_open", sqlDB.Stats().MaxOpenConnections, "max_idle", cfg.MaxIdleConns, "lifetime_s", cfg.ConnMaxLifetime, "query_timeout_ms", cfg.QueryTimeout.Milliseconds())
+
 	// 4. 自动同步表结构 (AutoMigrate)
 	// 将我们之前定义的模型传给 AutoMigrate，它会自动在数据库中建表或更新字段
 	err = DB.AutoMigrate(
@@ -59,6 +62,7 @@ func InitPostgres(cfg *config.DatabaseConfig) error {
 	)
 	if err != nil {
 		log.Logger.Error("自动同步表结构失败", "error", err)
+		_ = sqlDB.Close()
 		return fmt.Errorf("failed to auto migrate tables: %w", err)
 	}
 

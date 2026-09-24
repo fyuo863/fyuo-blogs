@@ -1,0 +1,320 @@
+{
+  "started_at": "2026-09-24T03:19:37.969Z",
+  "status": "stopped_on_errors",
+  "runs": [
+    {
+      "repeat": 1,
+      "concurrency": 10,
+      "elapsed_s": 10.0470737,
+      "started": 1136,
+      "completed": 1136,
+      "completed_flows_per_second": 113.06774827380832,
+      "failed_fraction": 0,
+      "successful_flow_ms": {
+        "n": 1136,
+        "p50": 85.91039999999975,
+        "p95": 109.38710000000015,
+        "p99": 135.91200000000026
+      },
+      "stages": {
+        "list": {
+          "success": 1136,
+          "n": 1136,
+          "p50": 3.6203999999997905,
+          "p95": 7.6877000000004045,
+          "p99": 10.873899999998685
+        },
+        "detail": {
+          "success": 1136,
+          "n": 1136,
+          "p50": 27.78769999999895,
+          "p95": 37.9072000000001,
+          "p99": 45.43709999999919
+        },
+        "view": {
+          "success": 1136,
+          "n": 1136,
+          "p50": 54.30580000000009,
+          "p95": 71.39250000000015,
+          "p99": 85.33380000000034
+        }
+      },
+      "errors": {}
+    },
+    {
+      "repeat": 1,
+      "concurrency": 50,
+      "elapsed_s": 10.2910729,
+      "started": 1236,
+      "completed": 1236,
+      "completed_flows_per_second": 120.10409526882275,
+      "failed_fraction": 0,
+      "successful_flow_ms": {
+        "n": 1236,
+        "p50": 391.5116999999991,
+        "p95": 636.7026000000005,
+        "p99": 869.0930000000008
+      },
+      "stages": {
+        "list": {
+          "success": 1236,
+          "n": 1236,
+          "p50": 4.596699999998236,
+          "p95": 25.944000000001324,
+          "p99": 50.663000000000466
+        },
+        "detail": {
+          "success": 1236,
+          "n": 1236,
+          "p50": 126.95279999999912,
+          "p95": 220.28579999999965,
+          "p99": 339.1964000000007
+        },
+        "view": {
+          "success": 1236,
+          "n": 1236,
+          "p50": 251.9416999999994,
+          "p95": 401.71909999999843,
+          "p99": 647.8112000000001
+        }
+      },
+      "errors": {}
+    },
+    {
+      "repeat": 1,
+      "concurrency": 100,
+      "elapsed_s": 11.022494400000003,
+      "started": 987,
+      "completed": 984,
+      "completed_flows_per_second": 89.27198910620447,
+      "failed_fraction": 0.00303951367781155,
+      "successful_flow_ms": {
+        "n": 984,
+        "p50": 1047.8974000000017,
+        "p95": 1552.7982999999986,
+        "p99": 1781.6595000000016
+      },
+      "stages": {
+        "list": {
+          "success": 987,
+          "n": 987,
+          "p50": 9.963099999997212,
+          "p95": 40.81469999999899,
+          "p99": 80.38730000000214
+        },
+        "detail": {
+          "success": 987,
+          "n": 987,
+          "p50": 322.39689999999973,
+          "p95": 597.6202000000012,
+          "p99": 795.9377999999997
+        },
+        "view": {
+          "success": 984,
+          "n": 987,
+          "p50": 685.6340000000018,
+          "p95": 1130.4822999999997,
+          "p99": 1366.035100000001
+        }
+      },
+      "errors": {
+        "view: HTTP 500": 3
+      }
+    },
+    {
+      "repeat": 1,
+      "concurrency": 200,
+      "elapsed_s": 10.965589400000004,
+      "started": 1489,
+      "completed": 764,
+      "completed_flows_per_second": 69.67249749475388,
+      "failed_fraction": 0.48690396239086636,
+      "successful_flow_ms": {
+        "n": 764,
+        "p50": 2082.9163999999946,
+        "p95": 3232.4772999999986,
+        "p99": 3603.5267999999996
+      },
+      "stages": {
+        "list": {
+          "success": 1489,
+          "n": 1489,
+          "p50": 34.33950000000186,
+          "p95": 211.37029999999504,
+          "p99": 324.66240000000107
+        },
+        "detail": {
+          "success": 1036,
+          "n": 1489,
+          "p50": 660.0305999999982,
+          "p95": 1331.5074000000022,
+          "p99": 1686.4274000000005
+        },
+        "view": {
+          "success": 764,
+          "n": 1036,
+          "p50": 852.4725000000035,
+          "p95": 2153.732799999998,
+          "p99": 2597.982100000001
+        }
+      },
+      "errors": {
+        "view: HTTP 500": 272,
+        "detail: HTTP 500": 453
+      }
+    }
+  ],
+  "method": "Closed-loop list -> detail -> view; no think time; deterministic rotation over first-page articles. Shared host, no browser rendering/static assets/Nginx/TLS. No retries. Existing isolated synthetic dataset.",
+  "environment": {
+    "cpu": "AMD Ryzen 5 7500F 6-Core Processor             ",
+    "cpus": 12,
+    "memory": 33865719808,
+    "node": "v24.14.1"
+  },
+  "git": "84f11d508a1b0217e5b46f60ee2fd5919917ec1e",
+  "docker": {
+    "cpus": 12,
+    "memory": 16524722176,
+    "version": "29.4.3"
+  },
+  "image": "sha256:e488612749413d5c54f06bb8647de80338417d0894a5960f02b66fb3054a7336",
+  "article_ids": [
+    1000,
+    999,
+    998,
+    997,
+    996,
+    995,
+    994,
+    993,
+    992,
+    991
+  ],
+  "before": {
+    "counts": {
+      "991": 19291,
+      "992": 19303,
+      "993": 19289,
+      "994": 19303,
+      "995": 19307,
+      "996": 19298,
+      "997": 19297,
+      "998": 19290,
+      "999": 19279,
+      "1000": 26468
+    },
+    "errors": {}
+  },
+  "acknowledged": {
+    "991": 402,
+    "992": 416,
+    "993": 418,
+    "994": 422,
+    "995": 417,
+    "996": 410,
+    "997": 413,
+    "998": 409,
+    "999": 402,
+    "1000": 411
+  },
+  "attempted": {
+    "991": 432,
+    "992": 439,
+    "993": 445,
+    "994": 443,
+    "995": 445,
+    "996": 442,
+    "997": 442,
+    "998": 438,
+    "999": 428,
+    "1000": 441
+  },
+  "stop_reason": "More than 5% flows failed; higher/repeated load skipped",
+  "after": {
+    "counts": {
+      "991": 19693,
+      "992": 19719,
+      "993": 19707,
+      "994": 19725,
+      "995": 19724,
+      "996": 19708,
+      "997": 19710,
+      "998": 19699,
+      "999": 19681,
+      "1000": 26879
+    },
+    "errors": {}
+  },
+  "counter": [
+    {
+      "id": 1000,
+      "acknowledged": 411,
+      "attempted": 441,
+      "delta": 411,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 999,
+      "acknowledged": 402,
+      "attempted": 428,
+      "delta": 402,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 998,
+      "acknowledged": 409,
+      "attempted": 438,
+      "delta": 409,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 997,
+      "acknowledged": 413,
+      "attempted": 442,
+      "delta": 413,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 996,
+      "acknowledged": 410,
+      "attempted": 442,
+      "delta": 410,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 995,
+      "acknowledged": 417,
+      "attempted": 445,
+      "delta": 417,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 994,
+      "acknowledged": 422,
+      "attempted": 443,
+      "delta": 422,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 993,
+      "acknowledged": 418,
+      "attempted": 445,
+      "delta": 418,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 992,
+      "acknowledged": 416,
+      "attempted": 439,
+      "delta": 416,
+      "verdict": "inconclusive"
+    },
+    {
+      "id": 991,
+      "acknowledged": 402,
+      "attempted": 432,
+      "delta": 402,
+      "verdict": "inconclusive"
+    }
+  ]
+}

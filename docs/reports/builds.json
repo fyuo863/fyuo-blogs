@@ -1,0 +1,17 @@
+{
+  "baseline_revision": "84f11d508a1b0217e5b46f60ee2fd5919917ec1e",
+  "binaries": {
+    "backend-baseline": "a72ae5db17981d783390d96f7b5306b3ac54fa0471b934a3d7c6c53338c2a86a",
+    "backend-optimized": "1bc98016544dd4b6b1dd1e0a1aa4c7298ea5dfcea29ea02167b24d8ccf662c08"
+  },
+  "go": "go version go1.26.2 windows/amd64",
+  "postgres": [
+    "16.14",
+    "100"
+  ],
+  "redis_version": "8.6.3",
+  "container_limits": {
+    "memory": 0,
+    "nano_cpus": 0
+  }
+}

@@ -1,0 +1,12 @@
+backend-1  | [GIN] 2026/09/24 - 03:33:54 | 200 | 624.546µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:33:56 | 200 | 618.484µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:33:58 | 200 | 631.447µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | [GIN] 2026/09/24 - 03:34:01 | 200 | 764.487µs |       127.0.0.1 | GET      "/api/v1/healthz"
+backend-1  | INFO counter sync scheduler stopped
+backend-1  | INFO starting counter sync
+backend-1  |
+backend-1  | 2026/09/24 03:34:04 [31;1mD:/Program Data/Github Program/.Golang/个人blog_old/backend/internal/service/counter.go:170 [35;1mtimeout: context deadline exceeded
+backend-1  | [0m[33m[1.668ms] [34;1m[rows:1][0m UPDATE "articles" SET "like_count"=0,"updated_at"='2026-09-24 03:34:04.472' WHERE id = 889
+backend-1  | INFO counter sync completed articles=1000
+backend-1  | INFO [Postgres] 连接池已正常关闭
+backend-1  | INFO redis connection closed

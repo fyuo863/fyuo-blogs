@@ -1,0 +1,226 @@
+{
+  "status": "passed",
+  "started_at": "2026-09-24T03:18:05.029Z",
+  "environment": {
+    "cpu": "AMD Ryzen 5 7500F 6-Core Processor             ",
+    "cpus": 12,
+    "memory": 33865719808,
+    "node": "v24.14.1"
+  },
+  "stages": [
+    {
+      "name": "hot-list-1",
+      "count": 5000,
+      "concurrency": 100,
+      "success": 5000,
+      "errors": {},
+      "elapsed_s": 1.4442199999999998,
+      "rps": 3462.0764149506313,
+      "error_rate": 0,
+      "p50": 25.48720000000003,
+      "p95": 47.07300000000032,
+      "p99": 63.361000000000104
+    },
+    {
+      "name": "cold-detail-wave-1",
+      "count": 200,
+      "concurrency": 200,
+      "success": 200,
+      "errors": {},
+      "elapsed_s": 0.05658210000000008,
+      "rps": 3534.6867648956068,
+      "error_rate": 0,
+      "p50": 43.46939999999995,
+      "p95": 51.65300000000025,
+      "p99": 51.97029999999995
+    },
+    {
+      "name": "hot-list-2",
+      "count": 5000,
+      "concurrency": 100,
+      "success": 5000,
+      "errors": {},
+      "elapsed_s": 1.2105507000000002,
+      "rps": 4130.351582961373,
+      "error_rate": 0,
+      "p50": 22.756800000000112,
+      "p95": 36.415500000000065,
+      "p99": 47.08669999999984
+    },
+    {
+      "name": "cold-detail-wave-2",
+      "count": 200,
+      "concurrency": 200,
+      "success": 200,
+      "errors": {},
+      "elapsed_s": 0.02453739999999925,
+      "rps": 8150.822825564489,
+      "error_rate": 0,
+      "p50": 19.08010000000013,
+      "p95": 21.5628999999999,
+      "p99": 21.716699999999946
+    },
+    {
+      "name": "hot-list-3",
+      "count": 5000,
+      "concurrency": 100,
+      "success": 5000,
+      "errors": {},
+      "elapsed_s": 1.4596072000000004,
+      "rps": 3425.579155816715,
+      "error_rate": 0,
+      "p50": 26.050100000000384,
+      "p95": 50.36029999999937,
+      "p99": 64.58650000000034
+    },
+    {
+      "name": "cold-detail-wave-3",
+      "count": 200,
+      "concurrency": 200,
+      "success": 200,
+      "errors": {},
+      "elapsed_s": 0.02333780000000024,
+      "rps": 8569.788069140961,
+      "error_rate": 0,
+      "p50": 16.278699999999844,
+      "p95": 20.393700000000536,
+      "p99": 21.010800000000017
+    },
+    {
+      "name": "burst",
+      "count": 3000,
+      "concurrency": 200,
+      "success": 3000,
+      "errors": {},
+      "elapsed_s": 0.8209126999999998,
+      "rps": 3654.468983120861,
+      "error_rate": 0,
+      "p50": 43.796800000000076,
+      "p95": 101.46390000000065,
+      "p99": 113.43479999999909
+    },
+    {
+      "name": "same-event-retries",
+      "count": 100,
+      "concurrency": 100,
+      "success": 100,
+      "errors": {},
+      "elapsed_s": 0.021038300000000162,
+      "rps": 4753.2357652471555,
+      "error_rate": 0,
+      "p50": 16.47689999999966,
+      "p95": 19.681099999999788,
+      "p99": 20.137699999999313
+    },
+    {
+      "name": "postgres-down-reads",
+      "count": 100,
+      "concurrency": 20,
+      "success": 100,
+      "errors": {},
+      "elapsed_s": 0.019180899999999383,
+      "rps": 5213.519699284351,
+      "error_rate": 0,
+      "p50": 3.6335999999992055,
+      "p95": 5.934599999998682,
+      "p99": 6.64929999999913
+    },
+    {
+      "name": "postgres-down-accepted-events",
+      "count": 500,
+      "concurrency": 50,
+      "success": 500,
+      "errors": {},
+      "elapsed_s": 0.09387440000000061,
+      "rps": 5326.265733788943,
+      "error_rate": 0,
+      "p50": 8.993099999999686,
+      "p95": 12.553799999999683,
+      "p99": 14.541400000000067
+    },
+    {
+      "name": "redis-down-bounded-reads",
+      "count": 32,
+      "concurrency": 32,
+      "success": 26,
+      "errors": {
+        "HTTP 503": 6
+      },
+      "elapsed_s": 0.30667929999999977,
+      "rps": 84.77911616467111,
+      "error_rate": 0.1875,
+      "p50": 304.2566999999981,
+      "p95": 305.9922000000006,
+      "p99": 306.10280000000057
+    },
+    {
+      "name": "redis-down-statistics-rejected",
+      "count": 8,
+      "concurrency": 8,
+      "success": 0,
+      "errors": {
+        "HTTP 503": 8
+      },
+      "elapsed_s": 1.9352727999999988,
+      "rps": 0,
+      "error_rate": 1,
+      "p50": 1934.7524000000012,
+      "p95": 1935.0831999999973,
+      "p99": 1935.0831999999973
+    },
+    {
+      "name": "redis-recovered-initial-wave",
+      "count": 100,
+      "concurrency": 20,
+      "success": 1,
+      "errors": {
+        "HTTP 503": 99
+      },
+      "elapsed_s": 0.7742728999999999,
+      "rps": 1.2915342897833568,
+      "error_rate": 0.99,
+      "p50": 4.852100000000064,
+      "p95": 10.078300000001036,
+      "p99": 11.791800000002695
+    },
+    {
+      "name": "redis-recovered-after-calibration",
+      "count": 100,
+      "concurrency": 20,
+      "success": 100,
+      "errors": {},
+      "elapsed_s": 0.026137399999999616,
+      "rps": 3825.935249871887,
+      "error_rate": 0,
+      "p50": 4.4945000000006985,
+      "p95": 8.684100000002218,
+      "p99": 9.504899999999907
+    }
+  ],
+  "git": "84f11d508a1b0217e5b46f60ee2fd5919917ec1e",
+  "image": "sha256:f86e26c3c8af4326247b8c55ab0b86ee7934f4ef9df78da17ca1405e9fd2cf01",
+  "docker": {
+    "cpus": 12,
+    "memory": 16524722176,
+    "version": "29.4.3"
+  },
+  "before": {
+    "events": 182592,
+    "views": 196523,
+    "records": 195747
+  },
+  "burst_drain_ms": 810.2856000000011,
+  "outage_backlog": 500,
+  "recovery_drain_ms": 3608.8269,
+  "after": {
+    "events": 186194,
+    "views": 200125,
+    "records": 199349
+  },
+  "accepted_unique": 3602,
+  "duplicate_responses": 100,
+  "backlog_peak_sampled": 500,
+  "persisted": 3602,
+  "database_delta": 3602,
+  "difference": 0
+}

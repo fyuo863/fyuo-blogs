@@ -1,0 +1,12 @@
+services:
+  redis:
+    command: [redis-server, --appendonly, 'yes', --appendfsync, everysec, --maxmemory-policy, noeviction]
+  backend:
+    stop_grace_period: 20s
+    environment:
+      VISIT_STREAM_ENABLED: 'true'
+      # Synthetic load shares one client address. Test real limits separately.
+      VISIT_RATE: '1000000'
+      VISIT_IP_RATE: '1000000'
+      VISIT_CLAIM_IDLE: 2s
+      VISIT_BACKOFF: 500ms

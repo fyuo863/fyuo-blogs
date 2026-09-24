@@ -1,3 +1,4 @@
+import { createViewTracker } from "../view-events.js";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -160,6 +161,9 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
     return () => cancelAnimationFrame(animationFrame);
   }, []);
 
+  const viewTracker = useRef(null);
+  if (!viewTracker.current) viewTracker.current = createViewTracker(recordArticleView);
+
   const fetchPosts = useCallback(() => {
     if (backendOffline) return;
 
@@ -196,9 +200,10 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
   }, [selectedPost, fetchPosts]);
 
   useEffect(() => {
-    if (!selectedPost?.id || backendOffline) return;
+    if (!selectedPost?.id) { viewTracker.current.select(null); return; }
+    if (backendOffline) return;
 
-    recordArticleView(
+    viewTracker.current.select(
       selectedPost.id,
       getVisitorId(),
       `/blog/${selectedPost.id}`
@@ -216,18 +221,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
           prev?.id === selectedPost.id ? applyCounterPatch(prev, counters) : prev
         );
       })
-      .catch((err) => {
-        if (isBackendOfflineError(err)) {
-          setBackendOffline(true);
-          return;
-        }
-
-        onNotify?.({
-          variant: "error",
-          title: "view-sync-failed.",
-          message: errorMessage(err, "浏览量同步失败。"),
-        });
-      });
+      .catch(() => { /* Statistics are best effort; keep article reading available. */ });
   }, [selectedPost?.id, backendOffline, onNotify]);
 
   useEffect(() => {

@@ -1,0 +1,40 @@
+name: fyuo-bench
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: bench
+      POSTGRES_PASSWORD: bench-local-only
+      POSTGRES_DB: bench
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -h 127.0.0.1 -U bench -d bench']
+      interval: 2s
+      retries: 30
+  redis:
+    image: redis:8-alpine
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 2s
+      retries: 30
+  backend:
+    build: ../backend
+    ports: ['127.0.0.1:18090:8080']
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: bench
+      DB_PASSWORD: bench-local-only
+      DB_NAME: bench
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      AUTH_TOKEN_SECRET: isolated-benchmark-not-for-production
+      ENABLE_ADMIN_ACCOUNT_SEED: 'true'
+      LOCAL_ADMIN_NAME: benchmark
+      LOCAL_ADMIN_PASSWORD: benchmark-local-only
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD-SHELL, 'wget -qO- http://127.0.0.1:8080/api/v1/healthz >/dev/null']
+      interval: 2s
+      retries: 60

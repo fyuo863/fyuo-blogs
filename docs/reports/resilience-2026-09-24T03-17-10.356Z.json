@@ -1,0 +1,103 @@
+{
+  "status": "failed",
+  "started_at": "2026-09-24T03:17:10.357Z",
+  "environment": {
+    "cpu": "AMD Ryzen 5 7500F 6-Core Processor             ",
+    "cpus": 12,
+    "memory": 33865719808,
+    "node": "v24.14.1"
+  },
+  "stages": [
+    {
+      "name": "hot-list-1",
+      "count": 5000,
+      "concurrency": 100,
+      "success": 5000,
+      "errors": {},
+      "elapsed_s": 1.4548908999999999,
+      "rps": 3436.6838090746187,
+      "error_rate": 0,
+      "p50": 26.118800000000192,
+      "p95": 40.33440000000019,
+      "p99": 124.24259999999981
+    },
+    {
+      "name": "cold-detail-wave-1",
+      "count": 200,
+      "concurrency": 200,
+      "success": 200,
+      "errors": {},
+      "elapsed_s": 0.058935399999999846,
+      "rps": 3393.546153924475,
+      "error_rate": 0,
+      "p50": 40.06269999999995,
+      "p95": 54.64209999999957,
+      "p99": 54.947099999999864
+    },
+    {
+      "name": "hot-list-2",
+      "count": 5000,
+      "concurrency": 100,
+      "success": 5000,
+      "errors": {},
+      "elapsed_s": 1.1957821000000004,
+      "rps": 4181.363812018927,
+      "error_rate": 0,
+      "p50": 23.402499999999236,
+      "p95": 29.591099999999642,
+      "p99": 36.01969999999983
+    },
+    {
+      "name": "cold-detail-wave-2",
+      "count": 200,
+      "concurrency": 200,
+      "success": 200,
+      "errors": {},
+      "elapsed_s": 0.025175900000000185,
+      "rps": 7944.10527528305,
+      "error_rate": 0,
+      "p50": 21.002400000000307,
+      "p95": 22.368400000000292,
+      "p99": 22.711600000000544
+    },
+    {
+      "name": "hot-list-3",
+      "count": 5000,
+      "concurrency": 100,
+      "success": 5000,
+      "errors": {},
+      "elapsed_s": 1.1565977999999995,
+      "rps": 4323.023958717544,
+      "error_rate": 0,
+      "p50": 22.355400000000373,
+      "p95": 30.295500000000175,
+      "p99": 38.90560000000005
+    },
+    {
+      "name": "cold-detail-wave-3",
+      "count": 200,
+      "concurrency": 200,
+      "success": 200,
+      "errors": {},
+      "elapsed_s": 0.02101500000000033,
+      "rps": 9517.011658339132,
+      "error_rate": 0,
+      "p50": 16.057600000000093,
+      "p95": 18.238500000000386,
+      "p99": 18.489400000000387
+    }
+  ],
+  "git": "84f11d508a1b0217e5b46f60ee2fd5919917ec1e",
+  "image": "sha256:f86e26c3c8af4326247b8c55ab0b86ee7934f4ef9df78da17ca1405e9fd2cf01",
+  "docker": {
+    "cpus": 12,
+    "memory": 16524722176,
+    "version": "29.4.3"
+  },
+  "before": {
+    "events": 182592,
+    "views": 196523,
+    "records": 195747
+  },
+  "error": "Error: HTTP 503\n    at IncomingMessage.<anonymous> (file:///D:/Program%20Data/Github%20Program/.Golang/%E4%B8%AA%E4%BA%BAblog_old/bench/run.mjs:27:79)\n    at IncomingMessage.emit (node:events:520:35)\n    at endReadableNT (node:internal/streams/readable:1729:12)\n    at process.processTicksAndRejections (node:internal/process/task_queues:90:21)"
+}
