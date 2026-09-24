@@ -162,7 +162,9 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
   }, []);
 
   const viewTracker = useRef(null);
-  if (!viewTracker.current) viewTracker.current = createViewTracker(recordArticleView);
+  if (viewTracker.current === null) {
+    viewTracker.current = createViewTracker(recordArticleView);
+  }
 
   const fetchPosts = useCallback(() => {
     if (backendOffline) return;
