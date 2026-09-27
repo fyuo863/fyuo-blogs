@@ -57,7 +57,7 @@ func (h *PluginHandler) Asset(c *gin.Context) {
 		c.Status(404)
 		return
 	}
-	c.Header("Content-Security-Policy", "default-src 'self'; connect-src 'none'; frame-ancestors 'self'")
+	c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'self'")
 	c.File(p)
 }
 func (h *PluginHandler) Upload(c *gin.Context) {

@@ -1,0 +1,1 @@
+{"id":"travel","name":"travel","version":"1.0.0","route":"/p/travel","entry":"index.html","type":"iframe","enabled":true,"navigation":{"label":"travel","order":30},"permissions":["read:travel-places"]}

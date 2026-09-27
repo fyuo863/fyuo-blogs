@@ -96,6 +96,10 @@ func main() {
 	apiKeyService := service.NewAPIKeyService(apiKeyRepo, userRepo)
 	pluginRepo := repository.NewPluginRepository(database.DB)
 	pluginService := service.NewPluginService(pluginRepo, "plugin-storage")
+	if err := pluginService.EnsureBuiltins("builtin-plugins"); err != nil {
+		log.Logger.Error("初始化内置插件失败", "error", err)
+		panic(err)
+	}
 	if err := authService.EnsureAdminAccount(
 		os.Getenv("LOCAL_ADMIN_NAME"),
 		os.Getenv("LOCAL_ADMIN_PASSWORD"),

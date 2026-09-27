@@ -38,6 +38,85 @@ type PluginService struct {
 	root string
 }
 
+// EnsureBuiltins installs the three first-party pages as ordinary published plugins.
+// It is idempotent and never overwrites an administrator-managed version.
+func (s *PluginService) EnsureBuiltins(root string) error {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return err
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		manifestPath := filepath.Join(root, entry.Name(), "manifest.json")
+		raw, err := os.ReadFile(manifestPath)
+		if err != nil {
+			return err
+		}
+		var m PluginManifest
+		if json.Unmarshal(raw, &m) != nil || ValidatePluginManifest(m) != nil {
+			return ErrInvalidPlugin
+		}
+		if _, _, err := s.repo.Active(m.ID); err == nil {
+			continue
+		}
+		p, err := s.repo.FindOrCreate(m.ID, m.Name, m.Type, 0)
+		if err != nil {
+			return err
+		}
+		dest := filepath.Join(s.root, m.ID, m.Version)
+		if _, err := os.Stat(dest); os.IsNotExist(err) {
+			if err := copyDir(filepath.Join(root, entry.Name()), dest); err != nil {
+				return err
+			}
+		}
+		h := sha256.Sum256(raw)
+		v := model.PluginVersion{PluginID: p.ID, Version: m.Version, ManifestJSON: string(raw), StoragePath: dest, ContentHash: hex.EncodeToString(h[:]), Status: "draft", CreatedBy: 0}
+		if _, err := s.repo.Version(m.ID, m.Version); err == nil {
+			continue
+		}
+		if err := s.repo.SaveVersion(&v); err != nil {
+			return err
+		}
+		if err := s.repo.Publish(m.ID, m.Version); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func copyDir(src, dst string) error {
+	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		rel, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		target := filepath.Join(dst, rel)
+		if info.IsDir() {
+			return os.MkdirAll(target, 0755)
+		}
+		in, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer in.Close()
+		out, err := os.Create(target)
+		if err != nil {
+			return err
+		}
+		_, cpErr := io.Copy(out, in)
+		closeErr := out.Close()
+		if cpErr != nil {
+			return cpErr
+		}
+		return closeErr
+	})
+}
+
 func NewPluginService(repo *repository.PluginRepository, root string) *PluginService {
 	return &PluginService{repo: repo, root: root}
 }

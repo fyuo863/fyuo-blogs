@@ -1,0 +1,1 @@
+{"id":"index","name":"index","version":"1.0.0","route":"/p/index","entry":"index.html","type":"iframe","enabled":true,"navigation":{"label":"index","order":10},"permissions":["read:home"]}

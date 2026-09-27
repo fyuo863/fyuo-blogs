@@ -29,9 +29,9 @@ function Navbar({ visible, selectedPages = [] }) {
 
   const navigation = (
     <>
-      <button className="site-nav__link" type="button" data-selected={isSelected("home") || undefined} aria-current={location.pathname === "/" ? "page" : undefined} onClick={() => navigateTo("/")}>index</button>
-      <button className="site-nav__link" type="button" data-selected={isSelected("blog") || undefined} aria-current={location.pathname === "/blog" ? "page" : undefined} onClick={() => navigateTo("/blog")}>journal</button>
-      <button className="site-nav__link" type="button" data-selected={isSelected("travel") || undefined} aria-current={location.pathname === "/travel" ? "page" : undefined} onClick={() => navigateTo("/travel")}>travel</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("home") || location.pathname.startsWith("/p/index") || undefined} aria-current={location.pathname === "/" || location.pathname.startsWith("/p/index") ? "page" : undefined} onClick={() => navigateTo("/p/index")}>index</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("blog") || location.pathname.startsWith("/p/journal") || undefined} aria-current={location.pathname === "/blog" || location.pathname.startsWith("/p/journal") ? "page" : undefined} onClick={() => navigateTo("/p/journal")}>journal</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("travel") || location.pathname.startsWith("/p/travel") || undefined} aria-current={location.pathname === "/travel" || location.pathname.startsWith("/p/travel") ? "page" : undefined} onClick={() => navigateTo("/p/travel")}>travel</button>
       {plugins.map((plugin) => <button key={plugin.slug} className="site-nav__link" type="button" data-selected={location.pathname.startsWith(`/p/${plugin.slug}`) || undefined} aria-current={location.pathname.startsWith(`/p/${plugin.slug}`) ? "page" : undefined} onClick={() => navigateTo(`/p/${plugin.slug}`)}>{plugin.name || plugin.slug}</button>)}
     </>
   );
