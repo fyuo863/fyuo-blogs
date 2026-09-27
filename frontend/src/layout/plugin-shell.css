@@ -1,0 +1,36 @@
+/* Hallmark · user sketch: full-canvas plugin with floating tabs · existing editorial tokens
+ * pre-emit critique: P5 H4 E4 S5 R5 V4 */
+.plugin-shell { position: relative; height: 100dvh; overflow: hidden; isolation: isolate; }
+.plugin-shell__canvas { position: absolute; inset: 0; min-width: 0; }
+.plugin-shell .plugin-shell__reader { height: 100%; width: 100%; overflow-x: clip; overflow-y: auto; }
+.plugin-sidebar { position: absolute; inset: 0 auto 0 0; width: 12rem; z-index: 40; pointer-events: auto; font-family: var(--font-outlier); color: var(--color-ink); }
+.plugin-sidebar__body { height: 100%; display: flex; flex-direction: column; justify-content: space-between; gap: var(--space-md); padding: max(var(--space-sm), env(safe-area-inset-top)) 0 max(var(--space-sm), env(safe-area-inset-bottom)); }
+.plugin-sidebar__tabs { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); overflow-y: auto; overflow-x: clip; min-height: 0; padding: 2px 4px 2px 0; scrollbar-width: none; pointer-events: none; }
+.plugin-sidebar .plugin-sidebar__tab { --preview-scale: 0.14; position: relative; flex: 0 0 auto; width: 143.36px; height: 100.8px; border: 1px solid var(--color-rule); border-left: 0; border-radius: 0 0.65rem 0.65rem 0; background: var(--color-paper); overflow: hidden; pointer-events: auto; transition: transform var(--dur-medium) var(--ease-out), width var(--dur-medium) var(--ease-out), height var(--dur-medium) var(--ease-out); }
+.plugin-sidebar .plugin-sidebar__tab[data-active="true"] { --preview-scale: 0.18; width: 184.32px; height: 129.6px; border-color: var(--color-ink); }
+.plugin-sidebar__preview { position: absolute; inset: 0; pointer-events: none; }
+.plugin-sidebar__preview iframe { display: block; width: 1024px; height: 720px; border: 0; transform: scale(var(--preview-scale)); transform-origin: top left; transition: transform var(--dur-medium) var(--ease-out); }
+.plugin-sidebar__select { position: absolute; inset: 0; display: block; }
+.plugin-sidebar__tab:hover { outline: 1px solid var(--color-ink); outline-offset: -2px; }
+.plugin-sidebar[data-collapsed="true"] { pointer-events: none; }
+.plugin-sidebar[data-collapsed="true"] .plugin-sidebar__tab { transform: translateX(calc(-100% + 16px)); }
+.plugin-sidebar[data-collapsed="true"] .plugin-sidebar__tab[data-active="true"] { transform: translateX(calc(-100% + 28px)); }
+.plugin-sidebar[data-collapsed="true"] .plugin-sidebar__bottom { visibility: hidden; pointer-events: none; }
+.plugin-sidebar__bottom { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-xs); padding-left: var(--space-2xs); }
+.plugin-sidebar__account { display: flex; flex-direction: column; align-items: flex-start; gap: var(--space-2xs); }
+.plugin-sidebar__bottom button, .plugin-sidebar__bottom a { pointer-events: auto; white-space: nowrap; background: var(--color-paper); color: var(--color-ink); padding: 0.35rem 0.5rem; border: 1px solid var(--color-rule); border-radius: 0.3rem; text-decoration: none; font-size: var(--text-xs); }
+.plugin-sidebar__bottom .plugin-sidebar__login { font-size: var(--text-sm); min-height: 2.75rem; }
+.plugin-sidebar__bottom .plugin-sidebar__icp { font-size: 0.6rem; }
+.plugin-sidebar button { cursor: pointer; }
+.plugin-sidebar button:hover, .plugin-sidebar__bottom a:hover { background: var(--color-paper-3); }
+.plugin-sidebar :is(a, button):focus-visible { outline: 2px solid var(--color-focus); outline-offset: -3px; }
+.plugin-sidebar :is(a, button):active { filter: brightness(0.9); }
+@media (max-width: 48rem) {
+  .plugin-sidebar { width: 9.5rem; }
+  .plugin-sidebar .plugin-sidebar__tab { --preview-scale: 0.11; width: 112.64px; height: 79.2px; }
+  .plugin-sidebar .plugin-sidebar__tab[data-active="true"] { --preview-scale: 0.14; width: 143.36px; height: 100.8px; }
+}
+@media (prefers-reduced-motion: reduce) { .plugin-sidebar *, .plugin-sidebar .plugin-sidebar__tab { transition: none; } }
+
+.plugin-shell__reader > iframe { height: 100%; display: block; }
+.plugin-shell__reader > p:is([role="status"], [role="alert"]) { margin: var(--space-lg) var(--space-lg) var(--space-lg) 11rem; }

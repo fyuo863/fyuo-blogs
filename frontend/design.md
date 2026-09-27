@@ -10,7 +10,7 @@ Editorial — a digital magazine with the project index as its cover story.
 
 - Portfolio pages: Portfolio Grid — a typographic cover followed by an asymmetric project index.
 - Content pages: Long Document — an issue masthead, utility search line, and reading ledger.
-- App surfaces: Newspaper masthead — functional controls live in a compact, ruled utility strip.
+- App shell: one plugin fills the viewport. Live plugin previews float over the left edge; the active preview extends farther right. The rail slides partly offscreen on pointer leave, an outside press, or Escape, leaving the actual preview edges visible. Hovering those edges or activating one restores the rail without resizing or remounting the active plugin. Preview documents render public plugin content and animation, without a nested shell or editor commands. Login/account controls and ICP registration sit at bottom-left. This user-sketched shell replaces the shared masthead/footer; plugin content keeps its editorial design.
 
 ## Theme
 
@@ -60,7 +60,7 @@ Use the 4-point named scale from `tokens.css`. Generous vertical whitespace is s
 
 - Existing routes, project links, blog data, authentication, and admin controls remain unchanged.
 - Decorative illustration is not used; type, rules, image crops, and colour blocks do the work.
-- Every page uses this token system and shares the masthead/footer voice.
+- Every page uses this token system; the host owns the floating navigation and plugins own their content.
 
 ## Exports
 
