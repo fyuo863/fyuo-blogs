@@ -7,6 +7,8 @@ function Navbar({ visible, selectedPages = [] }) {
   const location = useLocation();
   const menuRef = useRef(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [plugins, setPlugins] = useState([]);
+  useEffect(() => { fetch("/api/v1/plugins").then((r) => r.ok ? r.json() : null).then((body) => setPlugins(body?.data || [])).catch(() => {}); }, []);
 
   useEffect(() => {
     const closeOnOutsidePress = (event) => {
@@ -30,6 +32,7 @@ function Navbar({ visible, selectedPages = [] }) {
       <button className="site-nav__link" type="button" data-selected={isSelected("home") || undefined} aria-current={location.pathname === "/" ? "page" : undefined} onClick={() => navigateTo("/")}>index</button>
       <button className="site-nav__link" type="button" data-selected={isSelected("blog") || undefined} aria-current={location.pathname === "/blog" ? "page" : undefined} onClick={() => navigateTo("/blog")}>journal</button>
       <button className="site-nav__link" type="button" data-selected={isSelected("travel") || undefined} aria-current={location.pathname === "/travel" ? "page" : undefined} onClick={() => navigateTo("/travel")}>travel</button>
+      {plugins.map((plugin) => <button key={plugin.slug} className="site-nav__link" type="button" data-selected={location.pathname.startsWith(`/p/${plugin.slug}`) || undefined} aria-current={location.pathname.startsWith(`/p/${plugin.slug}`) ? "page" : undefined} onClick={() => navigateTo(`/p/${plugin.slug}`)}>{plugin.name || plugin.slug}</button>)}
     </>
   );
 

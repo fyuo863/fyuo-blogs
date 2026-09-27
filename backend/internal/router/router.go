@@ -16,6 +16,7 @@ type Dependencies struct {
 	APIKeys      *handler.APIKeyHandler
 	TravelPlaces *handler.TravelPlaceHandler
 	Uploads      *handler.UploadHandler
+	Plugins      *handler.PluginHandler
 	AuthorTokens gin.HandlerFunc
 	AuthTokens   gin.HandlerFunc
 	AdminTokens  gin.HandlerFunc
@@ -29,6 +30,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		gin.Recovery(),
 	)
 	r.Static("/uploads", "./uploads")
+	r.GET("/plugin-assets/:slug/*path", deps.Plugins.Asset)
 
 	config := cors.DefaultConfig()
 	config.AllowAllOrigins = true
@@ -48,6 +50,8 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		api.POST("/articles/:id/like", handler.ToggleLike)
 		api.GET("/home-content", deps.HomeContent.Get)
 		api.GET("/travel-places", deps.TravelPlaces.List)
+		api.GET("/plugins", deps.Plugins.List)
+		api.GET("/plugins/:slug/manifest", deps.Plugins.Manifest)
 	}
 
 	authenticated := api.Group("")
@@ -73,6 +77,9 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		// Uploaded executable/page assets are an administrative capability; agents
 		// may publish articles but cannot change the site's executable surface.
 		adminProtected.POST("/uploads/images", deps.Uploads.UploadImage)
+		adminProtected.POST("/admin/plugins", deps.Plugins.Upload)
+		adminProtected.POST("/admin/plugins/:slug/publish/:version", deps.Plugins.Publish)
+		adminProtected.POST("/admin/plugins/:slug/disable", deps.Plugins.Disable)
 		adminProtected.GET("/visit-records", deps.VisitRecords.List)
 		adminProtected.GET("/admin/publisher-users", deps.APIKeys.ListPublisherUsers)
 		adminProtected.GET("/admin/api-keys", deps.APIKeys.List)

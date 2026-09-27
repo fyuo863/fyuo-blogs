@@ -13,6 +13,7 @@ import Home from "../pages/Home";
 import Blog from "../pages/Blog";
 import Travel from "../pages/Travel";
 import ContentDesk from "../pages/ContentDesk";
+import PluginPage from "../components/PluginPage";
 
 const PAGE_ORDER = ["home", "blog", "travel"];
 const PAGE_PATHS = { home: "/", blog: "/blog", travel: "/travel", desk: "/desk" };
@@ -55,8 +56,15 @@ function MobileRoutes(props) {
       <Route path="/blog" element={<section className="single-page-reader"><PageContent {...props} page="blog" showDrawer /></section>} />
       <Route path="/travel" element={<section className="single-page-reader"><PageContent {...props} page="travel" showDrawer={false} /></section>} />
       <Route path="/desk" element={<section className="single-page-reader"><ContentDesk user={props.user} onOpenSignIn={props.onOpenSignIn} /></section>} />
+      <Route path="/p/:slug/*" element={<PluginRoute />} />
     </Routes>
   );
+}
+
+function PluginRoute() {
+  const location = useLocation();
+  const slug = location.pathname.split("/")[2] || "";
+  return <PluginPage slug={decodeURIComponent(slug)} />;
 }
 
 function MagazineSpread(props) {
@@ -117,7 +125,7 @@ export default function AppLayout({
       <Navbar visible selectedPages={selectedPages} />
 
       <main className="app-shell">
-        {currentPage === "desk" ? <section className="single-page-reader"><ContentDesk user={user} onOpenSignIn={onOpenSignIn} /></section> : isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
+        {location.pathname.startsWith("/p/") ? <PluginRoute /> : currentPage === "desk" ? <section className="single-page-reader"><ContentDesk user={user} onOpenSignIn={onOpenSignIn} /></section> : isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
       </main>
 
       <Footer />

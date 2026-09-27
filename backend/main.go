@@ -94,6 +94,8 @@ func main() {
 	travelPlaceService := service.NewTravelPlaceService(travelPlaceRepo)
 	visitRecordService := service.NewVisitRecordService(visitRecordRepo, articleRepo)
 	apiKeyService := service.NewAPIKeyService(apiKeyRepo, userRepo)
+	pluginRepo := repository.NewPluginRepository(database.DB)
+	pluginService := service.NewPluginService(pluginRepo, "plugin-storage")
 	if err := authService.EnsureAdminAccount(
 		os.Getenv("LOCAL_ADMIN_NAME"),
 		os.Getenv("LOCAL_ADMIN_PASSWORD"),
@@ -118,6 +120,7 @@ func main() {
 		VisitRecords: handler.NewVisitRecordHandler(visitRecordService),
 		APIKeys:      handler.NewAPIKeyHandler(apiKeyService, authService),
 		Uploads:      handler.NewUploadHandler(),
+		Plugins:      handler.NewPluginHandler(pluginService),
 		AuthorTokens: middleware.RequireRole(tokenManager, apiKeyService, "admin", "agent"),
 		AuthTokens:   middleware.RequireRole(tokenManager, apiKeyService),
 		AdminTokens:  middleware.RequireRole(tokenManager, apiKeyService, "admin"),
