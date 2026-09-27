@@ -55,7 +55,8 @@ func (h *PluginHandler) Asset(c *gin.Context) {
 		c.Status(404)
 		return
 	}
-	if st, e := os.Stat(p); e != nil || st.IsDir() {
+	st, e := os.Stat(p)
+	if e != nil || st.IsDir() {
 		c.Status(404)
 		return
 	}
