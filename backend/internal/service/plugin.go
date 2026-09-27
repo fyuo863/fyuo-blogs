@@ -58,7 +58,8 @@ func (s *PluginService) EnsureBuiltins(root string) error {
 		if json.Unmarshal(raw, &m) != nil || ValidatePluginManifest(m) != nil {
 			return ErrInvalidPlugin
 		}
-		if _, _, err := s.repo.Active(m.ID); err == nil {
+		activePlugin, activeVersion, activeErr := s.repo.Active(m.ID)
+		if activeErr == nil && (activePlugin.CreatedBy != 0 || activeVersion.Version == m.Version) {
 			continue
 		}
 		p, err := s.repo.FindOrCreate(m.ID, m.Name, m.Type, 0)
