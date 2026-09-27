@@ -62,3 +62,8 @@ jobs:
         run: |
           cd frontend
           npm run build
+
+      - name: Build independent React plugins
+        run: |
+          cd frontend
+          npm run build:plugins

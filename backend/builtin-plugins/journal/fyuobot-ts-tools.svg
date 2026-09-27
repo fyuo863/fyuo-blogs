@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="1920" height="1080">
+  <defs>
+    <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+      <rect width="20" height="20" fill="none" stroke="rgba(0,0,0,0.04)" stroke-width="1" />
+    </pattern>
+  </defs>
+  <rect width="1920" height="1080" fill="#ffffff" />
+  <rect width="1920" height="1080" fill="url(#grid)" />
+  <text
+    x="960"
+    y="540"
+    text-anchor="middle"
+    dominant-baseline="central"
+    font-family="'Consolas', 'Cascadia Code', 'Courier New', monospace"
+    font-size="115"
+    font-weight="400"
+    fill="#222222"
+    letter-spacing="10"
+  >
+    fyuobot-ts-tools
+  </text>
+</svg>

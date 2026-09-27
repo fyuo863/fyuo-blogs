@@ -1,1 +1,1 @@
-{"id":"journal","name":"journal","version":"1.0.1","route":"/p/journal","entry":"index.html","type":"iframe","enabled":true,"navigation":{"label":"journal","order":20},"permissions":["read:articles","write:view-events"]}
+{"id":"journal","name":"journal","version":"2.0.0","route":"/p/journal","entry":"index.html","type":"iframe","enabled":true,"navigation":{"label":"journal","order":20},"permissions":["read:articles","write:view-events"]}

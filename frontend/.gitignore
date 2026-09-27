@@ -11,6 +11,7 @@ node_modules
 .vite
 dist
 dist-ssr
+plugin-dist
 *.local
 
 # Editor directories and files

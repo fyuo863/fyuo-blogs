@@ -2,24 +2,25 @@ const STORAGE_KEY = "user";
 
 export const authStorage = {
   getUser() {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    let saved;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch { return null; }
     if (!saved) return null;
 
     try {
       const parsed = JSON.parse(saved);
       if (parsed?.token) return parsed;
     } catch {
-      localStorage.removeItem(STORAGE_KEY);
+      try { localStorage.removeItem(STORAGE_KEY); } catch { /* sandboxed plugin storage */ }
     }
 
     return null;
   },
 
   setUser(user) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(user)); } catch { /* sandboxed plugin storage */ }
   },
 
   clear() {
-    localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* sandboxed plugin storage */ }
   },
 };
