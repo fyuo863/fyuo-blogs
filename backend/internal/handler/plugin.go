@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/gin-gonic/gin"
+	"mime"
 	"myblog/internal/middleware"
 	"myblog/internal/service"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,7 +60,17 @@ func (h *PluginHandler) Asset(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'self'")
-	c.File(p)
+	f, err := os.Open(p)
+	if err != nil {
+		c.Status(404)
+		return
+	}
+	defer f.Close()
+	contentType := mime.TypeByExtension(filepath.Ext(p))
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	c.DataFromReader(http.StatusOK, st.Size(), contentType, f, nil)
 }
 func (h *PluginHandler) Upload(c *gin.Context) {
 	claims, ok := middleware.Claims(c)

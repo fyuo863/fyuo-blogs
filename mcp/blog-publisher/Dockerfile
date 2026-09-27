@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN npm ci --registry=https://registry.npmmirror.com --no-audit --no-fund
 
 COPY tsconfig.json ./
 COPY src ./src
