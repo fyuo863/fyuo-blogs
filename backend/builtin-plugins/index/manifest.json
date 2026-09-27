@@ -1,1 +1,21 @@
-{"id":"index","name":"index","version":"2.0.0","route":"/p/index","entry":"index.html","type":"iframe","enabled":true,"navigation":{"label":"index","order":10},"permissions":["read:home"]}
+{
+  "id": "index",
+  "name": "index",
+  "version": "3.0.0-ab3156d80b662fea",
+  "route": "/p/index",
+  "entry": "entry.js",
+  "styles": [
+    "style.css"
+  ],
+  "type": "module",
+  "apiVersion": 1,
+  "enabled": true,
+  "navigation": {
+    "label": "index",
+    "order": 10
+  },
+  "permissions": [
+    "read:home",
+    "write:home"
+  ]
+}

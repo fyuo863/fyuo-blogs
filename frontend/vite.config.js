@@ -11,6 +11,8 @@ export default defineConfig({
         target: "http://localhost:8090", // 👈 换成你本地 Go 后端跑的真实端口
         changeOrigin: true,
       },
+      "/plugin-assets": { target: "http://localhost:8090", changeOrigin: true },
+      "/uploads": { target: "http://localhost:8090", changeOrigin: true },
     },
   },
 });

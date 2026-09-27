@@ -12,6 +12,18 @@ jobs:
   # 1. 后端 Go 代码质量检查
   backend-check:
     runs-on: ubuntu-latest
+    services:
+      plugin-postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: plugin_test
+          POSTGRES_PASSWORD: local-test-only
+          POSTGRES_DB: plugin_test
+        ports:
+          - 15449:5432
+        options: >-
+          --health-cmd "pg_isready -U plugin_test -d plugin_test"
+          --health-interval 2s --health-timeout 5s --health-retries 20
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +45,8 @@ jobs:
           go build -v ./...
 
       - name: Run backend tests
+        env:
+          BLOG_PLUGIN_INTEGRATION: "1"
         run: cd backend && go test ./...
 
   # 2. 前端 React 代码质量检查
@@ -45,7 +59,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
 
       - name: Install dependencies
         run: |
@@ -67,3 +81,12 @@ jobs:
         run: |
           cd frontend
           npm run build:plugins
+
+      - name: Test view-event behavior
+        run: cd frontend && npm test
+
+      - name: Install browser for plugin compatibility checks
+        run: cd frontend && npx playwright install --with-deps chromium
+
+      - name: Verify built plugins in the host
+        run: cd frontend && npm run test:e2e

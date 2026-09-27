@@ -26,13 +26,14 @@ function Navbar({ visible, selectedPages = [] }) {
     if (path !== location.pathname) navigate(path);
   };
   const isSelected = (page) => selectedPages.includes(page);
+  const isPluginSelected = (slug) => location.pathname === `/p/${slug}` || location.pathname.startsWith(`/p/${slug}/`);
 
   const navigation = (
     <>
-      <button className="site-nav__link" type="button" data-selected={isSelected("home") || location.pathname.startsWith("/p/index") || undefined} aria-current={location.pathname === "/" || location.pathname.startsWith("/p/index") ? "page" : undefined} onClick={() => navigateTo("/p/index")}>index</button>
-      <button className="site-nav__link" type="button" data-selected={isSelected("blog") || location.pathname.startsWith("/p/journal") || undefined} aria-current={location.pathname === "/blog" || location.pathname.startsWith("/p/journal") ? "page" : undefined} onClick={() => navigateTo("/p/journal")}>journal</button>
-      <button className="site-nav__link" type="button" data-selected={isSelected("travel") || location.pathname.startsWith("/p/travel") || undefined} aria-current={location.pathname === "/travel" || location.pathname.startsWith("/p/travel") ? "page" : undefined} onClick={() => navigateTo("/p/travel")}>travel</button>
-      {plugins.filter((plugin) => !["index", "journal", "travel"].includes(plugin.slug)).map((plugin) => <button key={plugin.slug} className="site-nav__link" type="button" data-selected={location.pathname.startsWith(`/p/${plugin.slug}`) || undefined} aria-current={location.pathname.startsWith(`/p/${plugin.slug}`) ? "page" : undefined} onClick={() => navigateTo(`/p/${plugin.slug}`)}>{plugin.name || plugin.slug}</button>)}
+      <button className="site-nav__link" type="button" data-selected={isSelected("home") || isPluginSelected("index") || undefined} aria-current={location.pathname === "/" || isPluginSelected("index") ? "page" : undefined} onClick={() => navigateTo("/p/index")}>index</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("blog") || isPluginSelected("journal") || undefined} aria-current={location.pathname === "/blog" || isPluginSelected("journal") ? "page" : undefined} onClick={() => navigateTo("/p/journal")}>journal</button>
+      <button className="site-nav__link" type="button" data-selected={isSelected("travel") || isPluginSelected("travel") || undefined} aria-current={location.pathname === "/travel" || isPluginSelected("travel") ? "page" : undefined} onClick={() => navigateTo("/p/travel")}>travel</button>
+      {plugins.filter((plugin) => !["index", "journal", "travel"].includes(plugin.slug)).map((plugin) => <button key={plugin.slug} className="site-nav__link" type="button" data-selected={isPluginSelected(plugin.slug) || undefined} aria-current={isPluginSelected(plugin.slug) ? "page" : undefined} onClick={() => navigateTo(`/p/${plugin.slug}`)}>{plugin.name || plugin.slug}</button>)}
     </>
   );
 

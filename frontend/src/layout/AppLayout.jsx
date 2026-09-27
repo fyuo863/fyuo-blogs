@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 
 import Navbar from "../module/Navbar";
 import Footer from "../module/Footer";
@@ -9,9 +10,6 @@ import SignInModal from "../components/SignInModal";
 import InfoModal from "../components/InfoModal";
 import AdminPanel from "../components/AdminPanel";
 
-import Home from "../pages/Home";
-import Blog from "../pages/Blog";
-import Travel from "../pages/Travel";
 import ContentDesk from "../pages/ContentDesk";
 import PluginPage from "../components/PluginPage";
 
@@ -19,6 +17,9 @@ const PAGE_ORDER = ["home", "blog", "travel"];
 const PAGE_PATHS = { home: "/", blog: "/blog", travel: "/travel", desk: "/desk" };
 
 function pageKeyForPath(pathname) {
+  pathname = pathname.replace(/\/$/, "") || "/";
+  const aliases = { "/p/index": "home", "/p/journal": "blog", "/p/travel": "travel" };
+  if (aliases[pathname]) return aliases[pathname];
   return Object.entries(PAGE_PATHS).find(([, path]) => path === pathname)?.[0] ?? "home";
 }
 
@@ -38,33 +39,31 @@ function useWideSpread() {
 }
 
 function PageContent({ page, user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer }) {
-  if (page === "home") {
-    return <Home user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer && Boolean(user)} />;
+  const location = useLocation();
+  const parameters = new URLSearchParams(location.search);
+  // A spread keeps multiple pages mounted. Only the addressed page may consume
+  // a content-desk command; the other page keeps its state and normal routing.
+  if (page !== pageKeyForPath(location.pathname) && parameters.has("desk")) {
+    parameters.delete("desk");
+    parameters.delete("id");
   }
-
-  if (page === "blog") {
-    return <Blog user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer && Boolean(user)} />;
-  }
-
-  return <Travel user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} />;
+  const pageLocation = { ...location, search: parameters.size ? `?${parameters}` : "" };
+  const slug = { home: "index", blog: "journal", travel: "travel" }[page];
+  return <Routes location={pageLocation}><Route path="*" element={<PluginPage slug={slug} user={user} onOpenSignIn={onOpenSignIn} onLogout={onLogout} onNotify={onNotify} drawerItems={drawerItems} showDrawer={showDrawer && Boolean(user)} portalTarget={document.getElementById("root")} />} /></Routes>;
 }
 
 function MobileRoutes(props) {
-  return (
-    <Routes>
-      <Route path="/" element={<section className="single-page-reader"><PageContent {...props} page="home" showDrawer /></section>} />
-      <Route path="/blog" element={<section className="single-page-reader"><PageContent {...props} page="blog" showDrawer /></section>} />
-      <Route path="/travel" element={<section className="single-page-reader"><PageContent {...props} page="travel" showDrawer={false} /></section>} />
-      <Route path="/desk" element={<section className="single-page-reader"><ContentDesk user={props.user} onOpenSignIn={props.onOpenSignIn} /></section>} />
-      <Route path="/p/:slug/*" element={<PluginRoute />} />
-    </Routes>
-  );
+  const location = useLocation();
+  if (["/", "/blog", "/travel", "/p/index", "/p/journal", "/p/travel"].includes(location.pathname.replace(/\/$/, "") || "/")) {
+    return <section className="single-page-reader"><PageContent {...props} page={pageKeyForPath(location.pathname)} showDrawer /></section>;
+  }
+  return null;
 }
 
-function PluginRoute() {
+function PluginRoute(props) {
   const location = useLocation();
   const slug = location.pathname.split("/")[2] || "";
-  return <PluginPage slug={decodeURIComponent(slug)} />;
+  return <section className="single-page-reader"><PluginPage slug={decodeURIComponent(slug)} {...props} /></section>;
 }
 
 function MagazineSpread(props) {
@@ -116,7 +115,8 @@ export default function AppLayout({
     : [];
   const pageProps = { user, onOpenSignIn, onLogout, onNotify, drawerItems };
   const currentPage = pageKeyForPath(location.pathname);
-  const selectedPages = isWideSpread
+  const customPlugin = location.pathname.startsWith("/p/") && !["/p/index", "/p/journal", "/p/travel"].includes(location.pathname.replace(/\/$/, ""));
+  const selectedPages = customPlugin ? [] : isWideSpread
     ? PAGE_ORDER.slice(currentPage === "travel" ? 1 : 0, (currentPage === "travel" ? 1 : 0) + 2)
     : [currentPage];
 
@@ -125,13 +125,14 @@ export default function AppLayout({
       <Navbar visible selectedPages={selectedPages} />
 
       <main className="app-shell">
-        {location.pathname.startsWith("/p/") ? <PluginRoute /> : currentPage === "desk" ? <section className="single-page-reader"><ContentDesk user={user} onOpenSignIn={onOpenSignIn} /></section> : isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
+        {customPlugin ? <PluginRoute {...pageProps} /> : currentPage === "desk" ? <section className="single-page-reader"><ContentDesk user={user} onOpenSignIn={onOpenSignIn} /></section> : isWideSpread ? <MagazineSpread {...pageProps} /> : <MobileRoutes {...pageProps} />}
       </main>
 
       <Footer />
 
       {!user && <AppDrawer user={null} onOpenSignIn={onOpenSignIn} placement="frame" />}
 
+      {createPortal(<>
       <SignInModal
         open={showSignIn}
         onClose={onCloseSignIn}
@@ -153,6 +154,7 @@ export default function AppLayout({
         variant={info?.variant}
         onClose={() => setInfo(null)}
       />
+      </>, document.getElementById("root"))}
     </div>
   );
 }

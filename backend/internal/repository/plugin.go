@@ -1,7 +1,9 @@
 package repository
 
 import (
+	"encoding/json"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"myblog/internal/model"
 )
 
@@ -41,10 +43,19 @@ func (r *PluginRepository) ListPublished() ([]model.Plugin, error) {
 	return p, err
 }
 func (r *PluginRepository) Publish(slug, version string) error {
+	return r.publish(slug, version, true)
+}
+func (r *PluginRepository) PublishBuiltin(slug, version string) error {
+	return r.publish(slug, version, false)
+}
+func (r *PluginRepository) publish(slug, version string, manual bool) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		var p model.Plugin
-		if err := tx.Where("slug = ?", slug).First(&p).Error; err != nil {
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Where("slug = ?", slug).First(&p).Error; err != nil {
 			return err
+		}
+		if !manual && (p.ManagedByAdmin || p.CreatedBy != 0 || p.Status == "disabled") {
+			return nil
 		}
 		var v model.PluginVersion
 		if err := tx.Where("plugin_id = ? AND version = ?", p.ID, version).First(&v).Error; err != nil {
@@ -53,9 +64,23 @@ func (r *PluginRepository) Publish(slug, version string) error {
 		if err := tx.Model(&v).Updates(map[string]interface{}{"status": "published", "published_at": gorm.Expr("CURRENT_TIMESTAMP")}).Error; err != nil {
 			return err
 		}
-		return tx.Model(&p).Updates(map[string]interface{}{"status": "published", "active_version": version}).Error
+		var manifest struct {
+			Name string `json:"name"`
+			Type string `json:"type"`
+		}
+		if err := json.Unmarshal([]byte(v.ManifestJSON), &manifest); err != nil {
+			return err
+		}
+		return tx.Model(&p).Updates(map[string]interface{}{"status": "published", "active_version": version, "name": manifest.Name, "type": manifest.Type, "managed_by_admin": manual}).Error
 	})
 }
 func (r *PluginRepository) SetStatus(slug, status string) error {
-	return r.db.Model(&model.Plugin{}).Where("slug = ?", slug).Update("status", status).Error
+	result := r.db.Model(&model.Plugin{}).Where("slug = ?", slug).Updates(map[string]interface{}{"status": status, "managed_by_admin": true})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }

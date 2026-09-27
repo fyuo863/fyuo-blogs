@@ -38,14 +38,14 @@ func (h *PluginHandler) Manifest(c *gin.Context) {
 	c.JSON(200, gin.H{"data": m})
 }
 func (h *PluginHandler) Asset(c *gin.Context) {
-	_, v, e := h.svc.Active(c.Param("slug"))
-	if e != nil {
+	raw := strings.TrimPrefix(c.Param("path"), "/")
+	parts := strings.SplitN(raw, "/", 2)
+	if len(parts) != 2 {
 		c.Status(404)
 		return
 	}
-	raw := strings.TrimPrefix(c.Param("path"), "/")
-	parts := strings.SplitN(raw, "/", 2)
-	if len(parts) != 2 || parts[0] != v.Version {
+	v, e := h.svc.AssetVersion(c.Param("slug"), parts[0])
+	if e != nil {
 		c.Status(404)
 		return
 	}
@@ -61,6 +61,8 @@ func (h *PluginHandler) Asset(c *gin.Context) {
 		return
 	}
 	c.Header("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'self'")
+	c.Header("X-Content-Type-Options", "nosniff")
+	c.Header("Cache-Control", "no-cache")
 	f, err := os.Open(p)
 	if err != nil {
 		c.Status(404)
@@ -68,18 +70,28 @@ func (h *PluginHandler) Asset(c *gin.Context) {
 	}
 	defer f.Close()
 	contentType := mime.TypeByExtension(filepath.Ext(p))
+	if filepath.Ext(p) == ".js" {
+		contentType = "text/javascript; charset=utf-8"
+	}
+	if filepath.Ext(p) == ".css" {
+		contentType = "text/css; charset=utf-8"
+	}
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
 	c.DataFromReader(http.StatusOK, st.Size(), contentType, f, nil)
 }
 func (h *PluginHandler) Upload(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 33<<20)
 	claims, ok := middleware.Claims(c)
 	if !ok {
 		c.Status(401)
 		return
 	}
 	f, e := c.FormFile("file")
+	if c.Request.MultipartForm != nil {
+		defer c.Request.MultipartForm.RemoveAll()
+	}
 	if e != nil {
 		c.JSON(400, gin.H{"error": "缺少插件 ZIP"})
 		return

@@ -1,1 +1,24 @@
-{"id":"journal","name":"journal","version":"2.0.0","route":"/p/journal","entry":"index.html","type":"iframe","enabled":true,"navigation":{"label":"journal","order":20},"permissions":["read:articles","write:view-events"]}
+{
+  "id": "journal",
+  "name": "journal",
+  "version": "3.0.0-fdb53897a290ac27",
+  "route": "/p/journal",
+  "entry": "entry.js",
+  "styles": [
+    "style.css"
+  ],
+  "type": "module",
+  "apiVersion": 1,
+  "enabled": true,
+  "navigation": {
+    "label": "journal",
+    "order": 20
+  },
+  "permissions": [
+    "read:articles",
+    "write:articles",
+    "write:view-events",
+    "write:likes",
+    "write:uploads"
+  ]
+}

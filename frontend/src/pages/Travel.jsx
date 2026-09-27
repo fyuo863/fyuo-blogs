@@ -60,7 +60,6 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   const [places, setPlaces] = useState([]);
   const [selectedId, setSelectedId] = useState(null);
   const [draft, setDraft] = useState(emptyDraft);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
@@ -72,7 +71,6 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   );
 
   const loadPlaces = useCallback(async () => {
-    setLoading(true);
     setError("");
     try {
       const response = await listTravelPlaces();
@@ -81,8 +79,6 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
       setSelectedId((current) => current ?? nextPlaces[0]?.id ?? null);
     } catch (requestError) {
       setError(isBackendOfflineError(requestError) ? "Travel records are waiting for the backend connection." : "Locations could not be loaded right now.");
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -216,22 +212,12 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
   return (
     <div className="travel-page travel-page--globe">
       <ConstructionNotice />
-      <header className="travel-globe-masthead">
-        <p className="travel-globe-masthead__edition">FYUO863 / GEO ARCHIVE</p>
-        <h1>Earth, marked.</h1>
-        <div className="travel-globe-masthead__footer">
+      <section className="travel-globe-stage" aria-label="Interactive travel globe">
+        <header className="travel-globe-stage__header">
+          <p className="travel-globe-stage__edition">FYUO863 / GEO ARCHIVE</p>
+          <h1>Earth, marked.</h1>
           <p>Every pin starts with a coordinate. Routes are optional; the globe is the index.</p>
-        </div>
-      </header>
-
-      <section className="travel-globe-stage" aria-labelledby="travel-globe-title">
-        <div className="travel-globe-stage__caption">
-          <p id="travel-globe-title">Drag to rotate. Select a red point to inspect it.</p>
-          <div>
-            <span>{loading ? "loading coordinates…" : `${places.length} saved ${places.length === 1 ? "location" : "locations"}`}</span>
-            <span>NASA Blue + Black Marble / celestial ink field</span>
-          </div>
-        </div>
+        </header>
         <Suspense fallback={<div className="travel-globe__fallback" role="status" aria-label="Loading globe." />}>
           <TravelGlobe places={places} onSelectPlace={selectPlace} />
         </Suspense>
@@ -245,9 +231,7 @@ function Travel({ user, onOpenSignIn, onLogout, onNotify }) {
               <img src={selectedPlace.gallery[0]} alt={`${selectedPlace.name} travel record`} loading="lazy" />
             )}
           </article>
-        ) : (
-          <p className="travel-globe-stage__empty" role="status">{error || "No coordinates have been indexed yet."}</p>
-        )}
+        ) : null}
       </section>
 
       {user && editorOpen && (

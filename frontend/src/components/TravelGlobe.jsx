@@ -2,8 +2,14 @@ import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 
 /* Hallmark · component: celestial globe canvas · genre: atmospheric editorial
- * pre-emit critique: P5 H5 E5 S5 R5 V5 · contrast: pass (40–41) · slop: pass (33, 47–48)
+ * states: default · hover · focus · active · disabled · pre-emit critique: P5 H5 E5 S5 R5 V5
+ * contrast: pass (40–41) · slop: pass (33, 47–48)
  */
+
+const GLOBE_ZOOM_MIN = 2.35;
+const GLOBE_ZOOM_MAX = 5.1;
+const GLOBE_ZOOM_DEFAULT = 3.45;
+const CLOUD_LAYER_REFRESH_INTERVAL = 3 * 60 * 60 * 1000;
 
 function colorFromCss(value) {
   const canvas = document.createElement("canvas");
@@ -272,9 +278,75 @@ function createNightLightsFallbackTexture() {
   return texture;
 }
 
+function liveCloudMapUrl(date = new Date()) {
+  const day = date.toISOString().slice(0, 10);
+  const cacheWindow = date.toISOString().slice(0, 13);
+  const parameters = new URLSearchParams({
+    SERVICE: "WMS",
+    REQUEST: "GetMap",
+    VERSION: "1.3.0",
+    LAYERS: "MODIS_Terra_CorrectedReflectance_TrueColor",
+    STYLES: "",
+    CRS: "EPSG:4326",
+    BBOX: "-90,-180,90,180",
+    WIDTH: "1536",
+    HEIGHT: "768",
+    FORMAT: "image/jpeg",
+    TIME: day,
+    cache: cacheWindow,
+  });
+  return `https://gibs.earthdata.nasa.gov/wms/epsg4326/best/wms.cgi?${parameters.toString()}`;
+}
+
+const liveCloudShader = {
+  uniforms: {
+    cloudMap: { value: null },
+    sunDirection: { value: new THREE.Vector3(0, 1, 0) },
+  },
+  vertexShader: `
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    vUv = uv;
+    vNormal = normal;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+  }
+`,
+  fragmentShader: `
+  uniform sampler2D cloudMap;
+  uniform vec3 sunDirection;
+  varying vec2 vUv;
+  varying vec3 vNormal;
+
+  void main() {
+    vec3 satellite = texture2D(cloudMap, vUv).rgb;
+    float brightness = dot(satellite, vec3(0.2126, 0.7152, 0.0722));
+    float chroma = max(satellite.r, max(satellite.g, satellite.b)) - min(satellite.r, min(satellite.g, satellite.b));
+    float whiteCloud = smoothstep(0.46, 0.88, brightness) * (1.0 - smoothstep(0.1, 0.32, chroma));
+    float sunExposure = smoothstep(-0.28, 0.36, dot(normalize(vNormal), normalize(sunDirection)));
+    float cloudAlpha = whiteCloud * mix(0.14, 0.58, sunExposure);
+    vec3 cloudColor = mix(vec3(0.43, 0.47, 0.56), vec3(1.0), sunExposure);
+    gl_FragColor = vec4(cloudColor, cloudAlpha);
+  }
+`,
+};
+
 function TravelGlobe({ places, onSelectPlace }) {
   const hostRef = useRef(null);
   const [unavailable, setUnavailable] = useState(false);
+  const [zoom, setZoom] = useState(GLOBE_ZOOM_DEFAULT);
+  const zoomRef = useRef(GLOBE_ZOOM_DEFAULT);
+  const scaleKilometres = zoom < 3.15 ? 1000 : zoom < 4.25 ? 2000 : 4000;
+
+  const handleZoomChange = (event) => {
+    const nextZoom = Number(event.target.value);
+    zoomRef.current = nextZoom;
+    setZoom(nextZoom);
+    hostRef.current?.dispatchEvent(
+      new CustomEvent("travel-globe-zoom", { detail: nextZoom }),
+    );
+  };
 
   useEffect(() => {
     const host = hostRef.current;
@@ -302,7 +374,7 @@ function TravelGlobe({ places, onSelectPlace }) {
     };
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(34, 1, 0.1, SUN_DISTANCE * 1.3);
-    camera.position.set(0, 0, 3.45);
+    camera.position.set(0, 0, zoomRef.current);
     const backgroundScene = new THREE.Scene();
     const backgroundCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
     const globe = new THREE.Group();
@@ -379,8 +451,24 @@ function TravelGlobe({ places, onSelectPlace }) {
       toneMapped: false,
     });
     const nightLights = new THREE.Mesh(new THREE.SphereGeometry(1.003, 72, 48), nightLightsMaterial);
-    nightLights.renderOrder = 2;
+    nightLights.renderOrder = 1;
     globe.add(nightLights);
+
+    const liveCloudMaterial = new THREE.ShaderMaterial({
+      uniforms: {
+        cloudMap: { value: null },
+        sunDirection: { value: new THREE.Vector3() },
+      },
+      vertexShader: liveCloudShader.vertexShader,
+      fragmentShader: liveCloudShader.fragmentShader,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false,
+    });
+    const liveClouds = new THREE.Mesh(new THREE.SphereGeometry(1.008, 96, 64), liveCloudMaterial);
+    liveClouds.visible = false;
+    liveClouds.renderOrder = 2;
+    globe.add(liveClouds);
 
     const atmosphereMaterial = new THREE.ShaderMaterial({
       uniforms: {
@@ -397,6 +485,7 @@ function TravelGlobe({ places, onSelectPlace }) {
       side: THREE.FrontSide,
     });
     const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(1.016, 64, 48), atmosphereMaterial);
+    atmosphere.renderOrder = 3;
     globe.add(atmosphere);
 
     const markerGeometry = new THREE.SphereGeometry(0.032, 16, 12);
@@ -427,6 +516,7 @@ function TravelGlobe({ places, onSelectPlace }) {
     host.appendChild(renderer.domElement);
     let earthTexture;
     let nightLightsTexture;
+    let cloudTexture;
 
     const sunLocal = new THREE.Vector3();
     const moonLocal = new THREE.Vector3();
@@ -436,6 +526,7 @@ function TravelGlobe({ places, onSelectPlace }) {
       sunLocal.copy(sunDirection(day));
       moonLocal.copy(moonDirection(day));
       nightLightsMaterial.uniforms.sunDirection.value.copy(sunLocal);
+      liveCloudMaterial.uniforms.sunDirection.value.copy(sunLocal);
       atmosphereMaterial.uniforms.sunDirection.value.copy(sunLocal);
       inkFieldMaterial.uniforms.uSunDirection.value.copy(sunLocal).applyQuaternion(globe.quaternion);
       inkFieldMaterial.uniforms.uMoonDirection.value.copy(moonLocal).applyQuaternion(globe.quaternion);
@@ -508,6 +599,30 @@ function TravelGlobe({ places, onSelectPlace }) {
         nightLights.visible = false;
       }
     );
+    const loadLiveCloudMap = () => {
+      textureLoader.load(
+        liveCloudMapUrl(),
+        (texture) => {
+          cloudTexture?.dispose();
+          cloudTexture = texture;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.minFilter = THREE.LinearMipmapLinearFilter;
+          texture.magFilter = THREE.LinearFilter;
+          texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+          liveCloudMaterial.uniforms.cloudMap.value = texture;
+          liveClouds.visible = true;
+          render();
+        },
+        undefined,
+        () => {
+          liveClouds.visible = false;
+          render();
+        },
+      );
+    };
+    loadLiveCloudMap();
+    const cloudTimer = window.setInterval(loadLiveCloudMap, CLOUD_LAYER_REFRESH_INTERVAL);
     const resize = () => {
       const { width, height } = host.getBoundingClientRect();
       if (!width || !height) return;
@@ -576,6 +691,14 @@ function TravelGlobe({ places, onSelectPlace }) {
       event.preventDefault();
       render();
     };
+    const onZoomChange = (event) => {
+      camera.position.z = THREE.MathUtils.clamp(
+        Number(event.detail),
+        GLOBE_ZOOM_MIN,
+        GLOBE_ZOOM_MAX,
+      );
+      render();
+    };
 
     const observer = new ResizeObserver(resize);
     observer.observe(host);
@@ -584,18 +707,21 @@ function TravelGlobe({ places, onSelectPlace }) {
     host.addEventListener("pointerup", onPointerUp);
     host.addEventListener("pointercancel", onPointerUp);
     host.addEventListener("keydown", onKeyDown);
+    host.addEventListener("travel-globe-zoom", onZoomChange);
     resize();
     if (!reduceMotion) frame = requestAnimationFrame(tick);
 
     return () => {
       cancelAnimationFrame(frame);
       window.clearInterval(celestialTimer);
+      window.clearInterval(cloudTimer);
       observer.disconnect();
       host.removeEventListener("pointerdown", onPointerDown);
       host.removeEventListener("pointermove", onPointerMove);
       host.removeEventListener("pointerup", onPointerUp);
       host.removeEventListener("pointercancel", onPointerUp);
       host.removeEventListener("keydown", onKeyDown);
+      host.removeEventListener("travel-globe-zoom", onZoomChange);
       scene.traverse((object) => {
         object.geometry?.dispose?.();
         if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose?.());
@@ -605,6 +731,7 @@ function TravelGlobe({ places, onSelectPlace }) {
       inkFieldMaterial.dispose();
       earthTexture?.dispose();
       nightLightsTexture?.dispose();
+      cloudTexture?.dispose();
       fallbackTexture.dispose();
       nightLightsFallbackTexture.dispose();
       renderer.dispose();
@@ -616,7 +743,31 @@ function TravelGlobe({ places, onSelectPlace }) {
     return <div className="travel-globe__fallback" role="img" aria-label="A globe preview is unavailable on this device." />;
   }
 
-  return <div className="travel-globe" ref={hostRef} tabIndex="0" aria-label="Drag the globe to inspect saved locations, or use arrow keys to rotate it." />;
+  return (
+    <div className="travel-globe-shell">
+      <div className="travel-globe" ref={hostRef} tabIndex="0" aria-label="Drag the globe to inspect saved locations, or use arrow keys to rotate it." />
+      <label className="travel-globe__zoom">
+        <span className="travel-globe__zoom-label">zoom.</span>
+        <input
+          className="travel-globe__zoom-input"
+          type="range"
+          min={GLOBE_ZOOM_MIN}
+          max={GLOBE_ZOOM_MAX}
+          step="0.01"
+          value={zoom}
+          onInput={handleZoomChange}
+          aria-label="缩放地球"
+          aria-valuetext={`${Math.round(((GLOBE_ZOOM_MAX - zoom) / (GLOBE_ZOOM_MAX - GLOBE_ZOOM_MIN)) * 100)}% 放大`}
+        />
+        <output className="travel-globe__zoom-value">{Math.round(((GLOBE_ZOOM_MAX - zoom) / (GLOBE_ZOOM_MAX - GLOBE_ZOOM_MIN)) * 100)}</output>
+      </label>
+      <div className="travel-globe__scale" aria-label={`比例尺：0 至 ${scaleKilometres.toLocaleString()} 公里`}>
+        <span>0</span>
+        <span className="travel-globe__scale-rule" aria-hidden="true" />
+        <output>{scaleKilometres.toLocaleString()} km</output>
+      </div>
+    </div>
+  );
 }
 
 export default TravelGlobe;

@@ -109,7 +109,7 @@ function BackendOfflineNotice() {
   );
 }
 
-function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true }) {
+function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer = true, portalTarget = document.body }) {
   const navigate = useNavigate();
   const location = useLocation();
   const [posts, setPosts] = useState([]);
@@ -740,7 +740,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
             onBack={closePost}
             onUploadImage={handleUploadImage}
           />,
-          document.body,
+          portalTarget,
         )}
     </div>
   );

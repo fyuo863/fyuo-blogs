@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"gorm.io/gorm"
 	"io"
 	"myblog/internal/model"
 	"myblog/internal/repository"
@@ -20,13 +21,15 @@ var ErrInvalidPlugin = errors.New("invalid plugin package")
 var safePluginPart = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,79}$`)
 
 type PluginManifest struct {
-	ID         string `json:"id"`
-	Name       string `json:"name"`
-	Version    string `json:"version"`
-	Route      string `json:"route"`
-	Entry      string `json:"entry"`
-	Type       string `json:"type"`
-	Enabled    bool   `json:"enabled"`
+	ID         string   `json:"id"`
+	Name       string   `json:"name"`
+	Version    string   `json:"version"`
+	Route      string   `json:"route"`
+	Entry      string   `json:"entry"`
+	Type       string   `json:"type"`
+	APIVersion int      `json:"apiVersion,omitempty"`
+	Styles     []string `json:"styles,omitempty"`
+	Enabled    bool     `json:"enabled"`
 	Navigation struct {
 		Label string `json:"label"`
 		Order int    `json:"order"`
@@ -59,12 +62,15 @@ func (s *PluginService) EnsureBuiltins(root string) error {
 			return ErrInvalidPlugin
 		}
 		activePlugin, activeVersion, activeErr := s.repo.Active(m.ID)
-		if activeErr == nil && (activePlugin.CreatedBy != 0 || activeVersion.Version == m.Version) {
+		if activeErr == nil && (activePlugin.ManagedByAdmin || activePlugin.CreatedBy != 0 || activeVersion.CreatedBy != 0 || activeVersion.Version == m.Version) {
 			continue
 		}
 		p, err := s.repo.FindOrCreate(m.ID, m.Name, m.Type, 0)
 		if err != nil {
 			return err
+		}
+		if p.ManagedByAdmin || p.CreatedBy != 0 || p.Status == "disabled" {
+			continue
 		}
 		dest := filepath.Join(s.root, m.ID, m.Version)
 		if _, err := os.Stat(dest); os.IsNotExist(err) {
@@ -74,13 +80,15 @@ func (s *PluginService) EnsureBuiltins(root string) error {
 		}
 		h := sha256.Sum256(raw)
 		v := model.PluginVersion{PluginID: p.ID, Version: m.Version, ManifestJSON: string(raw), StoragePath: dest, ContentHash: hex.EncodeToString(h[:]), Status: "draft", CreatedBy: 0}
-		if _, err := s.repo.Version(m.ID, m.Version); err == nil {
-			continue
+		if _, err := s.repo.Version(m.ID, m.Version); err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				return err
+			}
+			if err := s.repo.SaveVersion(&v); err != nil {
+				return err
+			}
 		}
-		if err := s.repo.SaveVersion(&v); err != nil {
-			return err
-		}
-		if err := s.repo.Publish(m.ID, m.Version); err != nil {
+		if err := s.repo.PublishBuiltin(m.ID, m.Version); err != nil {
 			return err
 		}
 	}
@@ -123,11 +131,32 @@ func NewPluginService(repo *repository.PluginRepository, root string) *PluginSer
 }
 
 func ValidatePluginManifest(m PluginManifest) error {
-	entry := filepath.ToSlash(m.Entry)
-	if !safePluginPart.MatchString(m.ID) || !safePluginPart.MatchString(m.Version) || m.Name == "" || m.Type != "iframe" || m.Entry == "" || filepath.IsAbs(m.Entry) || strings.HasPrefix(entry, "/") || strings.Contains(entry, "..") {
+	if !safePluginPart.MatchString(m.ID) || !safePluginPart.MatchString(m.Version) || m.Name == "" || len(m.Name) > 160 || !safePluginAsset(m.Entry) {
 		return ErrInvalidPlugin
 	}
+	if m.Type != "iframe" && m.Type != "module" {
+		return ErrInvalidPlugin
+	}
+	if m.Type == "module" && (m.APIVersion != 1 || !strings.HasSuffix(m.Entry, ".js")) {
+		return ErrInvalidPlugin
+	}
+	for _, style := range m.Styles {
+		if !safePluginAsset(style) || !strings.HasSuffix(style, ".css") {
+			return ErrInvalidPlugin
+		}
+	}
 	return nil
+}
+func safePluginAsset(name string) bool {
+	if name == "" || len(name) > 240 || strings.HasPrefix(name, "/") || strings.ContainsAny(name, "\\\\:?#\x00") {
+		return false
+	}
+	for _, part := range strings.Split(name, "/") {
+		if part == "" || part == "." || part == ".." {
+			return false
+		}
+	}
+	return true
 }
 func (s *PluginService) Upload(path string, actor uint) (model.PluginVersion, error) {
 	r, err := zip.OpenReader(path)
@@ -144,10 +173,17 @@ func (s *PluginService) Upload(path string, actor uint) (model.PluginVersion, er
 	var manifest PluginManifest
 	var raw []byte
 	found := false
+	var totalSize uint64
+	files := make(map[string]bool)
 	for _, f := range r.File {
 		if f.FileInfo().IsDir() {
 			continue
 		}
+		totalSize += f.UncompressedSize64
+		if totalSize > 64<<20 || !safePluginAsset(f.Name) || f.Mode()&os.ModeSymlink != 0 || files[f.Name] {
+			return model.PluginVersion{}, ErrInvalidPlugin
+		}
+		files[f.Name] = true
 		if f.UncompressedSize64 > 8<<20 || len(strings.Split(filepath.ToSlash(f.Name), "/")) > 8 {
 			return model.PluginVersion{}, ErrInvalidPlugin
 		}
@@ -175,6 +211,14 @@ func (s *PluginService) Upload(path string, actor uint) (model.PluginVersion, er
 	}
 	if !found || ValidatePluginManifest(manifest) != nil {
 		return model.PluginVersion{}, ErrInvalidPlugin
+	}
+	if !files[manifest.Entry] {
+		return model.PluginVersion{}, ErrInvalidPlugin
+	}
+	for _, style := range manifest.Styles {
+		if !files[style] {
+			return model.PluginVersion{}, ErrInvalidPlugin
+		}
 	}
 	p, err := s.repo.FindOrCreate(manifest.ID, manifest.Name, manifest.Type, actor)
 	if err != nil {
@@ -212,7 +256,12 @@ func (s *PluginService) Upload(path string, actor uint) (model.PluginVersion, er
 		if e == nil {
 			_, e = io.Copy(io.MultiWriter(out, h), rc)
 		}
-		out.Close()
+		if out != nil {
+			closeErr := out.Close()
+			if e == nil {
+				e = closeErr
+			}
+		}
 		rc.Close()
 		if e != nil {
 			return model.PluginVersion{}, e
@@ -243,4 +292,20 @@ func (s *PluginService) Disable(slug string) error          { return s.repo.SetS
 func (s *PluginService) List() ([]model.Plugin, error)      { return s.repo.ListPublished() }
 func (s *PluginService) Active(slug string) (model.Plugin, model.PluginVersion, error) {
 	return s.repo.Active(slug)
+}
+
+// A published historical version remains readable for pages already open.
+// Drafts and every version of a disabled plugin remain inaccessible.
+func (s *PluginService) AssetVersion(slug, version string) (model.PluginVersion, error) {
+	if _, _, err := s.repo.Active(slug); err != nil {
+		return model.PluginVersion{}, err
+	}
+	v, err := s.repo.Version(slug, version)
+	if err != nil {
+		return v, err
+	}
+	if v.Status != "published" {
+		return v, gorm.ErrRecordNotFound
+	}
+	return v, nil
 }

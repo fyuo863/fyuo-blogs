@@ -58,6 +58,19 @@ jobs:
           username: ${{ secrets.ALIYUN_REGISTRY_USER }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
+      - name: Set up Node.js for page plugins
+        if: env.DEPLOY_ACTION == 'deploy'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build current page plugins before packaging backend
+        if: env.DEPLOY_ACTION == 'deploy'
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build:plugins
+
       - name: Build and push backend image
         if: env.DEPLOY_ACTION == 'deploy'
         uses: docker/build-push-action@v5

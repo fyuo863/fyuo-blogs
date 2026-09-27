@@ -12,6 +12,10 @@ node_modules
 dist
 dist-ssr
 plugin-dist
+plugin-packages
+migration-artifacts
+test-results
+playwright-report
 *.local
 
 # Editor directories and files

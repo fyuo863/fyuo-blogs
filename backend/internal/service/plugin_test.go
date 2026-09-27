@@ -24,3 +24,25 @@ func TestValidatePluginManifestRejectsUnsafeParts(t *testing.T) {
 		}
 	}
 }
+
+func TestModuleManifestContract(t *testing.T) {
+	valid := PluginManifest{ID: "index", Name: "Index", Version: "3.0.0-a1", Type: "module", APIVersion: 1, Entry: "entry.js", Styles: []string{"style.css"}}
+	if err := ValidatePluginManifest(valid); err != nil {
+		t.Fatal(err)
+	}
+	for _, mutate := range []func(*PluginManifest){
+		func(m *PluginManifest) { m.APIVersion = 2 },
+		func(m *PluginManifest) { m.Type = "script" },
+		func(m *PluginManifest) { m.Entry = "index.html" },
+		func(m *PluginManifest) { m.Entry = "C:\\entry.js" },
+		func(m *PluginManifest) { m.Entry = "https://example.com/entry.js" },
+		func(m *PluginManifest) { m.Styles = []string{"../style.css"} },
+		func(m *PluginManifest) { m.Styles = []string{"style.css?x"} },
+	} {
+		m := valid
+		mutate(&m)
+		if ValidatePluginManifest(m) == nil {
+			t.Fatalf("invalid module accepted: %+v", m)
+		}
+	}
+}
