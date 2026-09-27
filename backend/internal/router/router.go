@@ -65,12 +65,14 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		authorProtected.POST("/articles", deps.Articles.CreateBlog)
 		authorProtected.PUT("/articles/:id", deps.Articles.UpdateBlog)
 		authorProtected.DELETE("/articles/:id", deps.Articles.DeleteBlog)
-		authorProtected.POST("/uploads/images", deps.Uploads.UploadImage)
 	}
 
 	adminProtected := api.Group("")
 	adminProtected.Use(deps.AdminTokens)
 	{
+		// Uploaded executable/page assets are an administrative capability; agents
+		// may publish articles but cannot change the site's executable surface.
+		adminProtected.POST("/uploads/images", deps.Uploads.UploadImage)
 		adminProtected.GET("/visit-records", deps.VisitRecords.List)
 		adminProtected.GET("/admin/publisher-users", deps.APIKeys.ListPublisherUsers)
 		adminProtected.GET("/admin/api-keys", deps.APIKeys.List)
