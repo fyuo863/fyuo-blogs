@@ -44,6 +44,7 @@ services:
       - "8080"
     volumes:
       - backend_uploads:/app/uploads
+      - backend_plugins:/app/plugin-storage
     env_file:
       - ./.env
     environment:
@@ -123,3 +124,4 @@ volumes:
   postgres_data:
   frontend_dist:
   backend_uploads:
+  backend_plugins:

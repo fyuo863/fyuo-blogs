@@ -157,7 +157,18 @@ jobs:
                  docker compose exec -T nginx wget -qO- http://backend:8080/api/v1/healthz >/dev/null 2>&1 &&
                  docker compose exec -T nginx wget -qO- http://mcp-blog-publisher:18081/healthz >/dev/null 2>&1; then
                 printf '%s\n' "$IMAGE_TAG" > .release
-                docker image prune -f
+                # Keep only the running release and the immediately previous release
+                # on the ECS host. This preserves one rollback target without
+                # retaining every historical tag indefinitely.
+                for repo in blog-backend blog-frontend blog-mcp-publisher; do
+                  docker image ls "$ALIYUN_REGISTRY/fyuo-blog/$repo" --format '{{.Repository}}:{{.Tag}}' | while IFS= read -r image_ref; do
+                    image_tag="${image_ref##*:}"
+                    if [ "$image_tag" != "$IMAGE_TAG" ] && [ "$image_tag" != "$PREVIOUS_TAG" ]; then
+                      docker image rm "$image_ref" >/dev/null 2>&1 || true
+                    fi
+                  done
+                done
+                docker image prune -af
                 echo "Deployment healthy: $IMAGE_TAG"
                 exit 0
               fi

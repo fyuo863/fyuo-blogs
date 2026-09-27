@@ -40,6 +40,7 @@ FROM builder AS runner
 WORKDIR /app
 
 RUN mkdir -p /app/uploads
+RUN mkdir -p /app/plugin-storage
 
 # 从构建阶段 (builder) 中，把编译好的二进制文件复制过来
 COPY --from=builder /build/main .
@@ -47,6 +48,7 @@ COPY --from=builder /build/main .
 # 【关键点】从构建阶段复制配置文件目录
 # 因为我看到你的目录结构里有 configs/ 文件夹，如果你的 Go 代码需要读取里面的 yaml/json 配置，必须把它拷过来
 COPY --from=builder /build/configs ./configs
+COPY --from=builder /build/builtin-plugins ./builtin-plugins
 
 # 暴露端口 (和你 docker-compose.yml 里 backend 映射的容器端口保持一致)
 EXPOSE 8080
