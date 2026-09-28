@@ -3,6 +3,7 @@ package model
 import "time"
 
 type Plugin struct {
+	SortOrder      int             `gorm:"not null;default:1000;index" json:"sort_order"`
 	ID             uint            `gorm:"primaryKey" json:"id"`
 	Slug           string          `gorm:"type:varchar(80);uniqueIndex;not null" json:"slug"`
 	Name           string          `gorm:"type:varchar(160);not null" json:"name"`

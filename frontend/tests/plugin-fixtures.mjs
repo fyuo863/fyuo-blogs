@@ -31,6 +31,7 @@ export async function mockBusinessAPI(page, { signedIn = false } = {}) {
     const url = new URL(request.url());
     calls.push({ method: request.method(), path: url.pathname, body: request.postData(), headers: request.headers() });
     let data = [];
+    if (url.pathname === "/api/v1/plugins") data = ["index", "journal", "travel"].map(slug => ({ slug, name: slug }));
     if (url.pathname.includes('/home-content')) data = null;
     if (url.pathname.endsWith('/signin')) data = user;
     if (/\/articles(?:\/search)?$/.test(url.pathname)) data = request.method() === 'GET' ? [article] : { ...article, ...request.postDataJSON() };

@@ -11,3 +11,9 @@ pnpm-debug.log*
 .git
 .gitignore
 README.md
+
+plugins
+plugin-dist
+plugin-packages
+test-results
+migration-artifacts

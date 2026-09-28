@@ -103,6 +103,8 @@ test('the existing content desk opens plugin editors with the host login and cal
   await page.getByRole('button', { name: 'edit home.', exact: true }).click();
   await expect(page.locator('.home-editor')).toBeVisible();
   await page.goto('/p/travel?desk=new');
+  await page.locator('.plugin-sidebar__select').first().focus();
+  await page.keyboard.press('Escape');
   await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Kyoto');
   await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('35.0116');
   await page.getByRole('textbox', { name: 'Longitude', exact: true }).fill('135.7681');
@@ -172,6 +174,8 @@ test('401 from a plugin editor invokes the host logout and sign-in flow', async 
   await page.route('**/api/v1/travel-places', route => route.request().method() === 'POST' ? route.fulfill({ status: 401, json: { error: 'expired' } }) : route.fallback());
   await page.setViewportSize({ width: 900, height: 900 });
   await page.goto('/travel?desk=new');
+  await page.locator('.plugin-sidebar__select').first().focus();
+  await page.keyboard.press('Escape');
   await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Kyoto');
   await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('35');
   await page.getByRole('textbox', { name: 'Longitude', exact: true }).fill('135');
@@ -205,7 +209,7 @@ test('content-desk commands only mount the addressed plugin editor', async ({ pa
 
 test('published plugins appear in the sidebar and switching resets the reading position', async ({ page }) => {
   await mockBusinessAPI(page);
-  await page.route('**/api/v1/plugins', route => route.fulfill({ json: { data: [{ slug: 'extra', name: 'Extra plugin' }] } }));
+  await page.route('**/api/v1/plugins', route => route.fulfill({ json: { data: [...['index', 'journal', 'travel'].map(slug => ({ slug, name: slug })), { slug: 'extra', name: 'Extra plugin' }] } }));
   await page.route('**/api/v1/plugins/extra/manifest', route => route.fulfill({ json: { data: { id: 'extra', name: 'Extra', version: '1.0.0', type: 'iframe', entry: 'index.html' } } }));
   await page.route('**/plugin-assets/extra/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Extra plugin</h1>' }));
   await page.goto('/');

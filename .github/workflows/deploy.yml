@@ -58,19 +58,6 @@ jobs:
           username: ${{ secrets.ALIYUN_REGISTRY_USER }}
           password: ${{ secrets.ALIYUN_REGISTRY_PASSWORD }}
 
-      - name: Set up Node.js for page plugins
-        if: env.DEPLOY_ACTION == 'deploy'
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Build current page plugins before packaging backend
-        if: env.DEPLOY_ACTION == 'deploy'
-        working-directory: frontend
-        run: |
-          npm ci
-          npm run build:plugins
-
       - name: Build and push backend image
         if: env.DEPLOY_ACTION == 'deploy'
         uses: docker/build-push-action@v5
@@ -107,7 +94,7 @@ jobs:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           key: ${{ secrets.ECS_SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf"
+          source: "docker-compose.yml,nginx.conf,scripts/prune-deploy-images.sh"
           target: "/data/blog/"
 
       - name: Deploy or rollback on ECS
@@ -159,7 +146,9 @@ jobs:
             echo "Running $DEPLOY_ACTION with IMAGE_TAG=$IMAGE_TAG"
 
             docker compose pull backend frontend mcp-blog-publisher || preflight_fail "image pull failed"
+            # Keep the same Compose project and named volumes; never remove volumes on upgrade.
             docker compose up -d --remove-orphans || runtime_fail "compose up failed"
+            docker compose exec -T nginx nginx -s reload || runtime_fail "nginx reload failed"
 
             i=1
             while [ "$i" -le 36 ]; do
@@ -170,18 +159,9 @@ jobs:
                  docker compose exec -T nginx wget -qO- http://backend:8080/api/v1/healthz >/dev/null 2>&1 &&
                  docker compose exec -T nginx wget -qO- http://mcp-blog-publisher:18081/healthz >/dev/null 2>&1; then
                 printf '%s\n' "$IMAGE_TAG" > .release
-                # Keep only the running release and the immediately previous release
-                # on the ECS host. This preserves one rollback target without
-                # retaining every historical tag indefinitely.
-                for repo in blog-backend blog-frontend blog-mcp-publisher; do
-                  docker image ls "$ALIYUN_REGISTRY/fyuo-blog/$repo" --format '{{.Repository}}:{{.Tag}}' | while IFS= read -r image_ref; do
-                    image_tag="${image_ref##*:}"
-                    if [ "$image_tag" != "$IMAGE_TAG" ] && [ "$image_tag" != "$PREVIOUS_TAG" ]; then
-                      docker image rm "$image_ref" >/dev/null 2>&1 || true
-                    fi
-                  done
-                done
-                docker image prune -af
+                # Keep the newest two complete tagged releases, including rollback images.
+                # A global `image prune -a` would also delete the rollback release.
+                sh scripts/prune-deploy-images.sh
                 echo "Deployment healthy: $IMAGE_TAG"
                 exit 0
               fi

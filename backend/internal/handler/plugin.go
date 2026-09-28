@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"mime"
 	"myblog/internal/middleware"
+	"myblog/internal/repository"
 	"myblog/internal/service"
 	"net/http"
 	"os"
@@ -108,6 +109,10 @@ func (h *PluginHandler) Upload(c *gin.Context) {
 		return
 	}
 	v, e := h.svc.Upload(tmp.Name(), claims.UserID)
+	if errors.Is(e, service.ErrPluginVersionExists) {
+		c.JSON(409, gin.H{"error": "该版本已存在，请修改版本号后重新上传"})
+		return
+	}
 	if errors.Is(e, service.ErrInvalidPlugin) {
 		c.JSON(400, gin.H{"error": "插件包无效"})
 		return
@@ -131,4 +136,32 @@ func (h *PluginHandler) Disable(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"message": "已下线"})
+}
+
+func (h *PluginHandler) AdminList(c *gin.Context) {
+	plugins, err := h.svc.ListAll()
+	if err != nil {
+		c.JSON(500, gin.H{"error": "查询插件失败"})
+		return
+	}
+	c.JSON(200, gin.H{"data": plugins})
+}
+func (h *PluginHandler) SetOrder(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 128<<10)
+	var request struct {
+		Slugs []string `json:"slugs"`
+	}
+	if c.ShouldBindJSON(&request) != nil || request.Slugs == nil {
+		c.JSON(400, gin.H{"error": "请提交完整的插件顺序"})
+		return
+	}
+	if err := h.svc.SetOrder(request.Slugs); err != nil {
+		if errors.Is(err, repository.ErrPluginOrderConflict) {
+			c.JSON(409, gin.H{"error": "插件列表已变化或顺序无效，请刷新后重试"})
+			return
+		}
+		c.JSON(500, gin.H{"error": "保存顺序失败"})
+		return
+	}
+	c.JSON(200, gin.H{"message": "顺序已保存"})
 }

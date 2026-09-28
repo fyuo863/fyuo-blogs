@@ -77,7 +77,7 @@ jobs:
           cd frontend
           npm run build
 
-      - name: Build independent React plugins
+      - name: Build optional plugin ZIPs (test only, never bundled with host)
         run: |
           cd frontend
           npm run build:plugins
@@ -88,5 +88,5 @@ jobs:
       - name: Install browser for plugin compatibility checks
         run: cd frontend && npx playwright install --with-deps chromium
 
-      - name: Verify built plugins in the host
+      - name: Verify historical plugins and empty host compatibility
         run: cd frontend && npm run test:e2e

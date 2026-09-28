@@ -13,7 +13,7 @@ function dateLabel(value) {
   return new Date(value).toLocaleDateString("en-CA", { year: "numeric", month: "short", day: "2-digit" }).toUpperCase();
 }
 
-export default function ContentDesk({ user, onOpenSignIn }) {
+export default function ContentDesk({ user, onOpenSignIn, plugins = [] }) {
   const navigate = useNavigate();
   const [home, setHome] = useState(null);
   const [articles, setArticles] = useState([]);
@@ -75,7 +75,7 @@ export default function ContentDesk({ user, onOpenSignIn }) {
       {error && <p className="content-desk__notice" role="status">{error}</p>}
 
       <section className="content-desk__index" aria-label="Content sections">
-        {CONTENT_SECTIONS.map((section) => (
+        {CONTENT_SECTIONS.filter(section => plugins.some(plugin => plugin.slug === (section.key === "home" ? "index" : section.key))).map((section) => (
           <article className="content-desk__section" key={section.key}>
             <p>{section.index} / {section.label}</p>
             <div>
@@ -83,7 +83,7 @@ export default function ContentDesk({ user, onOpenSignIn }) {
               <span>{section.note}</span>
             </div>
             {section.key === "home" && (
-              <button className="content-desk__action" type="button" onClick={() => navigate("/?desk=home")}>edit home.</button>
+              <button className="content-desk__action" type="button" onClick={() => navigate("/p/index?desk=home")}>edit home.</button>
             )}
             {section.key === "journal" && (
               <button className="content-desk__action" type="button" onClick={() => navigate("/blog?desk=new")}>new article.</button>

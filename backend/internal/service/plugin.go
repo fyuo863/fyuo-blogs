@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"gorm.io/gorm"
 	"io"
 	"myblog/internal/model"
@@ -18,6 +17,7 @@ import (
 )
 
 var ErrInvalidPlugin = errors.New("invalid plugin package")
+var ErrPluginVersionExists = errors.New("plugin version exists")
 var safePluginPart = regexp.MustCompile(`^[a-z0-9][a-z0-9._-]{0,79}$`)
 
 type PluginManifest struct {
@@ -39,91 +39,6 @@ type PluginManifest struct {
 type PluginService struct {
 	repo *repository.PluginRepository
 	root string
-}
-
-// EnsureBuiltins installs the three first-party pages as ordinary published plugins.
-// It is idempotent and never overwrites an administrator-managed version.
-func (s *PluginService) EnsureBuiltins(root string) error {
-	entries, err := os.ReadDir(root)
-	if err != nil {
-		return err
-	}
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		manifestPath := filepath.Join(root, entry.Name(), "manifest.json")
-		raw, err := os.ReadFile(manifestPath)
-		if err != nil {
-			return err
-		}
-		var m PluginManifest
-		if json.Unmarshal(raw, &m) != nil || ValidatePluginManifest(m) != nil {
-			return ErrInvalidPlugin
-		}
-		activePlugin, activeVersion, activeErr := s.repo.Active(m.ID)
-		if activeErr == nil && (activePlugin.ManagedByAdmin || activePlugin.CreatedBy != 0 || activeVersion.CreatedBy != 0 || activeVersion.Version == m.Version) {
-			continue
-		}
-		p, err := s.repo.FindOrCreate(m.ID, m.Name, m.Type, 0)
-		if err != nil {
-			return err
-		}
-		if p.ManagedByAdmin || p.CreatedBy != 0 || p.Status == "disabled" {
-			continue
-		}
-		dest := filepath.Join(s.root, m.ID, m.Version)
-		if _, err := os.Stat(dest); os.IsNotExist(err) {
-			if err := copyDir(filepath.Join(root, entry.Name()), dest); err != nil {
-				return err
-			}
-		}
-		h := sha256.Sum256(raw)
-		v := model.PluginVersion{PluginID: p.ID, Version: m.Version, ManifestJSON: string(raw), StoragePath: dest, ContentHash: hex.EncodeToString(h[:]), Status: "draft", CreatedBy: 0}
-		if _, err := s.repo.Version(m.ID, m.Version); err != nil {
-			if !errors.Is(err, gorm.ErrRecordNotFound) {
-				return err
-			}
-			if err := s.repo.SaveVersion(&v); err != nil {
-				return err
-			}
-		}
-		if err := s.repo.PublishBuiltin(m.ID, m.Version); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func copyDir(src, dst string) error {
-	return filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		rel, err := filepath.Rel(src, path)
-		if err != nil {
-			return err
-		}
-		target := filepath.Join(dst, rel)
-		if info.IsDir() {
-			return os.MkdirAll(target, 0755)
-		}
-		in, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer in.Close()
-		out, err := os.Create(target)
-		if err != nil {
-			return err
-		}
-		_, cpErr := io.Copy(out, in)
-		closeErr := out.Close()
-		if cpErr != nil {
-			return cpErr
-		}
-		return closeErr
-	})
 }
 
 func NewPluginService(repo *repository.PluginRepository, root string) *PluginService {
@@ -272,7 +187,7 @@ func (s *PluginService) Upload(path string, actor uint) (model.PluginVersion, er
 	}
 	dest := filepath.Join(s.root, manifest.ID, manifest.Version)
 	if _, e := os.Stat(dest); e == nil {
-		return model.PluginVersion{}, fmt.Errorf("plugin version exists")
+		return model.PluginVersion{}, ErrPluginVersionExists
 	}
 	if err := os.MkdirAll(filepath.Dir(dest), 0755); err != nil {
 		return model.PluginVersion{}, err
@@ -309,3 +224,6 @@ func (s *PluginService) AssetVersion(slug, version string) (model.PluginVersion,
 	}
 	return v, nil
 }
+
+func (s *PluginService) ListAll() ([]model.Plugin, error) { return s.repo.ListAll() }
+func (s *PluginService) SetOrder(slugs []string) error    { return s.repo.SetOrder(slugs) }

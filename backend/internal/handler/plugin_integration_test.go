@@ -3,11 +3,14 @@ package handler
 import (
 	"archive/zip"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -89,17 +92,14 @@ func pluginZip(t *testing.T, manifest service.PluginManifest, missingStyles bool
 func TestPluginLifecycleIntegration(t *testing.T) {
 	db := pluginTestDB(t)
 	repo := repository.NewPluginRepository(db)
-	svc := service.NewPluginService(repo, t.TempDir())
-	if err := svc.EnsureBuiltins("../../builtin-plugins"); err != nil {
-		t.Fatal(err)
-	}
+	svcRoot := t.TempDir()
+	svc := service.NewPluginService(repo, svcRoot)
+	seedPluginFixtures(t, db, svc)
 	p, original, err := svc.Active("travel")
 	if err != nil || p.Type != "module" {
 		t.Fatalf("builtin: %+v %v", p, err)
 	}
-	if err := svc.EnsureBuiltins("../../builtin-plugins"); err != nil {
-		t.Fatal(err)
-	}
+	svc = service.NewPluginService(repo, svcRoot)
 	var count int64
 	db.Model(&model.PluginVersion{}).Where("plugin_id = ?", p.ID).Count(&count)
 	if count != 1 {
@@ -142,9 +142,7 @@ func TestPluginLifecycleIntegration(t *testing.T) {
 	check("/plugin-assets/travel/test-2/style.css", 200, "text/css; charset=utf-8")
 	check("/plugin-assets/travel/"+original.Version+"/entry.js", 200, "text/javascript; charset=utf-8")
 	check("/plugin-assets/travel/test-2/../../../secret", 404, "")
-	if err := svc.EnsureBuiltins("../../builtin-plugins"); err != nil {
-		t.Fatal(err)
-	}
+	svc = service.NewPluginService(repo, svcRoot)
 	p, _, _ = svc.Active("travel")
 	if p.ActiveVersion != "test-2" || !p.ManagedByAdmin {
 		t.Fatal("restart replaced administrator version")
@@ -159,9 +157,7 @@ func TestPluginLifecycleIntegration(t *testing.T) {
 	if err := svc.Disable("travel"); err != nil {
 		t.Fatal(err)
 	}
-	if err := svc.EnsureBuiltins("../../builtin-plugins"); err != nil {
-		t.Fatal(err)
-	}
+	svc = service.NewPluginService(repo, svcRoot)
 	check("/api/v1/plugins/travel/manifest", 404, "")
 	check("/plugin-assets/travel/"+original.Version+"/entry.js", 404, "")
 	if err := svc.Disable("unknown"); err == nil {
@@ -217,5 +213,153 @@ func TestGeneratedPackagesCanBeUploaded(t *testing.T) {
 		if err = svc.Publish(id, version.Version); err != nil {
 			t.Fatal(err)
 		}
+	}
+}
+
+func TestPluginAdminOrderIntegration(t *testing.T) {
+	db := pluginTestDB(t)
+	repo := repository.NewPluginRepository(db)
+	svc := service.NewPluginService(repo, t.TempDir())
+	seedPluginFixtures(t, db, svc)
+	manifest := service.PluginManifest{ID: "order-test", Name: "Test", Version: "1.0.0", Type: "module", APIVersion: 1, Entry: "entry.js"}
+	archive := pluginZip(t, manifest, false)
+	if _, err := svc.Upload(archive, 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := svc.Upload(archive, 1); !errors.Is(err, service.ErrPluginVersionExists) {
+		t.Fatalf("duplicate: %v", err)
+	}
+	gin.SetMode(gin.TestMode)
+	router := gin.New()
+	handler := NewPluginHandler(svc)
+	router.GET("/admin/plugins", handler.AdminList)
+	router.PUT("/admin/plugins/order", handler.SetOrder)
+	read := httptest.NewRecorder()
+	router.ServeHTTP(read, httptest.NewRequest("GET", "/admin/plugins", nil))
+	var response struct {
+		Data []model.Plugin `json:"data"`
+	}
+	if read.Code != 200 || json.Unmarshal(read.Body.Bytes(), &response) != nil || len(response.Data) != 4 {
+		t.Fatalf("list: %s", read.Body.String())
+	}
+	for _, p := range response.Data {
+		if len(p.Versions) != 1 {
+			t.Fatalf("missing versions: %+v", p)
+		}
+	}
+	order := []string{"order-test", "travel", "index", "journal"}
+	save := func(body string, status int) {
+		t.Helper()
+		recorder := httptest.NewRecorder()
+		request := httptest.NewRequest("PUT", "/admin/plugins/order", strings.NewReader(body))
+		request.Header.Set("Content-Type", "application/json")
+		router.ServeHTTP(recorder, request)
+		if recorder.Code != status {
+			t.Fatalf("save status %d: %s", recorder.Code, recorder.Body.String())
+		}
+	}
+	save(`{"slugs":["order-test","travel","index","journal"]}`, 200)
+	save(`{"slugs":["index","travel","index","journal"]}`, 409)
+	save(`{"slugs":["travel","index","journal"]}`, 409)
+	save(`{"slugs":["missing","travel","index","journal"]}`, 409)
+	save(`{}`, 400)
+	items, err := repository.NewPluginRepository(db).ListAll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := []string{}
+	for _, p := range items {
+		got = append(got, p.Slug)
+	}
+	if !reflect.DeepEqual(got, order) {
+		t.Fatalf("order not persisted or rollback failed: %v", got)
+	}
+	if err := svc.Publish("order-test", "1.0.0"); err != nil {
+		t.Fatal(err)
+	}
+	items, err = svc.List()
+	if err != nil || len(items) != 4 || items[0].Slug != "order-test" || items[1].Slug != "travel" {
+		t.Fatalf("public order: %+v %v", items, err)
+	}
+	if err := svc.Disable("travel"); err != nil {
+		t.Fatal(err)
+	}
+	items, _ = svc.List()
+	if len(items) != 3 || items[1].Slug != "index" {
+		t.Fatalf("disabled filter: %+v", items)
+	}
+	_, travel, _ := svc.Active("index")
+	if err := svc.Publish("index", travel.Version); err != nil {
+		t.Fatal(err)
+	}
+	items, _ = svc.List()
+	if items[0].Slug != "order-test" || items[1].Slug != "index" {
+		t.Fatal("publish changed order")
+	}
+}
+
+// Historical packages are test fixtures only. Production startup never imports them.
+func seedPluginFixtures(t *testing.T, db *gorm.DB, svc *service.PluginService) {
+	t.Helper()
+	var count int64
+	db.Model(&model.Plugin{}).Count(&count)
+	if count != 0 {
+		return
+	}
+	for _, id := range []string{"index", "journal", "travel"} {
+		raw, err := os.ReadFile(filepath.Join("../../builtin-plugins", id, "manifest.json"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var manifest service.PluginManifest
+		if err := json.Unmarshal(raw, &manifest); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := svc.Upload(pluginZip(t, manifest, false), 1); err != nil {
+			t.Fatal(err)
+		}
+		if err := svc.Publish(id, manifest.Version); err != nil {
+			t.Fatal(err)
+		}
+	}
+}
+
+func TestPluginServiceRestartPreservesData(t *testing.T) {
+	db := pluginTestDB(t)
+	root := t.TempDir()
+	svc := service.NewPluginService(repository.NewPluginRepository(db), root)
+	items, err := svc.ListAll()
+	if err != nil || len(items) != 0 {
+		t.Fatalf("new host must be empty: %+v %v", items, err)
+	}
+	m := service.PluginManifest{ID: "custom-only", Name: "Custom", Version: "1.0.0", Type: "module", APIVersion: 1, Entry: "entry.js"}
+	if _, err := svc.Upload(pluginZip(t, m, false), 1); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.Publish(m.ID, m.Version); err != nil {
+		t.Fatal(err)
+	}
+	if err := svc.SetOrder([]string{m.ID}); err != nil {
+		t.Fatal(err)
+	}
+	m.Version = "2.0.0"
+	if _, err := svc.Upload(pluginZip(t, m, false), 1); err != nil {
+		t.Fatal(err)
+	}
+	before, _ := svc.ListAll()
+	beforeBytes, _ := os.ReadFile(filepath.Join(root, m.ID, "1.0.0", "entry.js"))
+	restarted := service.NewPluginService(repository.NewPluginRepository(db), root)
+	after, err := restarted.ListAll()
+	afterBytes, readErr := os.ReadFile(filepath.Join(root, m.ID, "1.0.0", "entry.js"))
+	if err != nil || readErr != nil || !reflect.DeepEqual(before, after) || !reflect.DeepEqual(beforeBytes, afterBytes) {
+		t.Fatal("restart changed plugin data")
+	}
+	if err := restarted.Disable(m.ID); err != nil {
+		t.Fatal(err)
+	}
+	restarted = service.NewPluginService(repository.NewPluginRepository(db), root)
+	public, err := restarted.List()
+	if err != nil || len(public) != 0 {
+		t.Fatal("restart enabled disabled plugin")
 	}
 }

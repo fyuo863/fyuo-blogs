@@ -5,3 +5,7 @@ tmp
 
 .git
 .gitignore
+
+# Plugins are administrator-owned persistent data, never image contents.
+builtin-plugins
+plugin-storage

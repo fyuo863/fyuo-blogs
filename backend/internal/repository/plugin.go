@@ -2,10 +2,13 @@ package repository
 
 import (
 	"encoding/json"
+	"errors"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"myblog/internal/model"
 )
+
+var ErrPluginOrderConflict = errors.New("plugin list changed or invalid order")
 
 type PluginRepository struct{ db *gorm.DB }
 
@@ -39,14 +42,11 @@ func (r *PluginRepository) Active(slug string) (model.Plugin, model.PluginVersio
 }
 func (r *PluginRepository) ListPublished() ([]model.Plugin, error) {
 	var p []model.Plugin
-	err := r.db.Where("status = ?", "published").Order("updated_at DESC").Find(&p).Error
+	err := r.db.Where("status = ?", "published").Order("sort_order ASC, id ASC").Find(&p).Error
 	return p, err
 }
 func (r *PluginRepository) Publish(slug, version string) error {
 	return r.publish(slug, version, true)
-}
-func (r *PluginRepository) PublishBuiltin(slug, version string) error {
-	return r.publish(slug, version, false)
 }
 func (r *PluginRepository) publish(slug, version string, manual bool) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
@@ -83,4 +83,38 @@ func (r *PluginRepository) SetStatus(slug, status string) error {
 		return gorm.ErrRecordNotFound
 	}
 	return nil
+}
+
+func (r *PluginRepository) ListAll() ([]model.Plugin, error) {
+	plugins := []model.Plugin{}
+	err := r.db.Preload("Versions", func(db *gorm.DB) *gorm.DB { return db.Order("created_at DESC, id DESC") }).Order("sort_order ASC, id ASC").Find(&plugins).Error
+	return plugins, err
+}
+
+// The complete list prevents stale clients from silently dropping new plugins.
+func (r *PluginRepository) SetOrder(slugs []string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var plugins []model.Plugin
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).Order("id ASC").Find(&plugins).Error; err != nil {
+			return err
+		}
+		if len(slugs) != len(plugins) {
+			return ErrPluginOrderConflict
+		}
+		ids := make(map[string]uint, len(plugins))
+		for _, plugin := range plugins {
+			ids[plugin.Slug] = plugin.ID
+		}
+		for position, slug := range slugs {
+			id, exists := ids[slug]
+			if !exists {
+				return ErrPluginOrderConflict
+			}
+			delete(ids, slug)
+			if err := tx.Model(&model.Plugin{}).Where("id = ?", id).Update("sort_order", position).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

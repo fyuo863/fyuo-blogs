@@ -1,5 +1,5 @@
 import { build } from "vite";
-import { cp, mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createHash } from "node:crypto";
@@ -7,7 +7,6 @@ import { zipSync } from "fflate";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const frontend = path.resolve(here, "..");
-const backendPlugins = path.resolve(frontend, "../backend/builtin-plugins");
 const ids = ["index", "journal", "travel"];
 const requested = process.argv.slice(2);
 if (requested.some(id => !ids.includes(id))) throw new Error("Expected index, journal or travel");
@@ -68,10 +67,6 @@ for (const id of requested.length ? requested : ids) {
   };
   contents["manifest.json"] = Buffer.from(JSON.stringify(manifest, null, 2) + "\n");
   await writeFile(path.join(out, "manifest.json"), contents["manifest.json"]);
-  const target = path.join(backendPlugins, id);
-  // id is allowlisted, and target is always a child of backend/builtin-plugins.
-  await rm(target, { recursive: true, force: true });
-  await cp(out, target, { recursive: true });
   await mkdir(path.join(frontend, "plugin-packages"), { recursive: true });
   const archive = Object.fromEntries(Object.entries(contents).map(([name, bytes]) => [name, [bytes, { mtime: new Date("2020-01-01T00:00:00Z") }]]));
   await writeFile(path.join(frontend, "plugin-packages", `${id}-${manifest.version}.zip`), zipSync(archive));

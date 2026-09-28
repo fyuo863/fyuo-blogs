@@ -77,6 +77,8 @@ func NewRouter(deps Dependencies) *gin.Engine {
 		// Uploaded executable/page assets are an administrative capability; agents
 		// may publish articles but cannot change the site's executable surface.
 		adminProtected.POST("/uploads/images", deps.Uploads.UploadImage)
+		adminProtected.GET("/admin/plugins", deps.Plugins.AdminList)
+		adminProtected.PUT("/admin/plugins/order", deps.Plugins.SetOrder)
 		adminProtected.POST("/admin/plugins", deps.Plugins.Upload)
 		adminProtected.POST("/admin/plugins/:slug/publish/:version", deps.Plugins.Publish)
 		adminProtected.POST("/admin/plugins/:slug/disable", deps.Plugins.Disable)

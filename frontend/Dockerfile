@@ -1,5 +1,5 @@
 # 前端构建镜像
-FROM node:20-alpine
+FROM node:20-alpine AS builder
 WORKDIR /app
 
 # 利用缓存加速安装依赖
@@ -9,6 +9,11 @@ RUN npm ci --registry=https://registry.npmmirror.com --no-audit --no-fund
 # 复制源码并执行打包
 COPY . .
 RUN npm run build
+
+# Runtime contains only host assets, not plugin sources, ZIPs or public assets.
+FROM node:20-alpine AS runner
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
 
 # 用一条没有副作用的死循环指令，确保容器挂载完成后能保持运行状态
 # 这样 docker-compose 才能通过 volumes_from 或命名卷将其产物持久化出来

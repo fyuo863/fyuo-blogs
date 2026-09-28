@@ -1,0 +1,30 @@
+.loading-spinner-demo {
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  background: var(--color-paper, #f8f4eb);
+  color: var(--color-ink, #252019);
+}
+.loading-spinner-demo__ring {
+  display: block;
+  width: 5rem;
+  height: 5rem;
+  box-sizing: border-box;
+  border: 0.375rem solid var(--color-rule-2, #d8d2c6);
+  border-top-color: var(--color-cobalt, #3459cd);
+  border-radius: 50%;
+  animation: loading-spinner-demo-turn 1s linear infinite;
+}
+.loading-spinner-demo__label {
+  margin: 0;
+  font-family: var(--font-body, serif);
+  font-size: 1rem;
+}
+@keyframes loading-spinner-demo-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner-demo__ring { animation: none; }
+}

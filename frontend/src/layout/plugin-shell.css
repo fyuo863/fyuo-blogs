@@ -34,3 +34,7 @@
 
 .plugin-shell__reader > iframe { height: 100%; display: block; }
 .plugin-shell__reader > p:is([role="status"], [role="alert"]) { margin: var(--space-lg) var(--space-lg) var(--space-lg) 11rem; }
+
+.plugin-shell__empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: var(--space-lg); gap: var(--space-sm); text-align: center; }
+.plugin-shell__empty h1 { font-family: var(--font-display); font-size: clamp(1.5rem, 5vw, 3rem); overflow-wrap: anywhere; }
+.plugin-shell__empty button { padding: var(--space-xs) var(--space-sm); border: 1px solid var(--color-rule); background: var(--color-paper-2); color: var(--color-ink); cursor: pointer; }

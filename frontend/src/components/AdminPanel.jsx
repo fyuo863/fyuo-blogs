@@ -1,5 +1,6 @@
+import PluginManager from "./PluginManager";
 import { useCallback, useEffect, useState } from "react";
-import { ChevronRight, Eye, KeyRound, Shield, X } from "lucide-react";
+import { ChevronRight, Eye, KeyRound, Package, Shield, X } from "lucide-react";
 import {
   createApiKey,
   deleteApiKey,
@@ -11,6 +12,7 @@ import {
 } from "../api";
 
 const NAV_ITEMS = [
+  { key: "plugins", label: "plugins.", icon: Package, title: "plugin management.", description: "上传页面插件、管理版本与调整栏目顺序。" },
   {
     key: "visits",
     label: "visitor-records.",
@@ -442,7 +444,7 @@ function ApiKeyPage({ open, token, onNotify, active }) {
 }
 
 function AdminPanel({ open, onClose, user, onNotify }) {
-  const [activeKey, setActiveKey] = useState("visits");
+  const [activeKey, setActiveKey] = useState("plugins");
 
   if (!open) return null;
 
@@ -536,6 +538,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
             </h2>
           </div>
 
+          {activeKey === "plugins" && <PluginManager key={user?.token} token={user?.token} />}
           <VisitRecordPage
             open={open}
             token={user?.token}
