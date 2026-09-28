@@ -146,9 +146,11 @@ jobs:
             echo "Running $DEPLOY_ACTION with IMAGE_TAG=$IMAGE_TAG"
 
             docker compose pull backend frontend mcp-blog-publisher || preflight_fail "image pull failed"
+            docker compose run --rm --no-deps nginx nginx -t || preflight_fail "nginx config invalid"
             # Keep the same Compose project and named volumes; never remove volumes on upgrade.
             docker compose up -d --remove-orphans || runtime_fail "compose up failed"
-            docker compose exec -T nginx nginx -s reload || runtime_fail "nginx reload failed"
+            # SCP replaces the config inode; reload alone keeps an old file bind mount.
+            docker compose up -d --no-deps --force-recreate nginx || runtime_fail "nginx recreate failed"
 
             i=1
             while [ "$i" -le 36 ]; do
