@@ -34,13 +34,14 @@ RUN go build -o main ./main.go
 # 第二阶段：运行阶段 (Runner)
 # ==========================================
 # 复用 builder 阶段，避免单独拉取 alpine:latest 时受到镜像源限制
-FROM builder AS runner
+FROM alpine:3.23 AS runner
 
 # 设置最终运行的工作目录
 WORKDIR /app
 
-RUN mkdir -p /app/uploads
-RUN mkdir -p /app/plugin-storage
+RUN addgroup -g 10001 app && adduser -D -u 10001 -G app app \
+    && mkdir -p /app/uploads /app/plugin-storage \
+    && chown -R 10001:10001 /app
 
 # 从构建阶段 (builder) 中，把编译好的二进制文件复制过来
 COPY --from=builder /build/main .
@@ -53,4 +54,5 @@ COPY --from=builder /build/configs ./configs
 EXPOSE 8080
 
 # 启动容器时运行我们的 Go 程序
+USER 10001:10001
 CMD ["./main"]

@@ -1,5 +1,16 @@
+x-security: &security
+  security_opt: ["no-new-privileges:true"]
+  pids_limit: 256
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
 services:
   nginx:
+    <<: *security
+    mem_limit: 256m
     image: nginx:alpine
     container_name: blog_nginx
     restart: always
@@ -12,10 +23,22 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       frontend:
+    <<: *security
+    mem_limit: 128m
         condition: service_healthy
       backend:
+    <<: *security
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 512m
+    tmpfs: ["/tmp:size=80m,mode=1777"]
         condition: service_healthy
       mcp-blog-publisher:
+    <<: *security
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 384m
+    tmpfs: ["/tmp:size=80m,mode=1777"]
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "nginx -t"]
@@ -52,8 +75,10 @@ services:
       ENABLE_AGENT_ACCOUNT_SEED: ${ENABLE_AGENT_ACCOUNT_SEED:-false}
     depends_on:
       postgres:
+    <<: *security
         condition: service_healthy
       redis:
+    <<: *security
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/v1/healthz >/dev/null"]
