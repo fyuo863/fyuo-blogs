@@ -16,7 +16,11 @@ export function useAuth() {
     authStorage.setUser(u);
   };
 
-  const logout = () => {
+  const logout = async () => {
+    if (user?.token) {
+      const response = await fetch('/api/v1/signout', {method:'POST', headers:{Authorization:`Bearer ${user.token}`}});
+      if (!response.ok && response.status !== 401) throw new Error('退出失败，请重试');
+    }
     setUser(null);
     authStorage.clear();
   };

@@ -58,3 +58,5 @@ func (s *AuthService) PublisherNameFromClaims(claims auth.Claims) string {
 func (s *AuthService) ListPrivilegedUsers() ([]model.User, error) {
 	return s.users.ListPrivileged()
 }
+
+func (s *AuthService) Logout(token string) error { return s.tokens.Revoke(token) }

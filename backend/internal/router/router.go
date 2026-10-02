@@ -59,6 +59,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	authenticated := api.Group("")
 	authenticated.Use(deps.AuthTokens)
 	{
+		authenticated.POST("/signout", deps.Auth.SignOut)
 		authenticated.PUT("/home-content", deps.HomeContent.Update)
 		authenticated.POST("/travel-places", deps.TravelPlaces.Create)
 		authenticated.PUT("/travel-places/:id", deps.TravelPlaces.Update)

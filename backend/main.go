@@ -83,6 +83,22 @@ func main() {
 		time.Duration(cfg.Auth.TokenTTLHours)*time.Hour,
 	)
 	userRepo := repository.NewUserRepository(database.DB)
+	if err := database.DB.AutoMigrate(&auth.Session{}); err != nil {
+		panic(err)
+	}
+	tokenManager.ResolveUser = userRepo.FindByID
+	tokenManager.SaveSession = func(s auth.Session) error {
+		if err := database.DB.Where("expires_at <= ?", time.Now()).Delete(&auth.Session{}).Error; err != nil {
+			return err
+		}
+		return database.DB.Create(&s).Error
+	}
+	tokenManager.SessionExists = func(id string, uid uint) (bool, error) {
+		var count int64
+		err := database.DB.Model(&auth.Session{}).Where("id = ? AND user_id = ? AND expires_at > ?", id, uid, time.Now()).Count(&count).Error
+		return count == 1, err
+	}
+	tokenManager.DeleteSession = func(id string) error { return database.DB.Delete(&auth.Session{}, "id = ?", id).Error }
 	articleRepo := repository.NewArticleRepository(database.DB)
 	homeContentRepo := repository.NewHomeContentRepository(database.DB)
 	travelPlaceRepo := repository.NewTravelPlaceRepository(database.DB)

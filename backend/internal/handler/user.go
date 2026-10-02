@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"myblog/internal/auth"
 	"myblog/internal/database"
 	"myblog/internal/security"
 	"myblog/internal/service"
@@ -83,4 +84,17 @@ func SignUp(c *gin.Context) {
 			"role": user.Role,
 		},
 	})
+}
+
+func (h *AuthHandler) SignOut(c *gin.Context) {
+	token, err := auth.BearerToken(c.GetHeader("Authorization"))
+	if err != nil {
+		c.AbortWithStatus(401)
+		return
+	}
+	if err = h.auth.Logout(token); err != nil {
+		c.AbortWithStatus(401)
+		return
+	}
+	c.Status(204)
 }
