@@ -38,6 +38,7 @@ test('ai coding renders public summaries, responsive layout and stale data hones
   }
   await page.getByRole('button', { name: '7 天', exact: true }).click();
   await expect(page.locator('.aic-bars>div')).toHaveCount(7);
+  await expect(page.frameLocator('.plugin-sidebar__preview iframe').locator('.aic-totals')).toContainText('1.2M');
   failed = true;
   await page.locator('.aic-status button').click();
   await expect(page.locator('.aic-status')).toContainText('保留最近记录');

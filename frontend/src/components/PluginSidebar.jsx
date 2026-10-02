@@ -11,8 +11,9 @@ export default function PluginSidebar({ plugins, activeSlug, user, onOpenSignIn,
     return () => document.removeEventListener("pointerdown", dismiss);
   }, []);
   const entries = plugins;
+  const isCollapsed = plugins.length > 0 && collapsed;
 
-  return <aside ref={rail} className="plugin-sidebar" data-collapsed={plugins.length > 0 && collapsed} aria-label="站点侧栏"
+  return <aside ref={rail} className="plugin-sidebar" data-collapsed={isCollapsed} aria-label="站点侧栏"
     onPointerEnter={event => { if (event.pointerType === "mouse") setCollapsed(false); }}
     onPointerLeave={event => { if (event.pointerType === "mouse") setCollapsed(true); }}
     onKeyDown={event => { if (event.key === "Escape") { setCollapsed(true); rail.current?.querySelector('[aria-current="page"]')?.focus(); } }}>
@@ -23,10 +24,10 @@ export default function PluginSidebar({ plugins, activeSlug, user, onOpenSignIn,
             <iframe key={plugin.active_version || plugin.slug} title={`${plugin.name || plugin.slug} 实时预览`} tabIndex={-1} src={`/p/${encodeURIComponent(plugin.slug)}?__plugin_preview=1`} />
           </div>
           <Link className="plugin-sidebar__select" to={`/p/${encodeURIComponent(plugin.slug)}`} aria-label={plugin.name || plugin.slug} aria-current={activeSlug === plugin.slug ? "page" : undefined}
-            onClick={event => { if (collapsed) { if (event.nativeEvent.pointerType !== "mouse") event.preventDefault(); setCollapsed(false); } }} />
+            onClick={() => setCollapsed(false)} />
         </div>)}
       </nav>
-      <div className="plugin-sidebar__bottom" inert={collapsed ? "" : undefined} aria-hidden={collapsed}>
+      <div className="plugin-sidebar__bottom" inert={isCollapsed ? "" : undefined} aria-hidden={isCollapsed}>
         {user ? <div className="plugin-sidebar__account">
           <Link to="/desk">desk.</Link>
           {user.role === "admin" && <button type="button" onClick={onOpenAdmin}>管理后台</button>}

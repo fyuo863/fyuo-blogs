@@ -44,6 +44,9 @@ export async function mockBusinessAPI(page, { signedIn = false } = {}) {
     await route.fulfill({ json: { data } });
   });
   await servePlugins(page);
+  // External font availability must not gate historical plugin CSS in CI.
+  await page.route('https://fonts.googleapis.com/**', route => route.fulfill({contentType:'text/css',body:''}));
+  await page.route('https://fonts.gstatic.com/**', route => route.abort());
   await page.route('https://gibs.earthdata.nasa.gov/**', route => route.abort());
   return calls;
 }
