@@ -15,7 +15,7 @@ func TestImageValidation(t *testing.T) {
 		name string
 		data []byte
 		ok   bool
-	}{{"real.png", img.Bytes(), true}, {"fake.png", []byte("<script>alert(1)</script>"), false}, {"wrong.jpg", img.Bytes(), false}, {"truncated.png", img.Bytes()[:12], false}} {
+	}{{"real.png", img.Bytes(), true}, {"fake.png", []byte("<script>alert(1)</script>"), false}, {"wrong.jpg", img.Bytes(), false}, {"truncated.png", img.Bytes()[:12], false}, {"header-only.png", img.Bytes()[:40], false}} {
 		var body bytes.Buffer
 		w := multipart.NewWriter(&body)
 		p, _ := w.CreateFormFile("file", tc.name)

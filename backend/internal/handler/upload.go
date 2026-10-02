@@ -81,7 +81,14 @@ func isAllowedImage(file *multipart.FileHeader) bool {
 	if ext == ".jpg" {
 		ext = ".jpeg"
 	}
-	return ext == "."+format
+	if ext != "."+format {
+		return false
+	}
+	if _, err = f.Seek(0, 0); err != nil {
+		return false
+	}
+	_, actual, err := image.Decode(f)
+	return err == nil && actual == format
 }
 
 func buildUploadFilename(original string) string {
