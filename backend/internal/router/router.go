@@ -66,6 +66,8 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	authorProtected := api.Group("")
 	authorProtected.Use(deps.AuthorTokens)
 	{
+		// Authenticated probe used by MCP on every request, including existing sessions.
+		authorProtected.GET("/auth/verify", func(c *gin.Context) { c.Status(204) })
 		authorProtected.POST("/articles", deps.Articles.CreateBlog)
 		authorProtected.PUT("/articles/:id", deps.Articles.UpdateBlog)
 		authorProtected.DELETE("/articles/:id", deps.Articles.DeleteBlog)
