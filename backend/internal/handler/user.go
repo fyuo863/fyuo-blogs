@@ -3,15 +3,19 @@ package handler
 import (
 	"errors"
 	"myblog/internal/database"
+	"myblog/internal/security"
 	"myblog/internal/service"
 	"myblog/log"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 type AuthHandler struct {
-	auth *service.AuthService
+	auth     *service.AuthService
+	attempts *security.Limiter
 }
 
 type LoginRequest struct {
@@ -20,7 +24,7 @@ type LoginRequest struct {
 }
 
 func NewAuthHandler(auth *service.AuthService) *AuthHandler {
-	return &AuthHandler{auth: auth}
+	return &AuthHandler{auth: auth, attempts: security.NewLimiter(10, 15*time.Minute)}
 }
 
 func (h *AuthHandler) SignIn(c *gin.Context) {
@@ -30,6 +34,11 @@ func (h *AuthHandler) SignIn(c *gin.Context) {
 		return
 	}
 
+	if !h.attempts.Allow("account:" + strings.ToLower(strings.TrimSpace(req.Name))) {
+		c.Header("Retry-After", "900")
+		c.AbortWithStatus(429)
+		return
+	}
 	result, err := h.auth.Authenticate(req.Name, req.Password)
 	if errors.Is(err, service.ErrInvalidCredentials) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
