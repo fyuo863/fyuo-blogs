@@ -1,6 +1,8 @@
 package config
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"strings"
 	"time"
@@ -82,11 +84,18 @@ func Load(configPath string) (*Config, error) {
 	if cfg.Auth.TokenTTLHours <= 0 {
 		cfg.Auth.TokenTTLHours = 24
 	}
-	if cfg.Auth.TokenSecret == "" {
-		cfg.Auth.TokenSecret = cfg.Database.Password
-	}
-	if cfg.Auth.TokenSecret == "" {
-		cfg.Auth.TokenSecret = "dev-only-change-me"
+	if cfg.Server.Mode == "release" {
+		secret := strings.TrimSpace(cfg.Auth.TokenSecret)
+		if len(secret) < 32 || secret == cfg.Database.Password || strings.Contains(strings.ToLower(secret), "change-me") {
+			return nil, fmt.Errorf("release requires an independent AUTH_TOKEN_SECRET of at least 32 characters")
+		}
+	} else if cfg.Auth.TokenSecret == "" {
+		// Ephemeral local credentials, never a known or database-derived signing key.
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			return nil, err
+		}
+		cfg.Auth.TokenSecret = hex.EncodeToString(b)
 	}
 
 	if cfg.Database.MaxOpenConns <= 0 {

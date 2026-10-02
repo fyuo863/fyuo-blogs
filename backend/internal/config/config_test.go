@@ -20,3 +20,18 @@ func TestLoadDatabasePool(t *testing.T) {
 		t.Fatalf("pool decoded incorrectly: idle=%d open=%d lifetime=%d", c.Database.MaxIdleConns, c.Database.MaxOpenConns, c.Database.ConnMaxLifetime)
 	}
 }
+
+func TestReleaseRejectsUnsafeSecrets(t *testing.T) {
+	for _, secret := range []string{"", "short", "db-password-with-at-least-32-characters", "dev-only-change-me-xxxxxxxxxxxxxxxx"} {
+		t.Run(secret, func(t *testing.T) {
+			t.Setenv("GIN_MODE", "release")
+			t.Setenv("AUTH_TOKEN_SECRET", secret)
+			t.Setenv("DB_PASSWORD", "db-password-with-at-least-32-characters")
+			p := filepath.Join(t.TempDir(), "config.yaml")
+			os.WriteFile(p, []byte("server:\n  mode: release\n"), 0600)
+			if _, err := Load(p); err == nil {
+				t.Fatal("accepted unsafe key")
+			}
+		})
+	}
+}
