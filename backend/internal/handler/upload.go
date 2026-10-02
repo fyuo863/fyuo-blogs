@@ -2,6 +2,11 @@ package handler
 
 import (
 	"fmt"
+	_ "golang.org/x/image/webp"
+	"image"
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
 	"mime/multipart"
 	"myblog/log"
 	"net/http"
@@ -22,7 +27,11 @@ func NewUploadHandler() *UploadHandler {
 }
 
 func (h *UploadHandler) UploadImage(c *gin.Context) {
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 9<<20)
 	file, err := c.FormFile("file")
+	if c.Request.MultipartForm != nil {
+		defer c.Request.MultipartForm.RemoveAll()
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少图片文件"})
 		return
@@ -56,13 +65,23 @@ func (h *UploadHandler) UploadImage(c *gin.Context) {
 }
 
 func isAllowedImage(file *multipart.FileHeader) bool {
-	ext := strings.ToLower(filepath.Ext(file.Filename))
-	switch ext {
-	case ".jpg", ".jpeg", ".png", ".gif", ".webp":
-		return true
-	default:
+	if file.Size <= 0 || file.Size > 8<<20 {
 		return false
 	}
+	f, err := file.Open()
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+	cfg, format, err := image.DecodeConfig(f)
+	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 || int64(cfg.Width)*int64(cfg.Height) > 24_000_000 {
+		return false
+	}
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	if ext == ".jpg" {
+		ext = ".jpeg"
+	}
+	return ext == "."+format
 }
 
 func buildUploadFilename(original string) string {

@@ -2,6 +2,7 @@ package router
 
 import (
 	"myblog/internal/handler"
+	"myblog/internal/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	r.Use(
 		gin.Logger(),
 		gin.Recovery(),
+		middleware.BodyLimit(),
 	)
 	r.Static("/uploads", "./uploads")
 	r.GET("/plugin-assets/:slug/*path", deps.Plugins.Asset)
