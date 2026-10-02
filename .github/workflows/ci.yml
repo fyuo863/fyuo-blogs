@@ -85,6 +85,9 @@ jobs:
       - name: Test view-event behavior
         run: cd frontend && npm test
 
+      - name: Test independent usage sync service
+        run: node --test services/ai-coding-sync/sync.test.mjs
+
       - name: Install browser for plugin compatibility checks
         run: cd frontend && npx playwright install --with-deps chromium
 

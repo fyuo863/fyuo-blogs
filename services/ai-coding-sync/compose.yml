@@ -1,0 +1,32 @@
+services:
+  ai-coding-sync:
+    image: node:22-alpine
+    restart: unless-stopped
+    working_dir: /app
+    command: ["node", "server.mjs"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    volumes:
+      - ./server.mjs:/app/server.mjs:ro
+      - ./schema.mjs:/app/schema.mjs:ro
+      - ./upload-token:/run/secrets/upload-token:ro
+      - snapshots:/data
+    networks:
+      blog:
+        aliases: [ai-coding-sync]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:18082/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      options:
+        max-size: "5m"
+        max-file: "2"
+volumes:
+  snapshots:
+networks:
+  blog:
+    external: true
+    name: blog_default

@@ -1,0 +1,5 @@
+{
+  "name": "FYUO",
+  "endpoint": "/api/v1/showcase/ai-coding",
+  "refreshSeconds": 30
+}
