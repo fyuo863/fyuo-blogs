@@ -23,22 +23,10 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       frontend:
-    <<: *security
-    mem_limit: 128m
         condition: service_healthy
       backend:
-    <<: *security
-    read_only: true
-    cap_drop: [ALL]
-    mem_limit: 512m
-    tmpfs: ["/tmp:size=80m,mode=1777"]
         condition: service_healthy
       mcp-blog-publisher:
-    <<: *security
-    read_only: true
-    cap_drop: [ALL]
-    mem_limit: 384m
-    tmpfs: ["/tmp:size=80m,mode=1777"]
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "nginx -t"]
@@ -47,6 +35,8 @@ services:
       retries: 6
 
   frontend:
+    <<: *security
+    mem_limit: 128m
     image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-frontend:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: blog-frontend
     restart: always
@@ -60,6 +50,11 @@ services:
       start_period: 10s
 
   backend:
+    <<: *security
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 512m
+    tmpfs: ["/tmp:size=80m,mode=1777"]
     image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-backend:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: blog-backend
     restart: always
@@ -68,17 +63,13 @@ services:
     volumes:
       - backend_uploads:/app/uploads
       - backend_plugins:/app/plugin-storage
-    env_file:
-      - ./.env
     environment:
       ENABLE_ADMIN_ACCOUNT_SEED: ${ENABLE_ADMIN_ACCOUNT_SEED:-false}
       ENABLE_AGENT_ACCOUNT_SEED: ${ENABLE_AGENT_ACCOUNT_SEED:-false}
     depends_on:
       postgres:
-    <<: *security
         condition: service_healthy
       redis:
-    <<: *security
         condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/api/v1/healthz >/dev/null"]
@@ -88,13 +79,16 @@ services:
       start_period: 20s
 
   mcp-blog-publisher:
+    <<: *security
+    read_only: true
+    cap_drop: [ALL]
+    mem_limit: 384m
+    tmpfs: ["/tmp:size=80m,mode=1777"]
     image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-mcp-publisher:${IMAGE_TAG:?IMAGE_TAG is required}
     container_name: blog_mcp_publisher
     restart: always
     expose:
       - "18081"
-    env_file:
-      - ./.env
     environment:
       BLOG_BASE_URL: ${BLOG_BASE_URL:-http://backend:8080}
       BLOG_TIMEOUT_MS: ${BLOG_TIMEOUT_MS:-10000}
@@ -110,6 +104,7 @@ services:
       start_period: 20s
 
   redis:
+    <<: *security
     image: redis:8-alpine
     container_name: blog_redis
     restart: always
@@ -124,6 +119,7 @@ services:
       retries: 10
 
   postgres:
+    <<: *security
     image: postgres:16-alpine
     container_name: blog_postgres
     restart: always
