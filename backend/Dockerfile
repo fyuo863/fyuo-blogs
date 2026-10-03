@@ -2,7 +2,7 @@
 # 第一阶段：构建阶段 (Builder)
 # ==========================================
 # 使用官方轻量级的 Go 镜像作为构建环境 (版本可以根据你实际使用的 Go 版本调整，一般 latest 或 1.21-alpine 即可)
-FROM golang:alpine AS builder
+FROM golang:1.26.8-alpine AS builder
 
 # 为我们的镜像设置必要的环境变量
 # GO111MODULE=on: 开启 go module
