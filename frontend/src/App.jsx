@@ -1,3 +1,5 @@
+import AdminApp from "./admin/AdminApp";
+import { isAdminOrigin, isPublicOrigin, openAdmin } from "./services/origins";
 import { BrowserRouter } from "react-router-dom";
 
 import PluginPage from "./components/PluginPage";
@@ -16,9 +18,9 @@ function MainApp() {
         user={user}
         showSignIn={ui.showSignIn}
         showAdmin={ui.showAdmin}
-        onOpenAdmin={() => ui.setShowAdmin(true)}
+        onOpenAdmin={isPublicOrigin ? openAdmin : () => ui.setShowAdmin(true)}
         onCloseAdmin={() => ui.setShowAdmin(false)}
-        onOpenSignIn={() => ui.setShowSignIn(true)}
+        onOpenSignIn={isPublicOrigin ? openAdmin : () => ui.setShowSignIn(true)}
         onCloseSignIn={() => ui.setShowSignIn(false)}
         onLogin={login}
         onLogout={logout}
@@ -32,6 +34,8 @@ function MainApp() {
 
 
 export default function App() {
+  // Before preview handling: the admin origin must never execute a plugin.
+  if (isAdminOrigin) return <AdminApp />;
   const params = new URLSearchParams(window.location.search);
   if (params.get("__plugin_preview") === "1") {
     let slug;

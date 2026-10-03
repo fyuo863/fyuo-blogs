@@ -1,3 +1,4 @@
+import { isAdminOrigin } from "../services/origins";
 import './hostRuntime';
 
 const modules = new Map();
@@ -25,6 +26,7 @@ function loadStylesheet(url) {
 }
 
 export function loadPluginComponent(manifest) {
+  if (isAdminOrigin) return Promise.reject(new Error("管理域不执行页面插件"));
   if (manifest.type !== 'module' || manifest.apiVersion !== 1) return Promise.reject(new Error('插件与当前站点版本不兼容'));
   const url = pluginAssetURL(manifest, manifest.entry);
   if (!modules.has(url)) {

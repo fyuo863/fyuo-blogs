@@ -1,0 +1,14 @@
+.secure-admin {position:fixed;inset:0;overflow:auto;background:#101012;color:#f5f5f7;padding:32px;font-family:system-ui,sans-serif}
+.secure-admin>header {display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:32px}
+.secure-admin nav,.secure-content footer {display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+.secure-admin button,.secure-admin select {padding:8px 14px;border:1px solid #505056;border-radius:6px;background:#252529;color:inherit;cursor:pointer}
+.secure-admin button:disabled {opacity:.45;cursor:default}
+.secure-content {max-width:1000px;margin:0 auto}
+.secure-content nav {margin-bottom:24px}
+.secure-content label {display:grid;gap:8px;margin:16px 0}
+.secure-content input,.secure-content textarea {width:100%;padding:12px;border:1px solid #505056;border-radius:6px;background:#18181c;color:#f5f5f7}
+.secure-content textarea {min-height:100px}
+.secure-content fieldset {border:1px solid #505056;padding:16px;margin:16px 0}
+.secure-content ul {display:grid;gap:8px;margin:24px 0}
+.secure-admin .admin-panel {top:110px}
+@media(max-width:600px){.secure-admin{padding:16px}.secure-admin .admin-panel{top:160px}}

@@ -35,7 +35,7 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	r.GET("/plugin-assets/:slug/*path", deps.Plugins.Asset)
 
 	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true
+	config.AllowOrigins = []string{"https://www.fyuoblog.top"}
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization", "X-Event-Id", "X-Visitor-Id", "X-Content-Path"}
 	r.Use(cors.New(config))
 	r.GET("/healthz", handler.Health)
