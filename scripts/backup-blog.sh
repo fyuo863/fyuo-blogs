@@ -20,6 +20,8 @@ for c in blog-backend blog-ai-coding-ai-coding-sync-1; do
  docker pause "$c" >/dev/null
  paused="$paused $c"
 done
+docker exec blog_redis redis-cli SAVE >/dev/null
+docker cp blog_redis:/data/dump.rdb "$work/data/redis.dump.rdb"
 timeout 90 docker exec blog_postgres sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' >"$work/data/database.dump"
 for volume in blog_backend_plugins blog_backend_uploads blog-ai-coding_snapshots; do
  source=$(docker volume inspect -f '{{.Mountpoint}}' "$volume")

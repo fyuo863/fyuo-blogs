@@ -114,7 +114,7 @@ services:
     ports:
       - "127.0.0.1:6380:6379"
     volumes:
-      - redis_data:/var/lib/redis/data
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
