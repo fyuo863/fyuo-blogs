@@ -24,7 +24,7 @@
 - 从生产备份恢复的隔离容器中，使用正式证书/SNI 经 Nginx 测试：安全头、敏感路径、跨域拒绝、413、登录/退出撤销、真实图片上传读取、插件上传/发布/下线、MCP 身份绑定/撤销、429，全链路通过。测试写入仅发生在隔离副本。
 - frontend `npm audit --omit=dev` 和 MCP 完整 npm audit 均为 0。
 - 官方 Go 漏洞库扫描 Windows、Linux：可达符号和导入包漏洞均为 0。数据库通过服务器下载到本机供离线扫描，非跳过审计。
-- Trivy：Alpine 3.23 和 Redis 8 Alpine 基础镜像无 HIGH/CRITICAL；Nginx 基础镜像发现 libexpat/pcre2 补丁项，因此改为构建时升级系统库。最终镜像扫描在发布后补记。
+- Trivy：Alpine 3.23 和 Redis 8 Alpine 基础镜像无 HIGH/CRITICAL；Nginx 基础镜像发现 libexpat/pcre2 补丁项，因此改为构建时升级系统库。修补后的 Nginx 镜像 HIGH/CRITICAL 为 0，替换隔离代理后完整烟测再次通过。
 
 ## 服务器与恢复验证
 
