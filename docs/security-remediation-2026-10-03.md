@@ -51,3 +51,11 @@
 - v0.5.1 已推送，发布工作流的完整 CI 通过；镜像构建因 npmmirror 缺少锁定包而失败，未切换生产。独立 main CI 出现侧栏动画点击时序失败，修正测试为先等待悬停展开再点击；没有修改页面动画。
 - 后续补丁使用 npm 官方源，保持已发布 tag 不变。官方源干净安装、lint、生产构建和 29 项浏览器测试已再次通过。最终补丁版本为 v0.5.2。
 - 本机恢复演练的明文临时副本清理被自动审批阻止，仍在受限的 `%LOCALAPPDATA%/FyuoBlogBackups/restore-drill` 和 `restore.tar`；服务器隔离副本及测试容器已清理。加密备份与私钥保留。
+
+## 最终基础服务补丁 v0.5.3
+
+- v0.5.2 的发布 CI 与 main CI 均已通过。应用已上线，但首次启动监控时 Nginx 的 Docker health 状态尚处于 starting，工作流因此报失败；现在部署先等待 nginx 的健康状态，避免把就绪时序当成服务故障。
+- 对服务器实际 PostgreSQL/Redis 镜像复扫，发现旧 Alpine OpenSSL/util-linux/libxml2 库告警。固定到已扫描的官方镜像镜像站摘要，保留 PostgreSQL 16、Redis 8 大版本；补丁镜像的 PostgreSQL 恢复演练成功。
+- 修复 Redis 的持久化目录：旧配置挂载 /var/lib/redis/data，服务实际写 /data。迁移会停止后端写入、SAVE、复制当前 RDB 到原命名卷，再以 /data 挂载；失败会恢复原后端。Redis 独立重建恢复测试成功。历史旧配置重建造成的易失缓存无法保证完整追溯，文章持久计数保存在 PostgreSQL。
+- 加密备份新增 redis.dump.rdb。2026-10-03T05:15:55Z 已成功生成包含 Redis 快照的新备份。
+- 本次基础服务迁移已在保留现有持久卷的情况下执行；公开插件文件、插件数据库记录、版本及排序以发布前后的摘要比对验收。
