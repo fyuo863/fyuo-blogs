@@ -1,5 +1,5 @@
 # 前端构建镜像
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
 # 利用缓存加速安装依赖
@@ -11,7 +11,7 @@ COPY . .
 RUN npm run build
 
 # Runtime contains only host assets, not plugin sources, ZIPs or public assets.
-FROM node:20-alpine AS runner
+FROM alpine:3.23 AS runner
 WORKDIR /app
 COPY --from=builder /app/dist ./dist
 
