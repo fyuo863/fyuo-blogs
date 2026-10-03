@@ -21,7 +21,11 @@ test('fullscreen plugin shell overlays content and preserves it when collapsed',
   await page.mouse.move(8, 45);
   await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'false');
   const nav = page.getByRole('navigation', { name: '插件导航' });
-  await nav.getByRole('link', { name: 'journal', exact: true }).click();
+  const journalLink = nav.getByRole('link', { name: 'journal', exact: true });
+  await journalLink.hover();
+  await expect.poll(async () => (await journalLink.boundingBox())?.x).toBe(0);
+  await journalLink.click();
+  await expect(page).toHaveURL(/\/p\/journal$/);
   await expect(page.locator('.blog-title')).toBeVisible();
   const title = page.locator('.blog-title');
   const style = await title.getAttribute('style');
