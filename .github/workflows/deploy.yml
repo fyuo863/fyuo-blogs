@@ -97,7 +97,7 @@ jobs:
           host: ${{ secrets.ECS_HOST }}
           username: ${{ secrets.ECS_USER }}
           key: ${{ secrets.ECS_SSH_KEY }}
-          source: "docker-compose.yml,nginx.conf,scripts/prune-deploy-images.sh,scripts/prepare-security-volumes.sh"
+          source: "docker-compose.yml,nginx.conf,scripts/prune-deploy-images.sh,scripts/prepare-security-volumes.sh,scripts/backup-blog.sh,scripts/install-security-timers.sh,scripts/security-health.py"
           target: "/data/blog/"
 
       - name: Deploy or rollback on ECS
@@ -151,7 +151,7 @@ jobs:
             docker compose pull backend frontend mcp-blog-publisher || preflight_fail "image pull failed"
             docker compose run --rm --no-deps nginx nginx -t || preflight_fail "nginx config invalid"
             # Keep the same Compose project and named volumes; never remove volumes on upgrade.
-            sh scripts/prepare-security-volumes.sh
+            sudo -E sh scripts/prepare-security-volumes.sh
             docker compose up -d --remove-orphans || runtime_fail "compose up failed"
             # SCP replaces the config inode; reload alone keeps an old file bind mount.
             docker compose up -d --no-deps --force-recreate nginx || runtime_fail "nginx recreate failed"
@@ -168,6 +168,7 @@ jobs:
                 # Keep the newest two complete tagged releases, including rollback images.
                 # A global `image prune -a` would also delete the rollback release.
                 sh scripts/prune-deploy-images.sh
+                if [ -s /data/blog/backup-recipient.pem ]; then sudo sh scripts/install-security-timers.sh; fi
                 echo "Deployment healthy: $IMAGE_TAG"
                 exit 0
               fi
