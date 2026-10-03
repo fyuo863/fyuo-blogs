@@ -107,7 +107,8 @@ services:
 
   redis:
     <<: *security
-    image: redis:8-alpine
+    # Official-image mirror, pinned to the scanned distribution patch build.
+    image: public.ecr.aws/docker/library/redis:8-alpine@sha256:3811787313eba226a2ef38658c6ccb91cd5e110edc89c37767de373120a0e5a0
     container_name: blog_redis
     restart: always
     ports:
@@ -122,7 +123,7 @@ services:
 
   postgres:
     <<: *security
-    image: postgres:16-alpine
+    image: public.ecr.aws/docker/library/postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
     container_name: blog_postgres
     restart: always
     env_file:
