@@ -11,7 +11,7 @@ services:
   nginx:
     <<: *security
     mem_limit: 256m
-    image: nginx:alpine
+    image: crpi-hpnvugd276r767na.cn-hangzhou.personal.cr.aliyuncs.com/fyuo-blog/blog-nginx:security-20261003
     container_name: blog_nginx
     restart: always
     ports:

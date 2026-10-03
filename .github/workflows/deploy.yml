@@ -71,6 +71,14 @@ jobs:
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-backend:latest
             ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-backend:${{ env.RELEASE_TAG }}
 
+      - name: Build patched reverse proxy
+        if: env.DEPLOY_ACTION == 'deploy'
+        uses: docker/build-push-action@v5
+        with:
+          context: ./deploy/nginx
+          push: true
+          tags: ${{ secrets.ALIYUN_REGISTRY }}/fyuo-blog/blog-nginx:security-20261003
+
       - name: Build and push frontend image
         if: env.DEPLOY_ACTION == 'deploy'
         uses: docker/build-push-action@v5
@@ -148,7 +156,7 @@ jobs:
             export IMAGE_TAG
             echo "Running $DEPLOY_ACTION with IMAGE_TAG=$IMAGE_TAG"
 
-            docker compose pull backend frontend mcp-blog-publisher || preflight_fail "image pull failed"
+            docker compose pull backend frontend mcp-blog-publisher nginx || preflight_fail "image pull failed"
             docker compose run --rm --no-deps nginx nginx -t || preflight_fail "nginx config invalid"
             # Keep the same Compose project and named volumes; never remove volumes on upgrade.
             sudo -E sh scripts/prepare-security-volumes.sh
