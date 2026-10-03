@@ -215,7 +215,14 @@ test('published plugins appear in the sidebar and switching resets the reading p
   await page.goto('/');
   await expect(page.locator('.home-cover')).toBeVisible();
   await page.locator('.plugin-shell__reader').evaluate(el => { el.scrollTop = 500; });
-  await page.getByRole('link', { name: 'Extra plugin' }).click();
+  const extra = page.getByRole('link', { name: 'Extra plugin' });
+  // Hover can expand the rail and move the target after click's first
+  // actionability check. Complete that user interaction before clicking.
+  await extra.hover();
+  await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'false');
+  await expect.poll(async () => (await extra.boundingBox())?.x).toBe(0);
+  await extra.click();
+  await expect(page).toHaveURL(/\/p\/extra$/);
   await expect(page.frameLocator('.plugin-shell__reader > iframe').getByRole('heading')).toHaveText('Extra plugin');
   expect(await page.locator('.plugin-shell__reader').evaluate(el => el.scrollTop)).toBe(0);
   await expect(page.getByRole('link', { name: 'Extra plugin' })).toHaveAttribute('aria-current', 'page');
