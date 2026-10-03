@@ -123,6 +123,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
       ) : null}
       <div className="article-reader px-[10%] py-16">
         <button
+          type="button"
           onClick={onBack}
           className="article-reader__back text-lg font-mono text-white hover:text-white transition-colors mb-16"
         >
@@ -228,6 +229,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
 
         <div className="mt-20 border-t border-zinc-800 pt-8">
           <button
+            type="button"
             onClick={onBack}
             className="text-lg font-mono text-white hover:text-white transition-colors"
           >

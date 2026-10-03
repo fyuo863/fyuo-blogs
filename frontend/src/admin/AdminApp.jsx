@@ -15,8 +15,8 @@ export default function AdminApp() {
   const notify = value => setInfo(value);
   return <BrowserRouter><main className="secure-admin">
     <header><h1>fyuo-control.</h1><nav aria-label="管理导航">
-      <button onClick={() => setSection('plugins')}>插件与权限</button>
-      <button onClick={() => setSection('content')}>内容编辑</button>
+      {user?.role === 'admin' && <button aria-pressed={section === 'plugins'} onClick={() => setSection('plugins')}>插件与权限</button>}
+      <button aria-pressed={section === 'content' || user?.role !== 'admin'} onClick={() => setSection('content')}>内容编辑</button>
       <a href="https://fyuoblog.top/" rel="noopener noreferrer">查看网站</a>
       {user ? <button onClick={() => logout().catch(error => notify({title:'退出失败',message:error.message}))}>退出登录</button> : <button onClick={() => setSignIn(true)}>登录</button>}
     </nav></header>
