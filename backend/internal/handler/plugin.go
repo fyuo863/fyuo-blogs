@@ -97,18 +97,20 @@ func (h *PluginHandler) Upload(c *gin.Context) {
 		c.JSON(400, gin.H{"error": "缺少插件 ZIP"})
 		return
 	}
-	tmp, e := os.CreateTemp("", "plugin-upload-*.zip")
+	// Gin changes the destination directory's permissions. Use an owned
+	// private directory so a non-root process never chmods the shared /tmp.
+	tmpDir, e := os.MkdirTemp("", "plugin-upload-")
 	if e != nil {
 		c.Status(500)
 		return
 	}
-	tmp.Close()
-	defer os.Remove(tmp.Name())
-	if e = c.SaveUploadedFile(f, tmp.Name()); e != nil {
+	defer os.RemoveAll(tmpDir)
+	tmpPath := filepath.Join(tmpDir, "upload.zip")
+	if e = c.SaveUploadedFile(f, tmpPath); e != nil {
 		c.Status(500)
 		return
 	}
-	v, e := h.svc.Upload(tmp.Name(), claims.UserID)
+	v, e := h.svc.Upload(tmpPath, claims.UserID)
 	if errors.Is(e, service.ErrPluginVersionExists) {
 		c.JSON(409, gin.H{"error": "该版本已存在，请修改版本号后重新上传"})
 		return
