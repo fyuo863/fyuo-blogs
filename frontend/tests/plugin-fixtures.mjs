@@ -25,7 +25,8 @@ export const user = { id: 1, name: 'migration-test', role: 'admin', token: 'loca
 export const article = { id: 42, title: 'Migration fixture', content: '# Preserved Markdown\n\n**Original formatting** and a [link](https://example.com).', stage: 'published', vol: 1, tags: ['test'], created_at: '2026-09-01T00:00:00Z', view_count: 7, like_count: 2 };
 export async function mockBusinessAPI(page, { signedIn = false } = {}) {
   const calls = [];
-  if (signedIn) await page.addInitScript(profile => localStorage.setItem('user', JSON.stringify(profile)), user);
+  // Only seed the app document; screenshot style-probe frames must not restore a logged-out session.
+  if (signedIn) await page.addInitScript(profile => { if (window === window.top) localStorage.setItem('user', JSON.stringify(profile)); }, user);
   await page.route('**/api/v1/**', async route => {
     const request = route.request();
     const url = new URL(request.url());

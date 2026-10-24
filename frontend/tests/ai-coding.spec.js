@@ -25,7 +25,7 @@ test('ai coding renders public summaries, responsive layout and stale data hones
   // Explicit synthetic fixture: never included in the plugin ZIP.
   const data = { schemaVersion: 1, updatedAt: new Date().toISOString(), totals: { today: 12000, month: 240000, allTime: 1200000 }, daily: Array.from({ length: 90 }, (_, i) => { const d = new Date(); d.setUTCDate(d.getUTCDate() - i); return { date: d.toISOString().slice(0, 10), tokens: (i % 9 + 1) * 1200 }; }), tools: [{ name: 'Codex', tokens: 1200000 }], models: [{ name: 'Test model', tokens: 1200000 }] };
   await page.route('**/api/v1/showcase/ai-coding', route => failed ? route.fulfill({ status: 503 }) : route.fulfill({ json: data }));
-  await page.goto('/');
+  await page.goto('/p/ai-coding');
   await expect(page.locator('.aic-totals')).toContainText('1.2M');
   for (const width of [320, 375, 414, 768, 1440]) {
     await page.setViewportSize({ width, height: 1000 });
@@ -38,13 +38,13 @@ test('ai coding renders public summaries, responsive layout and stale data hones
   }
   await page.getByRole('button', { name: '7 天', exact: true }).click();
   await expect(page.locator('.aic-bars>div')).toHaveCount(7);
-  await expect(page.frameLocator('.plugin-sidebar__preview iframe').locator('.aic-totals')).toContainText('1.2M');
+  await expect(page.locator('.plugin-sidebar')).toHaveCount(0);
   failed = true;
   await page.locator('.aic-status button').click();
   await expect(page.locator('.aic-status')).toContainText('保留最近记录');
   await expect(page.locator('.aic-totals')).toContainText('1.2M');
-  await expect(page.locator('.plugin-sidebar__preview iframe')).toHaveCount(1);
-  await expect(page.frameLocator('.plugin-sidebar__preview iframe').locator('.aic-totals')).toContainText('1.2M');
+  await expect(page.locator('.plugin-sidebar__preview iframe')).toHaveCount(0);
+  await expect(page.locator('.plugin-sidebar')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
@@ -52,7 +52,7 @@ test('ai coding unavailable or malformed feed does not invent usage', async ({ p
   await setup(page);
   await page.route('**/api/v1/showcase/ai-coding', route => route.fulfill({ json: { invalid: true } }));
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
+  await page.goto('/p/ai-coding');
   await expect(page.locator('.aic-status')).toContainText('等待首次同步');
   await expect(page.locator('.aic-totals strong')).toHaveText(['—', '—', '—']);
   await page.screenshot({ path: 'test-results/ai-coding-empty.png', fullPage: true });

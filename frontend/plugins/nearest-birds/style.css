@@ -1,0 +1,8 @@
+.nearest-birds { position:relative; width:100%; height:100dvh; min-height:240px; overflow:hidden; background:#fff; color:#202020; }
+.nearest-birds__canvas { display:block; width:100%; height:100%; }
+.nearest-birds__controls { position:absolute; bottom:24px; left:50%; transform:translateX(-50%); display:flex; align-items:center; gap:16px; padding:8px 12px; background:rgba(255,255,255,.9); border:1px solid #e8e8e8; border-radius:8px; font:13px/1.4 system-ui,sans-serif; white-space:nowrap; }
+.nearest-birds__controls button { color:inherit; font:inherit; cursor:pointer; padding:6px 10px; border:0; border-radius:4px; background:#f3f3f3; }
+.nearest-birds__controls button:hover { background:#e6e6e6; }
+.nearest-birds__controls button:focus-visible { outline:2px solid #315bd5; outline-offset:3px; }
+
+.nearest-birds__controls { display:none; }

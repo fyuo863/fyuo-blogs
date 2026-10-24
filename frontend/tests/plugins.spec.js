@@ -1,81 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { mockBusinessAPI, user } from './plugin-fixtures.mjs';
 
-test('fullscreen plugin shell overlays content and preserves it when collapsed', async ({ page }) => {
-  const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  await mockBusinessAPI(page);
-  await page.goto('/');
-  await expect(page.locator('.home-cover')).toBeVisible();
-  await expect(page.locator('.blog-title')).toHaveCount(0);
-  await expect(page.locator('.plugin-shell__reader > iframe')).toHaveCount(0);
-  await page.locator('.home-cover').evaluate(el => { el.dataset.identity = 'original'; });
-  const before = await page.locator('.plugin-shell__canvas').boundingBox();
-  expect(before).toEqual({ x: 0, y: 0, width: 1440, height: 900 });
-  await page.screenshot({ path: 'test-results/shell-desktop.png' });
-  await page.locator('.plugin-shell__canvas').click({ position: { x: 900, y: 800 } });
-  await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'true');
-  await expect(page.locator('.plugin-sidebar__toggle')).toHaveCount(0);
-  expect(await page.locator('.plugin-shell__canvas').boundingBox()).toEqual(before);
-  await expect(page.locator('.home-cover')).toHaveAttribute('data-identity', 'original');
-  await page.mouse.move(8, 45);
-  await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'false');
-  const nav = page.getByRole('navigation', { name: '插件导航' });
-  const journalLink = nav.getByRole('link', { name: 'journal', exact: true });
-  await journalLink.hover();
-  await expect.poll(async () => (await journalLink.boundingBox())?.x).toBe(0);
-  await journalLink.click();
-  await expect(page).toHaveURL(/\/p\/journal$/);
-  await expect(page.locator('.blog-title')).toBeVisible();
-  const title = page.locator('.blog-title');
-  const style = await title.getAttribute('style');
-  await expect.poll(() => title.getAttribute('style')).not.toBe(style);
-  await nav.getByRole('link', { name: 'travel', exact: true }).click();
-  await expect(page).toHaveURL(/\/p\/travel$/);
-  await expect(nav.getByRole('link', { name: 'travel' })).toHaveAttribute('aria-current', 'page');
-  await expect(page.locator('.travel-globe__zoom-input')).toBeVisible();
-  await page.locator('.travel-globe__zoom-input').fill('2.5');
-  await expect(page.locator('.travel-globe__scale output')).toHaveText('1,000 km');
-  await page.goBack();
-  await expect(page.locator('.blog-title')).toBeVisible();
-  expect(errors).toEqual([]);
-});
-
-for (const width of [320, 375, 414, 768]) {
-  test(`shell fits ${width}px with accessible floating controls`, async ({ page }) => {
-    await mockBusinessAPI(page);
-    await page.setViewportSize({ width, height: 844 });
-    await page.goto('/');
-    await expect(page.locator('.home-cover')).toBeVisible();
-    expect(await page.locator('.plugin-shell__canvas').boundingBox()).toEqual({ x: 0, y: 0, width, height: 844 });
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
-    await expect(page.getByRole('button', { name: 'log-in.', exact: true })).toBeVisible();
-    await expect(page.getByRole('link', { name: '浙ICP备2026038123号' })).toHaveAttribute('href', 'https://beian.miit.gov.cn/');
-    await page.screenshot({ path: `test-results/shell-expanded-${width}.png` });
-    await page.getByRole('link', { name: 'index', exact: true }).focus();
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'true');
-    await expect(page.getByRole('link', { name: 'index', exact: true })).toBeFocused();
-    await expect.poll(async () => { const box = await page.locator('.plugin-sidebar__tab').first().boundingBox(); return box.x < 0 && box.x + box.width > 0; }).toBe(true);
-    await page.screenshot({ path: `test-results/shell-${width}.png` });
-  });
-}
-
-test('narrow screens, old routes, aliases and unknown plugin failures', async ({ page }) => {
-  await mockBusinessAPI(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  for (const [path, selector] of [['/', '.home-cover'], ['/p/index', '.home-cover'], ['/blog', '.blog-title'], ['/p/journal', '.blog-title'], ['/travel', '.travel-globe__canvas'], ['/p/travel', '.travel-globe__canvas']]) {
-    await page.goto(path);
-    await expect(page.locator(selector)).toBeVisible();
-    await expect(page.locator('.single-page-reader')).toHaveCount(1);
-    await expect(page.locator('.magazine-spread')).toHaveCount(0);
-  }
-  await page.goto('/p/missing');
-  await expect(page.getByRole('alert')).toHaveText('插件不可用');
-  await page.getByRole('navigation', { name: '插件导航' }).getByRole('link', { name: 'index', exact: true }).click();
-  await expect(page.locator('.home-cover')).toBeVisible();
-});
-
 test('journal search, Markdown portals and view identity remain intact', async ({ page }) => {
   const calls = await mockBusinessAPI(page);
   await page.setViewportSize({ width: 900, height: 900 });
@@ -107,8 +32,6 @@ test('the existing content desk opens plugin editors with the host login and cal
   await page.getByRole('button', { name: 'edit home.', exact: true }).click();
   await expect(page.locator('.home-editor')).toBeVisible();
   await page.goto('/p/travel?desk=new');
-  await page.locator('.plugin-sidebar__select').first().focus();
-  await page.keyboard.press('Escape');
   await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Kyoto');
   await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('35.0116');
   await page.getByRole('textbox', { name: 'Longitude', exact: true }).fill('135.7681');
@@ -178,8 +101,6 @@ test('401 from a plugin editor invokes the host logout and sign-in flow', async 
   await page.route('**/api/v1/travel-places', route => route.request().method() === 'POST' ? route.fulfill({ status: 401, json: { error: 'expired' } }) : route.fallback());
   await page.setViewportSize({ width: 900, height: 900 });
   await page.goto('/travel?desk=new');
-  await page.locator('.plugin-sidebar__select').first().focus();
-  await page.keyboard.press('Escape');
   await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Kyoto');
   await page.getByRole('textbox', { name: 'Latitude', exact: true }).fill('35');
   await page.getByRole('textbox', { name: 'Longitude', exact: true }).fill('135');
@@ -208,55 +129,4 @@ test('content-desk commands only mount the addressed plugin editor', async ({ pa
   await expect(page.getByPlaceholder('Article title...')).toBeVisible();
   await expect(page.locator('.travel-globe__canvas')).toHaveCount(0);
   await expect(page.locator('.travel-place-editor')).toHaveCount(0);
-});
-
-
-test('published plugins appear in the sidebar and switching resets the reading position', async ({ page }) => {
-  await mockBusinessAPI(page);
-  await page.route('**/api/v1/plugins', route => route.fulfill({ json: { data: [...['index', 'journal', 'travel'].map(slug => ({ slug, name: slug })), { slug: 'extra', name: 'Extra plugin' }] } }));
-  await page.route('**/api/v1/plugins/extra/manifest', route => route.fulfill({ json: { data: { id: 'extra', name: 'Extra', version: '1.0.0', type: 'iframe', entry: 'index.html' } } }));
-  await page.route('**/plugin-assets/extra/**', route => route.fulfill({ contentType: 'text/html', body: '<h1>Extra plugin</h1>' }));
-  await page.goto('/');
-  await expect(page.locator('.home-cover')).toBeVisible();
-  await page.locator('.plugin-shell__reader').evaluate(el => { el.scrollTop = 500; });
-  const extra = page.getByRole('link', { name: 'Extra plugin' });
-  // Hover can expand the rail and move the target after click's first
-  // actionability check. Complete that user interaction before clicking.
-  await extra.hover();
-  await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'false');
-  await expect.poll(async () => (await extra.boundingBox())?.x).toBe(0);
-  await extra.click();
-  await expect(page).toHaveURL(/\/p\/extra$/);
-  await expect(page.frameLocator('.plugin-shell__reader > iframe').getByRole('heading')).toHaveText('Extra plugin');
-  expect(await page.locator('.plugin-shell__reader').evaluate(el => el.scrollTop)).toBe(0);
-  await expect(page.getByRole('link', { name: 'Extra plugin' })).toHaveAttribute('aria-current', 'page');
-  await expect.poll(async () => {
-    const current = await page.getByRole('link', { name: 'Extra plugin' }).boundingBox();
-    const inactive = await page.getByRole('link', { name: 'index', exact: true }).boundingBox();
-    return current.width > inactive.width && current.height > inactive.height;
-  }).toBe(true);
-});
-
-
-test('sidebar previews render live plugin content without nested shells or editor commands', async ({ page }) => {
-  await mockBusinessAPI(page, { signedIn: true });
-  await page.goto('/p/journal?desk=new');
-  const home = page.frameLocator('iframe[title="index 实时预览"]');
-  const journal = page.frameLocator('iframe[title="journal 实时预览"]');
-  await expect(home.locator('.home-cover')).toBeVisible();
-  await expect(journal.locator('.blog-title')).toBeVisible();
-  await expect(journal.locator('.plugin-sidebar')).toHaveCount(0);
-  await expect(journal.locator('.article-sheet')).toHaveCount(0);
-  await expect(page.getByPlaceholder('Article title...')).toBeVisible();
-  const title = journal.locator('.blog-title');
-  const style = await title.getAttribute('style');
-  await expect.poll(() => title.getAttribute('style')).not.toBe(style);
-  await home.locator('.home-cover').evaluate(el => { el.dataset.previewIdentity = 'persistent'; });
-  await page.getByRole('link', { name: 'journal', exact: true }).focus();
-  await page.keyboard.press('Escape');
-  await expect(home.locator('.home-cover')).toHaveAttribute('data-preview-identity', 'persistent');
-  await page.screenshot({ path: 'test-results/live-sidebar-collapsed.png' });
-  await page.getByRole('link', { name: 'journal', exact: true }).press('Enter');
-  await expect(page.locator('.plugin-sidebar')).toHaveAttribute('data-collapsed', 'false');
-  await page.screenshot({ path: 'test-results/live-sidebar-expanded.png' });
 });

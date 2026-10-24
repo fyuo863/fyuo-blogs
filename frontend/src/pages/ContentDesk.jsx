@@ -75,7 +75,7 @@ export default function ContentDesk({ user, onOpenSignIn, plugins = [] }) {
       {error && <p className="content-desk__notice" role="status">{error}</p>}
 
       <section className="content-desk__index" aria-label="Content sections">
-        {CONTENT_SECTIONS.filter(section => plugins.some(plugin => plugin.slug === (section.key === "home" ? "index" : section.key))).map((section) => (
+        {CONTENT_SECTIONS.filter(section => section.key !== 'travel' || plugins.some(plugin => plugin.slug === 'travel')).map((section) => (
           <article className="content-desk__section" key={section.key}>
             <p>{section.index} / {section.label}</p>
             <div>
@@ -83,7 +83,7 @@ export default function ContentDesk({ user, onOpenSignIn, plugins = [] }) {
               <span>{section.note}</span>
             </div>
             {section.key === "home" && (
-              <button className="content-desk__action" type="button" onClick={() => navigate("/p/index?desk=home")}>edit home.</button>
+              <button className="content-desk__action" type="button" onClick={() => navigate("/?desk=home")}>edit home.</button>
             )}
             {section.key === "journal" && (
               <button className="content-desk__action" type="button" onClick={() => navigate("/blog?desk=new")}>new article.</button>

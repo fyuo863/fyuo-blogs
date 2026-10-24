@@ -1,6 +1,6 @@
 import { Children, useEffect, useRef, useState } from "react";
 
-function HalftoneTitle({ id, children }) {
+function HalftoneTitle({ id, children, as: Heading = 'h1' }) {
   const titleRef = useRef(null);
   const canvasRef = useRef(null);
   const lines = Children.toArray(children).map((child) => (
@@ -26,15 +26,21 @@ function HalftoneTitle({ id, children }) {
     const title = titleRef.current;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
-    const surface = title?.closest(".home-cover");
+    const surface = title?.closest(".home-cover, .studio-keyvisual");
     if (!title || !canvas || !context || !surface) return undefined;
 
-    const rootStyles = getComputedStyle(document.documentElement);
+    const isPreview = new URLSearchParams(window.location.search).get('__plugin_preview') === '1';
+    const frameInterval = 1000 / (isPreview ? 15 : 60);
+    const pixelBudget = isPreview ? 180000 : 1200000;
+    const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const rootStyles = getComputedStyle(surface);
     const colors = {
-      paper: rootStyles.getPropertyValue("--color-paper").trim(),
-      cobalt: rootStyles.getPropertyValue("--color-cobalt").trim(),
+      get paper() { return rootStyles.getPropertyValue("--color-paper").trim(); },
+      get cobalt() { return rootStyles.getPropertyValue("--color-cobalt").trim(); },
     };
-    const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
+    const baseCellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
+    let cellSize = baseCellSize;
+    let viewportScale = 1;
     const baseRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-base-radius")) || 0.78;
     const titleDotScale = Number.parseFloat(rootStyles.getPropertyValue("--halftone-title-dot-scale")) || 0.5;
     const revealRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-reveal-radius")) || 180;
@@ -54,8 +60,9 @@ function HalftoneTitle({ id, children }) {
       animation: 0,
       lastFrame: 0,
       wave: null,
+      simulationTime: 0,
     };
-    const prefersReducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const prefersReducedMotion = () => motionQuery.matches;
     const canTrackPointer = () => window.matchMedia("(hover: hover) and (pointer: fine)").matches && !prefersReducedMotion();
     const updatePointerPosition = (clientX, clientY) => {
       const bounds = surface.getBoundingClientRect();
@@ -108,29 +115,31 @@ function HalftoneTitle({ id, children }) {
 
     const draw = () => {
       if (!state.width || !state.height) return;
-      context.clearRect(0, 0, state.width, state.height);
       context.fillStyle = colors.cobalt;
       context.fillRect(0, 0, state.width, state.height);
       context.fillStyle = colors.paper;
 
+      context.beginPath();
       state.points.forEach((point) => {
-        const distance = Math.hypot(point.x - state.pointer.x, point.y - state.pointer.y);
-        const proximity = state.pointer.active ? Math.max(0, 1 - distance / revealRadius) : 0;
+        const distance = state.pointer.active ? Math.hypot(point.x - state.pointer.x, point.y - state.pointer.y) : 0;
+        const proximity = state.pointer.active ? Math.max(0, 1 - distance / (revealRadius * viewportScale)) : 0;
         const eased = proximity * proximity * (3 - 2 * proximity);
         const waveHeight = state.wave?.current[point.waveIndex] || 0;
         const radius = cellSize * Math.max(0.12, Math.min(0.96, point.baseRadius - eased * 0.63 + waveHeight * 0.27));
-        context.beginPath();
+        context.moveTo(point.x + radius, point.y);
         context.arc(point.x, point.y, radius, 0, Math.PI * 2);
-        context.fill();
       });
+      context.fill();
     };
 
     const resize = () => {
       const bounds = surface.getBoundingClientRect();
       const titleBox = title.getBoundingClientRect();
-      const scale = Math.min(window.devicePixelRatio || 1, 1.5);
       state.width = Math.max(1, bounds.width);
       state.height = Math.max(1, bounds.height);
+      // Preserve dot proportions while bounding the grid on large displays.
+      viewportScale = Math.max(1, state.width / 1280, state.height / 800);
+      cellSize = baseCellSize * viewportScale;
       state.titleBounds = {
         x: titleBox.left - bounds.left,
         y: titleBox.top - bounds.top,
@@ -138,9 +147,10 @@ function HalftoneTitle({ id, children }) {
         height: titleBox.height,
       };
       if (state.pointer.active) updatePointerPosition(state.pointer.clientX, state.pointer.clientY);
-      canvas.width = Math.round(state.width * scale);
-      canvas.height = Math.round(state.height * scale);
-      context.setTransform(scale, 0, 0, scale, 0, 0);
+      const scale = Math.min(window.devicePixelRatio || 1, 1.5, Math.sqrt(pixelBudget / (state.width * state.height)));
+      canvas.width = Math.max(1, Math.floor(state.width * scale));
+      canvas.height = Math.max(1, Math.floor(state.height * scale));
+      context.setTransform(canvas.width / state.width, 0, 0, canvas.height / state.height, 0, 0);
       state.points = [];
       const columns = Math.ceil(state.width / cellSize) + 2;
       const rows = Math.ceil(state.height / cellSize) + 2;
@@ -170,11 +180,11 @@ function HalftoneTitle({ id, children }) {
     };
 
     const requestDraw = () => {
-      if (state.frame || !state.visible) return;
+      if (state.animation || state.frame || !state.visible || document.hidden) return;
       state.frame = window.requestAnimationFrame(() => { state.frame = 0; draw(); });
     };
     const onPointerMove = (event) => {
-      if (!canTrackPointer()) return;
+      if (isPreview || !state.visible || !canTrackPointer()) return;
       updatePointerPosition(event.clientX, event.clientY);
       requestDraw();
     };
@@ -191,21 +201,41 @@ function HalftoneTitle({ id, children }) {
       requestDraw();
     };
     const animate = (timestamp) => {
-      if (!state.visible || prefersReducedMotion()) {
+      if (!state.visible || document.hidden || prefersReducedMotion()) {
         state.animation = 0;
         return;
       }
-      if (state.lastFrame) advanceWave(timestamp);
-      state.lastFrame = timestamp;
-      draw();
+      if (!state.lastFrame || timestamp - state.lastFrame >= frameInterval - 0.5) {
+        // Fixed simulation steps keep wave speed independent of preview/display FPS.
+        if (!state.simulationTime) state.simulationTime = timestamp;
+        state.simulationTime = Math.max(state.simulationTime, timestamp - 100);
+        while (timestamp - state.simulationTime >= 1000 / 60) {
+          state.simulationTime += 1000 / 60;
+          advanceWave(state.simulationTime);
+        }
+        state.lastFrame = timestamp;
+        draw();
+      }
       state.animation = window.requestAnimationFrame(animate);
     };
     const startAnimation = () => {
-      if (!state.animation && state.visible && !prefersReducedMotion()) {
+      if (!state.animation && state.visible && !document.hidden && !prefersReducedMotion()) {
+        if (state.frame) { window.cancelAnimationFrame(state.frame); state.frame = 0; }
+        state.simulationTime = 0;
         state.lastFrame = 0;
         state.animation = window.requestAnimationFrame(animate);
       }
     };
+    const onActivityChange = () => {
+      if (document.hidden || prefersReducedMotion()) {
+        window.cancelAnimationFrame(state.animation);
+        window.cancelAnimationFrame(state.frame);
+        state.animation = state.frame = 0;
+        if (!document.hidden) requestDraw();
+      } else startAnimation();
+    };
+    document.addEventListener('visibilitychange', onActivityChange);
+    motionQuery.addEventListener('change', onActivityChange);
     const resizeObserver = new ResizeObserver(resize);
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       state.visible = entry.isIntersecting;
@@ -227,6 +257,8 @@ function HalftoneTitle({ id, children }) {
     return () => {
       if (state.frame) window.cancelAnimationFrame(state.frame);
       if (state.animation) window.cancelAnimationFrame(state.animation);
+      document.removeEventListener('visibilitychange', onActivityChange);
+      motionQuery.removeEventListener('change', onActivityChange);
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       window.removeEventListener("pointermove", onPointerMove);
@@ -238,7 +270,7 @@ function HalftoneTitle({ id, children }) {
 
   let sequenceIndex = 0;
   return (
-    <h1 className="cover-title cover-title--halftone" id={id} ref={titleRef}>
+    <Heading className="cover-title cover-title--halftone" id={id} ref={titleRef}>
       <canvas ref={canvasRef} className="halftone-title__canvas" aria-hidden="true" />
       <span className="cover-title__text">
         {lines.map((line, lineIndex) => (
@@ -250,7 +282,7 @@ function HalftoneTitle({ id, children }) {
           </span>
         ))}
       </span>
-    </h1>
+    </Heading>
   );
 }
 

@@ -1,0 +1,18 @@
+/* Hallmark · studied-DNA: user screenshots / STUDIO TRIGGER · scoped to public shell */
+.studio-shell {
+  --studio-paper: #1e2020;
+  --studio-panel: #313332;
+  --studio-ink: #eff5d9;
+  --studio-muted: #b1b5a7;
+  --studio-rule: #55594f;
+  --studio-red: #ff3455;
+  --studio-orange: #ff932e;
+  --studio-dot-ink: #111111;
+  --studio-green: #acfa64;
+  --studio-blue: #809eff;
+  --studio-yellow: #f2d868;
+  --studio-display: 'Arial Black', 'Bricolage Grotesque', Arial, sans-serif;
+  --studio-body: 'Bricolage Grotesque', 'Microsoft YaHei', sans-serif;
+  --studio-mono: var(--font-outlier);
+  --studio-gutter: clamp(1.25rem, 5vw, 6rem);
+}

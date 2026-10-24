@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useShowcase } from "../showcase/useShowcase";
 import FeatureCard from "../module/FeatureCard";
 import ProjectGrid from "../module/ProjectGrid";
 import HalftoneTitle from "../components/HalftoneTitle";
@@ -37,6 +38,7 @@ const newProject = () => ({
 
 function Home({ user, onOpenSignIn, onLogout, onNotify }) {
   const location = useLocation();
+  const showcase = useShowcase();
   const [content, setContent] = useState(DEFAULT_HOME_CONTENT);
   const [draft, setDraft] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -124,7 +126,7 @@ function Home({ user, onOpenSignIn, onLogout, onNotify }) {
     <div className="home-page">
       <PhysicsItem strength={0.75}>
         <section className="home-cover" aria-labelledby="home-title">
-          <p className="cover-edition">fyuo / independent work / issue 01</p>
+          <p className="home-brand">FYUO</p>
           <HalftoneTitle id="home-title"><span>PROJECTS</span><span>&amp; NOTES</span></HalftoneTitle>
           <div className="cover-deck">
             <p>我的个人主页。</p>
@@ -133,24 +135,24 @@ function Home({ user, onOpenSignIn, onLogout, onNotify }) {
         </section>
       </PhysicsItem>
 
-      <PhysicsItem strength={1.05}>
-        <section className="home-feature" aria-label="Featured project">
-          <FeatureCard image={content.cover_image} title={content.cover_title} githubUrl={content.cover_github_url} description={content.cover_description} />
+      <PhysicsItem strength={1}>
+        <section className="projects-section" id="projects" aria-labelledby="projects-title">
+          {showcase.error && <p className="home-showcase-status" role="status">{showcase.error}</p>}
+          <ProjectGrid projects={showcase.albums ?? content.projects.map(({ link_url, ...project }) => ({ ...project, linkUrl: link_url }))} />
         </section>
       </PhysicsItem>
 
-      <PhysicsItem strength={1}>
-        <section className="projects-section" id="projects" aria-labelledby="projects-title">
-          <header className="section-head"><div><p className="section-kicker">the index / 02—07</p><h2 className="section-title" id="projects-title"><span className="section-title__selected">Selected work.</span></h2></div><p className="section-note">精选项目</p></header>
-          <ProjectGrid projects={content.projects.map(({ link_url, ...project }) => ({ ...project, linkUrl: link_url }))} />
+      {showcase.featured !== null && <PhysicsItem strength={1.05}>
+        <section className="home-feature" aria-label="Featured project">
+          <FeatureCard image={showcase.featured?.image ?? content.cover_image} title={showcase.featured?.title ?? content.cover_title} githubUrl={showcase.featured?.linkUrl ?? content.cover_github_url} description={showcase.featured?.description ?? content.cover_description} />
         </section>
-      </PhysicsItem>
+      </PhysicsItem>}
 
       {draft && (
         <section className="home-editor" ref={editorRef} aria-labelledby="home-editor-title" tabIndex="-1">
           <form onSubmit={saveContent}>
             <header className="home-editor__head">
-              <div><p className="section-kicker">editor / authenticated</p><h2 id="home-editor-title">Home content.</h2></div>
+              <div><h2 id="home-editor-title">Home content.</h2></div>
               <button className="home-editor__close" type="button" onClick={cancelEditing}>close ×</button>
             </header>
 
@@ -160,7 +162,7 @@ function Home({ user, onOpenSignIn, onLogout, onNotify }) {
               <label>简介<textarea value={draft.cover_description} onChange={(event) => updateDraft("cover_description", event.target.value)} required /></label>
             </fieldset>
 
-            <fieldset className="home-editor__fieldset">
+            {!showcase.configured && <fieldset className="home-editor__fieldset">
               <legend>Selected Work</legend>
               <div className="home-editor__projects">
                 {draft.projects.map((project, index) => (
@@ -172,7 +174,7 @@ function Home({ user, onOpenSignIn, onLogout, onNotify }) {
                 ))}
               </div>
               <button className="home-editor__add" type="button" onClick={addProject}>+ add project</button>
-            </fieldset>
+            </fieldset>}
 
             <footer className="home-editor__actions">
               <button type="button" onClick={cancelEditing}>cancel</button>

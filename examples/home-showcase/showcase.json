@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "albums": [
+    {
+      "id": "my-first-project",
+      "title": "我的第一个项目",
+      "description": "用一句话介绍这个项目。",
+      "content": "## 关于项目\n这里写专辑背面的正文，支持 Markdown。\n\n- 解决了什么问题\n- 有哪些功能\n- 最近的进展\n\n顺序由 albums 数组决定。",
+      "url": "https://github.com/your-name/your-project"
+    }
+  ],
+  "featured": {
+    "title": "fyuobot-ts",
+    "repository": "fyuo863/fyuobot-ts",
+    "description": "事件驱动的轻量化 Agent 框架。",
+    "url": "https://github.com/fyuo863/fyuobot-ts"
+  }
+}

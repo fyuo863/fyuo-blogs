@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import { useSidebarSnapshots } from "../plugins/sidebarSnapshots";
 import { Link } from "react-router-dom";
 
 
-export default function PluginSidebar({ plugins, activeSlug, user, onOpenSignIn, onOpenAdmin, onLogout }) {
+export default function PluginSidebar({ readerRef, plugins, activeSlug, user, onOpenSignIn, onOpenAdmin, onLogout }) {
   const [collapsed, setCollapsed] = useState(false);
   const rail = useRef(null);
   useEffect(() => {
@@ -12,6 +13,8 @@ export default function PluginSidebar({ plugins, activeSlug, user, onOpenSignIn,
   }, []);
   const entries = plugins;
   const isCollapsed = plugins.length > 0 && collapsed;
+  const version=plugins.find(plugin=>plugin.slug===activeSlug)?.active_version;
+  const snapshots=useSidebarSnapshots(readerRef,activeSlug,version,!isCollapsed);
 
   return <aside ref={rail} className="plugin-sidebar" data-collapsed={isCollapsed} aria-label="站点侧栏"
     onPointerEnter={event => { if (event.pointerType === "mouse") setCollapsed(false); }}
@@ -21,7 +24,9 @@ export default function PluginSidebar({ plugins, activeSlug, user, onOpenSignIn,
       <nav className="plugin-sidebar__tabs" aria-label="插件导航">
         {entries.map(plugin => <div key={plugin.slug} className="plugin-sidebar__tab" data-active={activeSlug === plugin.slug}>
           <div className="plugin-sidebar__preview" aria-hidden="true" inert="">
-            <iframe key={plugin.active_version || plugin.slug} title={`${plugin.name || plugin.slug} 实时预览`} tabIndex={-1} src={`/p/${encodeURIComponent(plugin.slug)}?__plugin_preview=1`} />
+            {snapshots[`${plugin.slug}@${plugin.active_version||''}`]
+              ? <img src={snapshots[`${plugin.slug}@${plugin.active_version||''}`]} alt="" draggable="false" />
+              : <span className="plugin-sidebar__placeholder">{plugin.name || plugin.slug}</span>}
           </div>
           <Link className="plugin-sidebar__select" to={`/p/${encodeURIComponent(plugin.slug)}`} aria-label={plugin.name || plugin.slug} aria-current={activeSlug === plugin.slug ? "page" : undefined}
             onClick={() => setCollapsed(false)} />

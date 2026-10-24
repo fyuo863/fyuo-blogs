@@ -82,6 +82,8 @@ jobs:
         run: |
           cd frontend
           npm run build:plugins
+          npm run build:captions
+          node --test plugins/predictive-captions/*.test.js
 
       - name: Test view-event behavior
         run: cd frontend && npm test

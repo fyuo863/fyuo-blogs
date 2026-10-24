@@ -16,7 +16,7 @@ test('production public plugins cannot receive persisted administrator credentia
   await page.route('**/api/v1/plugins',route=>route.fulfill({json:{data:[{slug:'probe',name:'Probe'}]}}));
   await page.route('**/api/v1/plugins/probe/manifest',route=>route.fulfill({json:{data:{id:'probe',version:'1',type:'module',apiVersion:1,entry:'entry.js'}}}));
   await page.route('**/plugin-assets/probe/**',route=>route.fulfill({contentType:'text/javascript',body:`export default function Probe(props){return globalThis.__FYUO_PLUGIN_HOST_V1__.react.createElement('output',null,JSON.stringify({user:props.user,stored:localStorage.getItem('user')}));}`}));
-  await page.goto('https://fyuoblog.top/');
+  await page.goto('https://fyuoblog.top/p/probe');
   await expect(page.locator('output')).toHaveText('{"user":null,"stored":null}');
   await page.getByRole('button',{name:'log-in.',exact:true}).click();
   await expect(page).toHaveURL('https://www.fyuoblog.top/');

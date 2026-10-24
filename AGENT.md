@@ -6,7 +6,7 @@
 
 - 主站发布不得构建、携带或自动安装任何页面插件；生产启动不得恢复内置页面。插件只由管理员上传和发布。
 - 主站升级不得修改插件文件、版本、发布状态或排序。保持现有数据库和 `backend_plugins` 命名卷；不得随升级删除卷。
-- 首页按已发布列表第一项展示，空站保留登录和插件管理入口；不要恢复硬编码默认插件列表。
+- 主站包含固定首页 `/`、博客 `/blog` 与插件目录 `/plugins`。插件继续通过 `/p/<id>` 独立加载；插件排序只影响插件目录，不替换首页。没有已发布插件时，首页与博客仍可访问。
 - API v1、共享运行时、props、样式变量及业务接口必须向后兼容。破坏性修改新增契约并保留旧版，升级时运行历史插件包回归。
 - 详见 `docs/host-only-deployment.md`。历史 `backend/builtin-plugins` 仅供兼容测试，不打包到镜像。
 
@@ -15,7 +15,7 @@
 - 新页面优先使用 `type: "module"`、`apiVersion: 1`，入口必须是 `.js` ESM，默认导出 React 组件。不要调用 `createRoot`，不要在插件中再创建 BrowserRouter 或复制主站侧栏。
 - 复用 `frontend/vite.plugins.config.js` 构建。该配置把 React、ReactDOM、JSX runtime、React Router 接到 `globalThis.__FYUO_PLUGIN_HOST_V1__`，不能打包第二份 React，也不能遗留浏览器无法解析的 npm 裸导入。
 - 宿主可传入 `user`、`onOpenSignIn`、`onLogout`、`onNotify`、`drawerItems`、`showDrawer`、`portalTarget`。可选 props 必须有默认值或空值保护；公开缩略预览没有登录用户，也不应开启编辑器。
-- 插件占据主内容区域，也会在独立预览文档中缩小展示。不要依赖唯一实例、主窗口尺寸或特定侧栏宽度。动画、事件监听和计时器应在卸载时清理。
+- 插件占据主内容区域。侧栏使用主页面画面快照，不另行挂载插件；旧独立预览路由仅保留兼容。不要依赖唯一实例、主窗口尺寸或特定侧栏宽度。动画、事件监听和计时器应在卸载时清理。
 - CSS 使用插件专属类名前缀和动画名；不要修改 `html`、`body`、`:root`、通用标签或宿主类。优先复用站点设计变量，并为独立展示提供默认值。支持 `prefers-reduced-motion`。
 - JS/CSS/图片/字体/动态分块必须随包交付；包内资源用相对路径或 `new URL('./asset', import.meta.url)`，不能依赖本地磁盘或开发服务器。
 - 生产管理域为 `https://www.fyuoblog.top`，不执行上传插件；公开域插件只收到 `user: null`，登录回调前往管理域。v1 props 与业务 API 保留，本地可信开发仍可验证旧插件编辑契约；生产内容编辑位于管理域。不得向公开插件传递管理令牌。
@@ -74,7 +74,7 @@ npm --prefix frontend run build:loading-test -- 1.0.1
 
 1. 构建成功，检查 ZIP 根目录、manifest 字段、资源齐全和大小限制。
 2. 使用实际打包产物在本地主站加载器中验证；可通过 Playwright 拦截 manifest/资源响应做本地验证，不调用上传和发布接口。
-3. 检查主页面、侧栏实时预览、动画运行和减少动态效果设置；确认 CSS 不污染主站。
+3. 检查主页面、侧栏画面快照、动画运行和减少动态效果设置；确认 CSS 不污染主站。
 4. 交付 ZIP 绝对路径、插件 id/version、构建命令和用户手动上传步骤。未实际上传就明确说明，不将本地渲染验证称为上传链路验证。
 
 ## 上传与发布接口
@@ -89,3 +89,7 @@ npm --prefix frontend run build:loading-test -- 1.0.1
 - `POST /api/v1/admin/plugins/<id>/disable`：下线。
 
 管理中心发布、下线和保存排序后，侧栏自动重新获取插件列表；已打开的插件页面刷新后使用新版本。打开 `/p/<id>` 查看内容。详细手动步骤见 `docs/loading-spinner-upload.md`。
+
+## 侧栏快照
+
+侧栏不得为了生成缩略图独立运行页面插件。只捕获当前阅读区域，未访问栏目使用占位，已访问栏目缓存最后快照；具体频率与限制见 `docs/sidebar-snapshots.md`。

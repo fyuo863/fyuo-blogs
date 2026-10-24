@@ -132,7 +132,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .section-title__selected { display: inline; padding: 0 0.05em; background: var(--color-accent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
 .section-note { max-width: 32ch; margin: 0; color: var(--color-muted); line-height: 1.45; }
 .project-grid { padding-block: var(--space-xl); border-top: var(--rule-hair) solid var(--color-ink); }
-.cover-flow { display: grid; gap: var(--space-lg); }
+.cover-flow { display: grid; gap: var(--space-lg); border-top:0; }
 .cover-flow__stage { position: relative; height: clamp(31.5rem, 69vw, 52.5rem); overflow: clip; isolation: isolate; background: var(--color-paper-2); perspective: 93rem; touch-action: pan-y; transform-style: preserve-3d; outline: 0; cursor: grab; }
 .cover-flow__wood-grain { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .cover-flow__wood-grain-line { fill: none; stroke: var(--color-ink-2); stroke-linecap: round; vector-effect: non-scaling-stroke; }
@@ -146,7 +146,6 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__item[aria-pressed="true"] { background: var(--color-paper); }
 .cover-flow__item > img { position: relative; z-index: 1; width: 100%; height: 100%; max-height: none; object-fit: cover; pointer-events: none; user-select: none; -webkit-user-drag: none; }
 .cover-flow__reflection { position: absolute; z-index: 0; top: calc(100% + 0.35rem); left: 0; width: 100%; height: 100%; overflow: clip; isolation: isolate; border: var(--rule-hair) solid var(--color-ink); pointer-events: none; }
-.cover-flow__reflection::after { content: ""; position: absolute; z-index: 1; inset: 0; background: color-mix(in oklch, var(--color-paper-3) 68%, transparent); pointer-events: none; }
 .cover-flow__reflection img { position: relative; z-index: 0; display: block; width: 100%; height: auto; aspect-ratio: 1; max-height: none; object-fit: cover; transform: translateY(100%) scaleY(-1); transform-origin: top; }
 .cover-flow__item-index { position: absolute; z-index: 2; top: var(--space-sm); left: var(--space-sm); font-family: var(--font-outlier); font-size: var(--text-xs); }
 /* Hallmark · component: project-postcard · genre: editorial · theme: locked custom
@@ -449,3 +448,50 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 @media (max-width: 40rem) { .journal-entry { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-md); padding-block: var(--space-xl); } .journal-entry__meta { padding-top: 0; } .journal-entry__content { grid-template-columns: minmax(0, 1fr); grid-template-areas: "title" "preview"; gap: var(--space-md); } .journal-entry__content h2 { max-width: none; font-size: clamp(1.9rem, 8.2cqi, 3.1rem); line-height: .98; } .journal-entry__thumbnail { aspect-ratio: 16 / 10; } .journal-entry--offline { margin-inline: clamp(var(--space-sm), 7vw, var(--space-4xl)); } }
 @media (max-width: 40rem) { .site-nav { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); } .site-nav__edition, .site-nav__rail { display: none; } .site-nav__actions { gap: var(--space-sm); } .site-nav__menu { display: inline-block; } .cover-title { font-size: clamp(3.5rem, 19vw, 6rem); } .cover-title__line:last-child { padding-left: var(--space-lg); } .home-feature { padding: var(--space-xl) var(--space-sm); } .feature-card { border-top-width: .25rem; } .feature-card__image { min-height: 13rem; padding: var(--space-md); } .feature-card__image img { width: min(100%, 17rem); max-height: 12rem; } .feature-card__content { padding: var(--space-lg) var(--space-md); } .feature-card__title { max-width: none; font-size: clamp(2.7rem, 15vw, 4.5rem); line-height: .84; } .feature-card__description { margin-block: var(--space-sm); } .blog-title { max-width: 100%; font-size: clamp(3.15rem, 15.5vw, 4.95rem); letter-spacing: -.075em; line-height: .88; } .blog-title--oil { display: block; width: 100%; padding-inline: .075em; } .sign-in-modal { place-items: end center; padding: 0; } .sign-in-modal__panel { width: 100%; min-height: 0; grid-template-columns: 1fr; box-shadow: 0 -0.45rem 0 var(--color-ink); } .sign-in-modal__masthead { min-height: 4.25rem; padding: var(--space-sm); } .sign-in-modal__masthead i { width: .75rem; height: .75rem; } .sign-in-modal__form { padding: var(--space-lg) var(--space-md); } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } .blog-title--oil::before { transform: none; } }
+
+/* Album details live on the reverse of the selected cover. */
+.cover-flow__item { border:0; background:transparent !important; }
+.cover-flow__sleeve { position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform 560ms var(--ease-out); }
+.cover-flow__item[data-flipped=true] .cover-flow__sleeve { transform:rotateY(180deg); }
+.cover-flow__front,.cover-flow__back { position:absolute; inset:0; width:100%; height:100%; border:var(--rule-hair) solid var(--color-ink); background:var(--color-paper); color:var(--color-ink); backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+.cover-flow__front { padding:0; cursor:pointer; }
+.cover-flow__front img { display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; }
+.cover-flow__back { transform:rotateY(180deg); display:flex; flex-direction:column; align-items:stretch; padding:clamp(16px,2vw,28px); text-align:left; cursor:auto; }
+.cover-flow__back h3 { padding-right:36px; margin:0 0 16px; font-family:var(--font-display); font-size:clamp(20px,2.2vw,30px); line-height:1.1; overflow-wrap:anywhere; }
+.cover-flow__back-content { min-height:0; flex:1; overflow:auto; overscroll-behavior:contain; touch-action:pan-y; font-size:14px; line-height:1.65; overflow-wrap:anywhere; }
+.cover-flow__back-content p { margin:0 0 12px; }
+.cover-flow__back-content img { max-width:100%; height:auto; }
+.cover-flow__back-content pre { max-width:100%; overflow:auto; }
+.cover-flow__back-content ul,.cover-flow__back-content ol { padding-left:20px; }
+.cover-flow__back-content a { text-decoration:underline; }
+.cover-flow__back .cover-flow__open { margin-top:12px; min-height:32px; display:flex; align-items:center; }
+.cover-flow__return { position:absolute; right:8px; top:8px; width:44px; height:44px; border:0; background:transparent; color:var(--color-ink); cursor:pointer; font-size:24px; }
+.cover-flow__return:hover { background:var(--color-paper-2); }
+.cover-flow__front:focus-visible,.cover-flow__return:focus-visible,.cover-flow__back-content:focus-visible { outline:3px solid var(--color-focus); outline-offset:3px; }
+.cover-flow__reflection { transform:scaleY(-1); transform-style:preserve-3d; border:0; overflow:visible; isolation:auto; }
+.cover-flow__reflection img { transform:none; }
+.cover-flow__item { transition-duration:560ms; }
+.cover-flow__navigation { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.cover-flow__navigation p { margin:0; font-size:var(--text-md); }
+.home-showcase-status { margin:0; padding:12px 0; font-size:var(--text-sm); color:var(--color-muted); }
+@media(prefers-reduced-motion:reduce) { .cover-flow__sleeve { transition:none; } }
+.home-cover { grid-template-rows:auto minmax(0,1fr) auto; }
+
+/* Darken each opaque reflected face without adding intersecting overlay planes. */
+.cover-flow__reflection .cover-flow__front, .cover-flow__reflection .cover-flow__back { filter:var(--cover-reflection-filter); }
+
+/* Older hosts still define this overlay; explicitly suppress it in the plugin. */
+.cover-flow__reflection::before, .cover-flow__reflection::after, .cover-flow__reflection .cover-flow__front::after, .cover-flow__reflection .cover-flow__back::after { content:none; }
+
+.cover-flow__fallback { padding:24px; font-family:var(--font-display); font-size:clamp(24px,3vw,40px); overflow-wrap:anywhere; }
+.cover-flow__front img[hidden] { display:none; }
+
+.cover-flow__heading { position:absolute; top:clamp(16px,2vw,28px); left:clamp(16px,2vw,28px); z-index:30; margin:0; font-size:clamp(1.75rem,4.5vw,4rem); pointer-events:none; }
+.cover-flow__empty { position:absolute; inset:50% 0 auto; text-align:center; }
+
+.feature-card__image img[hidden] { display:none; }
+.feature-card__image > span { font-family:var(--font-display); font-size:clamp(24px,4vw,48px); overflow-wrap:anywhere; }
+
+.home-brand { justify-self:center; margin:0; color:var(--color-ink); font-family:var(--font-display); font-size:clamp(2rem,5vw,4rem); font-weight:800; letter-spacing:-.07em; line-height:1; }
+
+.home-page .home-cover { padding-block-start:clamp(20px,3vw,40px); }
