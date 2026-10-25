@@ -28,8 +28,7 @@ test('the existing content desk opens plugin editors with the host login and cal
   page.on('pageerror', error => errors.push(error.message));
   const calls = await mockBusinessAPI(page, { signedIn: true });
   await page.setViewportSize({ width: 900, height: 900 });
-  await page.goto('/desk');
-  await page.getByRole('button', { name: 'edit home.', exact: true }).click();
+  await page.goto('/?desk=home');
   await expect(page.locator('.home-editor')).toBeVisible();
   await page.goto('/p/travel?desk=new');
   await page.getByRole('textbox', { name: 'Name', exact: true }).fill('Kyoto');
@@ -51,27 +50,29 @@ test('the existing content desk opens plugin editors with the host login and cal
   expect(errors).toEqual([]);
 });
 
-test('article create, cover upload, edit and delete use the original protected endpoints', async ({ page }) => {
+test('unified content manager creates, uploads, edits and deletes through protected endpoints', async ({ page }) => {
   const calls = await mockBusinessAPI(page, { signedIn: true });
-  await page.setViewportSize({ width: 900, height: 900 });
-  await page.goto('/p/journal?desk=new');
-  await page.getByPlaceholder('Article title...').fill('Created through plugin');
-  await page.locator('input[type="file"]').first().setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: Buffer.from('fixture-image') });
+  await page.goto('/blog');
+  await page.getByRole('button', { name: '管理后台', exact: true }).click();
+  await page.getByRole('button', { name: 'content.', exact: true }).click();
+  const editor = page.getByRole('region', { name: '内容编辑' });
+  await editor.getByRole('button', { name: '新建', exact: true }).click();
+  await page.getByPlaceholder('Article title...').fill('Created through manager');
+  await editor.locator('input[type="file"]').first().setInputFiles({ name: 'cover.png', mimeType: 'image/png', buffer: Buffer.from('fixture-image') });
   await expect(page.getByPlaceholder('Cover image URL...')).toHaveValue('/uploads/migration-test.png');
-  await page.getByRole('button', { name: 'blog.', exact: true }).click();
-  await page.getByRole('button', { name: 'save,', exact: true }).click();
+  await editor.getByRole('combobox').selectOption('published');
+  await editor.getByRole('button', { name: '保存', exact: true }).click();
   await expect.poll(() => calls.some(call => call.method === 'POST' && call.path.endsWith('/articles'))).toBe(true);
   const create = calls.find(call => call.method === 'POST' && call.path.endsWith('/articles'));
-  expect(JSON.parse(create.body)).toMatchObject({ title: 'Created through plugin', cover_image: '/uploads/migration-test.png', stage: 'published', vol: 1 });
+  expect(JSON.parse(create.body)).toMatchObject({ title: 'Created through manager', cover_image: '/uploads/migration-test.png', stage: 'published', vol: 1 });
   expect(create.headers.authorization).toBe(`Bearer ${user.token}`);
-  await page.goto('/blog?desk=edit&id=42');
-  await page.getByPlaceholder('Article title...').fill('Edited through plugin');
-  await page.getByRole('button', { name: 'blog.', exact: true }).click();
-  await page.getByRole('button', { name: 'save,', exact: true }).click();
+  await editor.getByRole('button', { name: /Migration fixture/ }).click();
+  await page.getByPlaceholder('Article title...').fill('Edited through manager');
+  await editor.getByRole('button', { name: '保存', exact: true }).click();
   await expect.poll(() => calls.some(call => call.method === 'PUT' && call.path.endsWith('/articles/42'))).toBe(true);
-  await page.getByRole('button', { name: 'close', exact: true }).click();
-  await page.getByRole('button', { name: 'blog.', exact: true }).click();
-  await page.getByRole('button', { name: 'delete,', exact: true }).click();
+  await editor.getByRole('button', { name: /Migration fixture/ }).click();
+  page.once('dialog', dialog => dialog.accept());
+  await editor.getByRole('button', { name: '删除', exact: true }).click();
   await expect.poll(() => calls.some(call => call.method === 'DELETE' && call.path.endsWith('/articles/42'))).toBe(true);
 });
 
@@ -83,13 +84,11 @@ test('host sign-in and logout reach mounted plugins without remounting the page'
   await page.getByPlaceholder('name-plz').fill('migration-test');
   await page.getByPlaceholder('and-psw').fill('fixture-password');
   await page.getByRole('button', { name: /UNLOCK THE DESK/ }).click();
-  await expect(page.getByRole('button', { name: 'blog.', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: 'close', exact: true }).click();
+  await expect(page.getByRole('button', { name: '管理后台', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '关闭登录窗口' }).click();
   await expect(page.locator('.blog-title')).toHaveAttribute('data-identity', 'mounted');
   expect(calls.find(call => call.path.endsWith('/signin')).method).toBe('POST');
-  await page.getByRole('button', { name: 'blog.', exact: true }).click();
-  await page.getByRole('button', { name: 'exit.', exact: true }).click();
+  await page.getByRole('button', { name: '退出', exact: true }).click();
   await page.mouse.move(8, 45);
   await expect(page.getByRole('button', { name: 'log-in.', exact: true })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('user'))).toBe(null);

@@ -5,7 +5,7 @@ for (const width of [320,375,414,768,1440]) {
   await mockBusinessAPI(page);await page.route('https://raw.githubusercontent.com/**',r=>r.abort());
   await page.setViewportSize({width,height:900});await page.goto('/');
   await expect(page.locator('#studio-title')).toBeVisible();
-  expect(await page.locator('.plugin-shell__reader').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+  expect(await page.locator('.route-live-layer.is-current .plugin-shell__reader').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth)).toBe(width);
   await page.screenshot({path:info.outputPath(`studio-${width}.png`)});
   await page.getByRole('slider',{name:'横向浏览精选项目'}).fill('700');
@@ -14,7 +14,7 @@ for (const width of [320,375,414,768,1440]) {
   await expect(page.getByRole('link',{name:'浙ICP备2026038123号'})).toBeVisible();
   await page.getByRole('navigation',{name:'主导航'}).getByRole('link',{name:/JOURNAL/}).click();
   await expect(page.locator('.blog-title')).toBeVisible();
-  expect(await page.locator('.plugin-shell__reader').evaluate(el=>el.scrollTop)).toBe(0);
+  expect(await page.locator('.route-live-layer.is-current .plugin-shell__reader').evaluate(el=>el.scrollTop)).toBe(0);
  });
 }
 test('explicit empty showcase and reduced motion are respected',async({page})=>{
