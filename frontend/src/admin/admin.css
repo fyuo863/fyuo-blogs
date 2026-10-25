@@ -61,3 +61,14 @@
   .secure-admin .admin-panel__mobile-nav > div:last-child { flex-wrap:nowrap; overflow-x:auto; padding-bottom:8px; }
   .secure-admin .admin-panel__mobile-nav-item { flex-shrink:0; white-space:nowrap; }
 }
+
+/* Independent trusted entry shares the host studio palette without mounting plugins. */
+.secure-admin {
+  --color-paper:var(--studio-paper); --color-paper-2:var(--studio-panel); --color-paper-3:var(--studio-panel);
+  --color-ink:var(--studio-ink); --color-ink-2:var(--studio-muted); --color-muted:var(--studio-muted); --color-rule:var(--studio-rule);
+  --color-cobalt:var(--studio-green); --color-accent:var(--studio-red); --color-focus:var(--studio-green);
+  --font-body:var(--studio-body); --font-display:var(--studio-display);
+}
+.secure-admin > header { background:var(--studio-panel); border:0; border-radius:var(--studio-card-radius); padding:20px 24px; }
+.secure-admin > header :is(a,button) { border-radius:2rem; }
+.secure-admin .sign-in-modal--embedded { background:none; }

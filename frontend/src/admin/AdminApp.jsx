@@ -6,6 +6,7 @@ import SignInModal from '../components/SignInModal';
 import InfoModal from '../components/InfoModal';
 import ContentManager from './ContentManager';
 import './admin.css';
+import '../layout/studio.css';
 
 export default function AdminApp() {
   const { user, login, logout } = useAuth();

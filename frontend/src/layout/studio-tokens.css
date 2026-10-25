@@ -1,5 +1,5 @@
 /* Hallmark · studied-DNA: user screenshots / STUDIO TRIGGER · scoped to public shell */
-.studio-shell, #root:has(> .studio-shell) > .sign-in-modal, #root:has(> .studio-shell) > .article-sheet, #root:has(> .studio-shell) > .admin-panel {
+.secure-admin, .studio-shell, #root:has(> .studio-shell) > .sign-in-modal, #root:has(> .studio-shell) > .article-sheet, #root:has(> .studio-shell) > .admin-panel {
   --studio-paper: #1e2020;
   --studio-panel: #313332;
   --studio-ink: #eff5d9;

@@ -95,6 +95,9 @@ for (const width of [390, 1440]) {
     await expect(page.getByRole('dialog')).toHaveCount(0);
     await expect(page.getByText('请登录管理中心。', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'content.', exact: true })).toHaveCount(0);
+    await expect(page.locator('.secure-admin')).toHaveCSS('background-color', 'rgb(30, 32, 32)');
+    await expect(page.locator('.sign-in-modal__masthead')).toHaveCSS('background-color', 'rgb(255, 52, 85)');
+    await expect(page.locator('.sign-in-modal__panel')).toHaveCSS('box-shadow', 'none');
     await page.screenshot({ path: info.outputPath('production-login.png'), fullPage: true });
     await page.getByPlaceholder('name-plz').fill('migration-test');
     await page.getByPlaceholder('and-psw').fill('fixture-password');
@@ -103,6 +106,10 @@ for (const width of [390, 1440]) {
     await page.getByRole('button', { name: 'content.', exact: true }).click();
     await expect(page.getByRole('region', { name: '内容编辑' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Migration fixture/ })).toBeVisible();
+    await expect(page.locator('.admin-panel__surface')).toHaveCSS('background-color', 'rgb(30, 32, 32)');
+    await expect(page.locator('.admin-panel__surface')).toHaveCSS('box-shadow', 'none');
+    const activeNav = page.locator(width < 600 ? '.admin-panel__mobile-nav-item.is-active' : '.admin-panel__nav-item.is-active');
+    await expect(activeNav).toHaveCSS('background-color', 'rgb(172, 250, 100)');
     await page.screenshot({ path: info.outputPath('production-management.png'), fullPage: true });
     expect(await page.locator('.secure-admin').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.getByRole('button', { name: '退出登录', exact: true }).click();
