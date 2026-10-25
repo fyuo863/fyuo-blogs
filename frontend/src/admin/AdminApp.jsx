@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import StudioFrame from '../layout/StudioFrame';
@@ -8,15 +8,23 @@ import { createPortal } from 'react-dom';
 
 export default function AdminApp() {
   const { user, login, logout } = useAuth();
-  const [panelOpen, setPanelOpen] = useState(true);
+  const [panelOpen, setPanelOpen] = useState(() => new URLSearchParams(window.location.search).get('manage') === '1');
+  const [signInOpen, setSignInOpen] = useState(() => !user && new URLSearchParams(window.location.search).get('manage') === '1');
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('manage')) {
+      url.searchParams.delete('manage');
+      window.history.replaceState(window.history.state, '', url.pathname + url.search + url.hash);
+    }
+  }, []);
   const [info, setInfo] = useState(null);
   const close = () => setPanelOpen(false);
   const open = () => setPanelOpen(true);
-  const signOut = () => logout().then(open).catch(error => setInfo({ title:'退出失败', message:error.message }));
+  const signOut = () => logout().then(close).catch(error => setInfo({ title:'退出失败', message:error.message }));
   return <BrowserRouter>
-    <StudioFrame user={user} showSignIn={panelOpen && !user} showAdmin={panelOpen && user?.role === 'admin'}
-      onOpenAdmin={open} onCloseAdmin={close} onOpenSignIn={open} onCloseSignIn={close}
-      onLogin={profile => { login(profile); open(); }} onLogout={signOut}
+    <StudioFrame user={user} showSignIn={signInOpen} showAdmin={panelOpen && !signInOpen && user?.role === 'admin'}
+      onOpenAdmin={open} onCloseAdmin={close} onOpenSignIn={() => setSignInOpen(true)} onCloseSignIn={() => { setSignInOpen(false); close(); }}
+      onLogin={login} onLogout={signOut}
       onNotify={setInfo} info={info} setInfo={setInfo} navigationOrigin="https://fyuoblog.top">
       <main className="plugin-shell__canvas" id="plugin-canvas">
         <section className="single-page-reader plugin-shell__reader"><StudioHome navigationOrigin="https://fyuoblog.top" /></section>

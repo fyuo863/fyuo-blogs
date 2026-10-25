@@ -138,11 +138,11 @@ function Home({ user, onOpenSignIn, onLogout, onNotify }) {
       <PhysicsItem strength={1}>
         <section className="projects-section" id="projects" aria-labelledby="projects-title">
           {showcase.error && <p className="home-showcase-status" role="status">{showcase.error}</p>}
-          <ProjectGrid projects={showcase.albums ?? content.projects.map(({ link_url, ...project }) => ({ ...project, linkUrl: link_url }))} />
+          {showcase.configured && showcase.albums === null ? <p role="status">{showcase.error || '正在加载展示项目…'}</p> : <ProjectGrid projects={showcase.albums ?? content.projects.map(({ link_url, ...project }) => ({ ...project, linkUrl: link_url }))} />}
         </section>
       </PhysicsItem>
 
-      {showcase.featured !== null && <PhysicsItem strength={1.05}>
+      {(showcase.configured ? showcase.featured != null : showcase.featured !== null) && <PhysicsItem strength={1.05}>
         <section className="home-feature" aria-label="Featured project">
           <FeatureCard image={showcase.featured?.image ?? content.cover_image} title={showcase.featured?.title ?? content.cover_title} githubUrl={showcase.featured?.linkUrl ?? content.cover_github_url} description={showcase.featured?.description ?? content.cover_description} />
         </section>

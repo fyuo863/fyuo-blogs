@@ -45,7 +45,7 @@ export default function StudioHome({ navigationOrigin = '' }) {
     getHomeContent().then(response => { if (active) setSaved(response.data?.data || null); }).catch(() => {});
     return () => { active = false; };
   }, []);
-  const projects = showcase.albums ?? (saved?.projects?.length ? saved.projects.map(project => ({ ...project, linkUrl: project.link_url })) : fallback);
+  const projects = showcase.configured ? (showcase.albums ?? []) : (saved?.projects?.length ? saved.projects.map(project => ({ ...project, linkUrl: project.link_url })) : fallback);
   useEffect(() => {
     const element = rail.current;
     if (!element) return undefined;
@@ -78,7 +78,7 @@ export default function StudioHome({ navigationOrigin = '' }) {
           >{projects.slice(0, 6).map((project, index) => <Poster key={project.id || `${project.title}-${index}`} project={project} index={index} compact />)}</div>
           <div className="studio-rail-scroll"><input type="range" min="0" max="1000" step="1" value={railProgress} disabled={!railScrollable} aria-label="横向浏览精选项目" onChange={event => { const progress = Number(event.target.value); setRailProgress(progress); const element = rail.current; if (element) element.scrollTo({ left: progress / 1000 * (element.scrollWidth - element.clientWidth), behavior: 'instant' }); }} /></div>
           <div className="studio-rail-controls"><a className="studio-all-works" href="#works">ALL WORKS<span aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" focusable="false"><path d="M4 12h15M13 5l7 7-7 7" /></svg></span></a></div>
-        </> : <p className="studio-empty">暂未添加展示项目。<Link to={`${navigationOrigin}/blog`}>先读一篇博客 ↗</Link></p>}
+        </> : <p className="studio-empty" role="status">{showcase.configured && showcase.albums === null ? (showcase.error || '正在加载展示项目…') : '暂未添加展示项目。'}<Link to={`${navigationOrigin}/blog`}>先读一篇博客 ↗</Link></p>}
       </div>
     </section>
     <section className="studio-work" id="works" aria-labelledby="studio-works-title">

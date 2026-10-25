@@ -19,8 +19,10 @@ test('production public plugins cannot receive persisted administrator credentia
   await page.goto('https://fyuoblog.top/p/probe');
   await expect(page.locator('output')).toHaveText('{"user":null,"stored":null}');
   await page.getByRole('button',{name:'log-in.',exact:true}).click();
-  await expect(page).toHaveURL('https://www.fyuoblog.top/');
+  await expect(page.getByRole('dialog', {name:'log-in.'})).toBeVisible();
   await expect(page.locator('.studio-wordmark')).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
 });
 
 test('admin origin never requests plugin assets or previews, and edits content through v1', async ({ page }) => {
@@ -34,6 +36,7 @@ test('admin origin never requests plugin assets or previews, and edits content t
     return route.fulfill({json:{data:[]}});
   });
   await page.goto('https://www.fyuoblog.top/p/travel?__plugin_preview=1');
+  await page.getByRole('button',{name:'管理后台',exact:true}).click();
   await expect(page.locator('.studio-wordmark')).toBeVisible();
   await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button',{name:'content.',exact:true}).click();
@@ -59,6 +62,8 @@ for (const width of [1440, 390]) {
       if (request.method() === 'PUT' && request.url().endsWith('/articles/42')) writes.push(request.postDataJSON());
     });
     await page.goto('https://www.fyuoblog.top/');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.getByRole('button',{name:/^(管理后台|log-in\.)$/}).click();
     await page.getByRole('button', { name: 'content.', exact: true }).click();
     const row = page.getByRole('button', { name: /Migration fixture/ });
     await expect(row).toBeVisible();
@@ -91,6 +96,8 @@ for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await productionOrigins(page);
     await page.goto('https://www.fyuoblog.top/');
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.getByRole('button',{name:/^(管理后台|log-in\.)$/}).click();
     await expect(page.getByRole('dialog', { name: 'log-in.' })).toBeVisible();
     await expect(page.getByRole('dialog')).toHaveCount(1);
     await expect(page.getByText('请登录管理中心。', { exact: true })).toHaveCount(0);
@@ -102,6 +109,10 @@ for (const width of [390, 1440]) {
     await page.getByPlaceholder('name-plz').fill('migration-test');
     await page.getByPlaceholder('and-psw').fill('fixture-password');
     await page.getByRole('button', { name: 'UNLOCK THE DESK', exact: true }).click();
+    await page.getByRole('button',{name:'关闭登录窗口',exact:true}).click();
+    const notification = page.getByRole('button',{name:'close',exact:true});
+    if(await notification.isVisible()) await notification.click();
+    await page.getByRole('button',{name:'管理后台',exact:true}).click();
     await expect(page.getByRole('dialog', { name: 'Admin control panel' })).toBeVisible();
     await page.getByRole('button', { name: 'content.', exact: true }).click();
     await expect(page.getByRole('region', { name: '内容编辑' })).toBeVisible();
@@ -114,8 +125,8 @@ for (const width of [390, 1440]) {
     expect(await page.locator('.studio-shell').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.getByRole('button', { name: 'Close admin panel', exact: true }).click();
     await page.getByRole('button', { name: '退出', exact: true }).click();
-    await expect(page.getByRole('dialog', { name: 'log-in.' })).toBeVisible();
-    expect(await page.evaluate(() => sessionStorage.getItem('user'))).toBe(null);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect.poll(() => page.evaluate(() => sessionStorage.getItem('user'))).toBe(null);
   });
 }
 
@@ -136,6 +147,8 @@ for (const width of [390, 768, 1440, 1920]) {
       await productionOrigins(production);
       await local.goto('http://127.0.0.1:5177/');
       await production.goto('https://www.fyuoblog.top/');
+      await expect(production.getByRole('dialog')).toHaveCount(0);
+      await production.getByRole('button',{name:'log-in.',exact:true}).click();
       await local.getByRole('button', { name:'log-in.', exact:true }).click();
       const prepare = async page => {
         await page.evaluate(() => document.fonts.ready);
@@ -181,12 +194,12 @@ for (const width of [390, 768, 1440, 1920]) {
         await page.getByRole('button', {name:'UNLOCK THE DESK',exact:true}).click();
       }
       // Local host keeps success notification and closes dialogs explicitly.
-      await local.getByRole('button', {name:'关闭登录窗口',exact:true}).click();
+      for (const page of [local, production]) await page.getByRole('button', {name:'关闭登录窗口',exact:true}).click();
       for (const page of [local, production]) {
         const notification = page.getByRole('button', {name:'close',exact:true});
         if (await notification.isVisible()) await notification.click();
       }
-      await local.getByRole('button', {name:'管理后台',exact:true}).click();
+      for (const page of [local, production]) await page.getByRole('button', {name:'管理后台',exact:true}).click();
       for (const page of [local, production]) {
         await expect(page.getByText('还没有插件，上传第一个 ZIP 开始使用。',{exact:true})).toBeVisible();
         await expect(page.getByRole('button',{name:'刷新列表',exact:true})).toBeEnabled();

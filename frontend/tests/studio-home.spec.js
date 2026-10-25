@@ -1,8 +1,22 @@
 import { test, expect } from '@playwright/test';
 import { mockBusinessAPI } from './plugin-fixtures.mjs';
+test('configured showcase never exposes legacy projects during loading or failure',async({page})=>{
+ await mockBusinessAPI(page);
+ await page.route('**/api/v1/home-content',r=>r.fulfill({json:{data:{projects:[{title:'LEGACY PROJECT',link_url:'https://example.com'}]}}}));
+ let release;
+ const ready=new Promise(resolve=>{release=resolve;});
+ await page.route('https://raw.githubusercontent.com/**',async route=>{await ready;await route.fulfill({status:503,body:'unavailable'});});
+ await page.goto('/');
+ await expect(page.locator('.studio-empty')).toContainText('正在加载展示项目…');
+ await expect(page.locator('.studio-poster,.cover-flow__item')).toHaveCount(0);
+ release();
+ await expect(page.locator('.studio-empty')).toContainText('暂时无法读取');
+ await expect(page.locator('.studio-poster,.cover-flow__item')).toHaveCount(0);
+ await expect(page.getByText('LEGACY PROJECT',{exact:true})).toHaveCount(0);
+});
 for (const width of [320,375,414,768,1440]) {
  test(`studio home fits ${width}px and navigation works`,async({page},info)=>{
-  await mockBusinessAPI(page);await page.route('https://raw.githubusercontent.com/**',r=>r.abort());
+  await mockBusinessAPI(page);await page.route('https://raw.githubusercontent.com/**',r=>r.fulfill({json:{version:1,albums:Array.from({length:6},(_,i)=>({id:'project-'+i,title:'Project '+i,cover:'https://example.com/cover.svg'}))}}));
   await page.setViewportSize({width,height:900});await page.goto('/');
   await expect(page.locator('#studio-title')).toBeVisible();
   expect(await page.locator('.route-live-layer.is-current .plugin-shell__reader').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
