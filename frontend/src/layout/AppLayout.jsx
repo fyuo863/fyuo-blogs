@@ -1,7 +1,7 @@
+import StudioFrame from './StudioFrame';
 import { useEffect, useState } from "react";
 import { listPlugins } from "../plugins/pluginApi";
-import { createPortal } from "react-dom";
-import { Link, NavLink, Navigate, useLocation } from "react-router-dom";
+import { Link, Navigate, useLocation } from "react-router-dom";
 
 import "./plugin-shell.css";
 import "./studio.css";
@@ -11,13 +11,8 @@ import StudioHome from "../pages/StudioHome";
 import Home from "../pages/Home";
 import Blog from "../pages/Blog";
 
-import SignInModal from "../components/SignInModal";
-import InfoModal from "../components/InfoModal";
-import AdminPanel from "../components/AdminPanel";
 
 import PluginPage from "../components/PluginPage";
-import GithubIcon from "../module/GithubIcon";
-import { UserRound, Settings, LogOut } from 'lucide-react';
 
 function pluginForPath(pathname) {
   const path = pathname.replace(/\/$/, "") || "/";
@@ -94,20 +89,8 @@ export default function AppLayout({
   const isCatalog = path === "/plugins";
 
   return (
-    <div className="plugin-shell studio-shell">
-      <header className="studio-nav">
-        <Link className="studio-wordmark" to="/" aria-label="FYUO 首页">FYUO<span>®</span></Link>
-        <nav aria-label="主导航">
-          <NavLink to="/" end>HOME<span>首页</span></NavLink>
-          <NavLink to="/blog">JOURNAL<span>博客</span></NavLink>
-          <NavLink to="/plugins">PLAYGROUND<span>插件</span></NavLink>
-        </nav>
-        <div className="studio-nav__actions">
-          <a href="https://github.com/fyuo863" target="_blank" rel="noreferrer" aria-label="GitHub" title="GitHub"><GithubIcon size={19} /></a>
-          <button type="button" aria-label={user ? '管理后台' : 'log-in.'} title={user ? '管理后台' : '登录'} onClick={user?.role === 'admin' ? onOpenAdmin : onOpenSignIn}>{user ? <Settings size={19} /> : <UserRound size={19} />}</button>
-          {user && <button type="button" aria-label="退出" title="退出" onClick={onLogout}><LogOut size={19} /></button>}
-        </div>
-      </header>
+    <StudioFrame {...{ user, showSignIn, showAdmin, onOpenAdmin, onCloseAdmin,
+      onOpenSignIn, onCloseSignIn, onLogin, onLogout, onNotify, info, setInfo }}>
       <main className="plugin-shell__canvas" id="plugin-canvas">
         <LiveRingTransition location={location}>
         <section key={path} className={`single-page-reader plugin-shell__reader ${isBlog ? 'studio-blog' : ''}`}>
@@ -129,30 +112,6 @@ export default function AppLayout({
         </section>
         </LiveRingTransition>
       </main>
-
-      {createPortal(<>
-      <SignInModal
-        open={showSignIn}
-        onClose={onCloseSignIn}
-        onLogin={onLogin}
-        onNotify={onNotify}
-      />
-
-      <AdminPanel
-        open={showAdmin}
-        onClose={onCloseAdmin}
-        user={user}
-        onNotify={onNotify}
-      />
-
-      <InfoModal
-        open={Boolean(info)}
-        title={info?.title}
-        message={info?.message}
-        variant={info?.variant}
-        onClose={() => setInfo(null)}
-      />
-      </>, document.getElementById("root"))}
-    </div>
+    </StudioFrame>
   );
 }

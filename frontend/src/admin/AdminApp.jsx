@@ -1,27 +1,33 @@
 import { useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
-import AdminPanel from '../components/AdminPanel';
-import SignInModal from '../components/SignInModal';
-import InfoModal from '../components/InfoModal';
+import StudioFrame from '../layout/StudioFrame';
+import StudioHome from '../pages/StudioHome';
 import ContentManager from './ContentManager';
-import './admin.css';
-import '../layout/studio.css';
+import { createPortal } from 'react-dom';
 
 export default function AdminApp() {
   const { user, login, logout } = useAuth();
+  const [panelOpen, setPanelOpen] = useState(true);
   const [info, setInfo] = useState(null);
-  const notify = value => setInfo(value);
-  return <BrowserRouter><main className={`secure-admin${!user ? ' secure-admin--login' : ''}`}>
-    <header><h1>fyuo-control.</h1><nav aria-label="管理导航">
-      <a href="https://fyuoblog.top/" rel="noopener noreferrer">查看网站</a>
-      {user && <button onClick={() => logout().catch(error => notify({title:'退出失败',message:error.message}))}>退出登录</button>}
-    </nav></header>
-    {!user ? <section className="secure-admin__login" aria-label="管理中心登录">
-      <SignInModal open embedded onLogin={login} />
-    </section> : user.role === 'admin'
-      ? <AdminPanel open user={user} onClose={() => window.location.assign('https://fyuoblog.top/')} onNotify={notify} />
-      : <ContentManager token={user.token} />}
-    <InfoModal open={Boolean(info)} title={info?.title} message={info?.message} variant={info?.variant} onClose={() => setInfo(null)} />
-  </main></BrowserRouter>;
+  const close = () => setPanelOpen(false);
+  const open = () => setPanelOpen(true);
+  const signOut = () => logout().then(open).catch(error => setInfo({ title:'退出失败', message:error.message }));
+  return <BrowserRouter>
+    <StudioFrame user={user} showSignIn={panelOpen && !user} showAdmin={panelOpen && user?.role === 'admin'}
+      onOpenAdmin={open} onCloseAdmin={close} onOpenSignIn={open} onCloseSignIn={close}
+      onLogin={profile => { login(profile); open(); }} onLogout={signOut}
+      onNotify={setInfo} info={info} setInfo={setInfo} navigationOrigin="https://fyuoblog.top">
+      <main className="plugin-shell__canvas" id="plugin-canvas">
+        <section className="single-page-reader plugin-shell__reader"><StudioHome navigationOrigin="https://fyuoblog.top" /></section>
+      </main>
+      {panelOpen && user && user.role !== 'admin' && createPortal(
+        <div className="admin-panel" role="dialog" aria-modal="true" aria-label="内容管理">
+          <div className="admin-panel__surface"><div className="admin-panel__content">
+            <button className="admin-panel__close" aria-label="Close admin panel" onClick={close}>×</button>
+            <div className="admin-panel__page p-6"><ContentManager token={user.token} /></div>
+          </div></div>
+        </div>, document.getElementById('root'))}
+    </StudioFrame>
+  </BrowserRouter>;
 }

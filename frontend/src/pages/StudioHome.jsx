@@ -32,7 +32,7 @@ function Poster({ project, index, compact = false }) {
   return href ? <a className="studio-poster" data-tone={index % 4} href={href} target="_blank" rel="noreferrer">{contents}</a> : <article className="studio-poster" data-tone={index % 4}>{contents}</article>;
 }
 
-export default function StudioHome() {
+export default function StudioHome({ navigationOrigin = '' }) {
   const showcase = useShowcase();
   const [saved, setSaved] = useState(null);
   const rail = useRef(null);
@@ -78,7 +78,7 @@ export default function StudioHome() {
           >{projects.slice(0, 6).map((project, index) => <Poster key={project.id || `${project.title}-${index}`} project={project} index={index} compact />)}</div>
           <div className="studio-rail-scroll"><input type="range" min="0" max="1000" step="1" value={railProgress} disabled={!railScrollable} aria-label="横向浏览精选项目" onChange={event => { const progress = Number(event.target.value); setRailProgress(progress); const element = rail.current; if (element) element.scrollTo({ left: progress / 1000 * (element.scrollWidth - element.clientWidth), behavior: 'instant' }); }} /></div>
           <div className="studio-rail-controls"><a className="studio-all-works" href="#works">ALL WORKS<span aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" focusable="false"><path d="M4 12h15M13 5l7 7-7 7" /></svg></span></a></div>
-        </> : <p className="studio-empty">暂未添加展示项目。<Link to="/blog">先读一篇博客 ↗</Link></p>}
+        </> : <p className="studio-empty">暂未添加展示项目。<Link to={`${navigationOrigin}/blog`}>先读一篇博客 ↗</Link></p>}
       </div>
     </section>
     <section className="studio-work" id="works" aria-labelledby="studio-works-title">
@@ -86,7 +86,7 @@ export default function StudioHome() {
       {showcase.error && <p className="studio-data-note" role="status">{showcase.error}</p>}
       <ProjectGrid projects={projects} showHeading={false} showNavigation={false} />
     </section>
-    <section className="studio-journal"><div><h2>ONE MORE<br />THING</h2></div><nav aria-label="更多页面"><Link to="/blog">JOURNAL<span>博客</span></Link><Link to="/plugins">PLAYGROUND<span>插件</span></Link></nav></section>
+    <section className="studio-journal"><div><h2>ONE MORE<br />THING</h2></div><nav aria-label="更多页面"><Link to={`${navigationOrigin}/blog`}>JOURNAL<span>博客</span></Link><Link to={`${navigationOrigin}/plugins`}>PLAYGROUND<span>插件</span></Link></nav></section>
     <footer className="studio-footer"><p>FYUO</p><div><a href="https://beian.miit.gov.cn/" target="_blank" rel="noreferrer">浙ICP备2026038123号</a></div></footer>
   </div>;
 }

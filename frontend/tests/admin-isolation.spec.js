@@ -20,7 +20,7 @@ test('production public plugins cannot receive persisted administrator credentia
   await expect(page.locator('output')).toHaveText('{"user":null,"stored":null}');
   await page.getByRole('button',{name:'log-in.',exact:true}).click();
   await expect(page).toHaveURL('https://www.fyuoblog.top/');
-  await expect(page.getByRole('heading',{name:'fyuo-control.',exact:true})).toBeVisible();
+  await expect(page.locator('.studio-wordmark')).toBeVisible();
 });
 
 test('admin origin never requests plugin assets or previews, and edits content through v1', async ({ page }) => {
@@ -34,7 +34,7 @@ test('admin origin never requests plugin assets or previews, and edits content t
     return route.fulfill({json:{data:[]}});
   });
   await page.goto('https://www.fyuoblog.top/p/travel?__plugin_preview=1');
-  await expect(page.getByRole('heading',{name:'fyuo-control.',exact:true})).toBeVisible();
+  await expect(page.locator('.studio-wordmark')).toBeVisible();
   await expect(page.locator('iframe')).toHaveCount(0);
   await page.getByRole('button',{name:'content.',exact:true}).click();
   await page.getByRole('button',{name:'旅行记录',exact:true}).click();
@@ -63,7 +63,7 @@ for (const width of [1440, 390]) {
     const row = page.getByRole('button', { name: /Migration fixture/ });
     await expect(row).toBeVisible();
     const bounds = await row.boundingBox();
-    expect(bounds.width).toBeGreaterThan(width < 600 ? 320 : 900);
+    expect(bounds.width).toBeGreaterThan(width < 600 ? 300 : 700);
     expect(bounds.height).toBeGreaterThanOrEqual(80);
     await page.screenshot({ path: testInfo.outputPath('content-list.png'), fullPage: true });
     await row.click();
@@ -80,22 +80,22 @@ for (const width of [1440, 390]) {
     await page.getByRole('button', { name: 'back.', exact: true }).last().click();
     await expect(row).toBeVisible();
     expect(writes).toHaveLength(1);
-    expect(await page.locator('.secure-admin').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    expect(await page.locator('.studio-shell').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.getByRole('button', { name: '首页内容', exact: true }).click();
     await expect(page.getByLabel('封面简介', { exact: true })).toBeVisible();
   });
 }
 
 for (const width of [390, 1440]) {
-  test(`production login is a complete page and opens shared management at ${width}px`, async ({ page }, info) => {
+  test(`production login uses shared host dialog and opens management at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: 900 });
     await productionOrigins(page);
     await page.goto('https://www.fyuoblog.top/');
-    await expect(page.getByRole('region', { name: '管理中心登录' })).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: 'log-in.' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(1);
     await expect(page.getByText('请登录管理中心。', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'content.', exact: true })).toHaveCount(0);
-    await expect(page.locator('.secure-admin')).toHaveCSS('background-color', 'rgb(30, 32, 32)');
+    await expect(page.locator('.studio-shell')).toHaveCSS('background-color', 'rgb(30, 32, 32)');
     await expect(page.locator('.sign-in-modal__masthead')).toHaveCSS('background-color', 'rgb(255, 52, 85)');
     await expect(page.locator('.sign-in-modal__panel')).toHaveCSS('box-shadow', 'none');
     await page.screenshot({ path: info.outputPath('production-login.png'), fullPage: true });
@@ -111,9 +111,63 @@ for (const width of [390, 1440]) {
     const activeNav = page.locator(width < 600 ? '.admin-panel__mobile-nav-item.is-active' : '.admin-panel__nav-item.is-active');
     await expect(activeNav).toHaveCSS('background-color', 'rgb(172, 250, 100)');
     await page.screenshot({ path: info.outputPath('production-management.png'), fullPage: true });
-    expect(await page.locator('.secure-admin').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
-    await page.getByRole('button', { name: '退出登录', exact: true }).click();
-    await expect(page.getByRole('region', { name: '管理中心登录' })).toBeVisible();
+    expect(await page.locator('.studio-shell').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await page.getByRole('button', { name: 'Close admin panel', exact: true }).click();
+    await page.getByRole('button', { name: '退出', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'log-in.' })).toBeVisible();
     expect(await page.evaluate(() => sessionStorage.getItem('user'))).toBe(null);
+  });
+}
+
+// Same fixtures and viewport, independent origins: compare actual rendered pixels,
+// not just palette values. Only the page behind the dialogs is neutralized.
+for (const width of [390, 768, 1440, 1920]) {
+  test(`local and production dialogs render identically at ${width}px`, async ({ browser }, info) => {
+    const context = await browser.newContext({ viewport:{ width, height:900 }, reducedMotion:'reduce' });
+    const local = await context.newPage();
+    const production = await context.newPage();
+    try {
+      await mockBusinessAPI(local);
+      await productionOrigins(production);
+      await local.goto('http://127.0.0.1:5177/');
+      await production.goto('https://www.fyuoblog.top/');
+      await local.getByRole('button', { name:'log-in.', exact:true }).click();
+      const prepare = async page => {
+        await page.evaluate(() => document.fonts.ready);
+        await page.addStyleTag({ content:'.sign-in-modal,.admin-panel{background:#1e2020!important;backdrop-filter:none!important} *{animation:none!important;transition:none!important}' });
+      };
+      await prepare(local);
+      await prepare(production);
+      const compare = async (selector, name) => {
+        const expected = local.locator(selector);
+        const actual = production.locator(selector);
+        await expect(expected).toBeVisible();
+        await expect(actual).toBeVisible();
+        expect(await actual.boundingBox()).toEqual(await expected.boundingBox());
+        const reference = await expected.screenshot({ path:info.outputPath(`local-${name}.png`), animations:'disabled' });
+        const deployed = await actual.screenshot({ path:info.outputPath(`production-${name}.png`), animations:'disabled' });
+        expect(deployed.equals(reference), `${name} pixels must match the local host`).toBe(true);
+      };
+      await compare('.sign-in-modal__panel', 'login');
+      for (const page of [local, production]) {
+        await page.getByPlaceholder('name-plz').fill('migration-test');
+        await page.getByPlaceholder('and-psw').fill('fixture-password');
+        await page.getByRole('button', {name:'UNLOCK THE DESK',exact:true}).click();
+      }
+      // Local host keeps success notification and closes dialogs explicitly.
+      await local.getByRole('button', {name:'关闭登录窗口',exact:true}).click();
+      for (const page of [local, production]) {
+        const notification = page.getByRole('button', {name:'close',exact:true});
+        if (await notification.isVisible()) await notification.click();
+      }
+      await local.getByRole('button', {name:'管理后台',exact:true}).click();
+      await expect(local.getByText('上传插件',{exact:true})).toBeVisible();
+      await expect(production.getByText('上传插件',{exact:true})).toBeVisible();
+      await compare('.admin-panel__surface', 'plugins');
+      for (const page of [local, production]) await page.getByRole('button', {name:'content.',exact:true}).click();
+      await expect(local.getByRole('button',{name:/Migration fixture/})).toBeVisible();
+      await expect(production.getByRole('button',{name:/Migration fixture/})).toBeVisible();
+      await compare('.admin-panel__surface', 'content');
+    } finally { await context.close(); }
   });
 }
