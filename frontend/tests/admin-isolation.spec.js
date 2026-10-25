@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+const adminPolicy = [...readFileSync(new URL('../../nginx.conf',import.meta.url),'utf8').matchAll(/add_header Content-Security-Policy "([^"]+)"/g)].at(-1)[1];
 import { mockBusinessAPI, user } from './plugin-fixtures.mjs';
 
 async function productionOrigins(page) {
   await page.route(/^https:\/\/(www\.)?fyuoblog\.top\//, async route => {
     const url = new URL(route.request().url());
     const response = await route.fetch({url:`http://127.0.0.1:5177${url.pathname}${url.search}`});
-    await route.fulfill({response});
+    await route.fulfill({response,headers:{...response.headers(),...(url.hostname==='www.fyuoblog.top'?{'content-security-policy':adminPolicy}:{})}});
   });
   await mockBusinessAPI(page);
 }
@@ -212,3 +214,12 @@ for (const width of [390, 768, 1440, 1920]) {
     } finally { await context.close(); }
   });
 }
+
+test('admin security policy permits the configured showcase data',async({page})=>{
+ await productionOrigins(page);
+ await page.route('https://raw.githubusercontent.com/**',r=>r.fulfill({json:{version:1,albums:[{id:'configured',title:'Configured showcase',cover:'https://example.com/cover.svg'}]}}));
+ await page.route('https://example.com/cover.svg',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg"/>'}));
+ await page.goto('https://www.fyuoblog.top/');
+ await expect(page.locator('.cover-flow__item')).toHaveCount(1);
+ await expect(page.getByRole('dialog')).toHaveCount(0);
+});
