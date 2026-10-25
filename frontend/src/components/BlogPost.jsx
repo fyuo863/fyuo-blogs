@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import MarkdownEditor from "./MarkdownEditor";
+import { ArrowLeft } from 'lucide-react';
 
 function formatDate(iso) {
   const d = new Date(iso);
@@ -127,7 +128,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           onClick={onBack}
           className="article-reader__back text-lg font-mono text-white hover:text-white transition-colors mb-16"
         >
-          back.
+          back.<span className="studio-button__icon" aria-hidden="true"><ArrowLeft size={24} strokeWidth={4} /></span>
         </button>
 
         <div className="article-reader__meta ml-10 flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -231,9 +232,9 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           <button
             type="button"
             onClick={onBack}
-            className="text-lg font-mono text-white hover:text-white transition-colors"
+            className="article-reader__back text-lg font-mono text-white hover:text-white transition-colors"
           >
-            back.
+            back.<span className="studio-button__icon" aria-hidden="true"><ArrowLeft size={24} strokeWidth={4} /></span>
           </button>
         </div>
       </div>

@@ -13,7 +13,7 @@ function LoginHalftoneField() {
 
     const draw = () => {
       const bounds = surface.getBoundingClientRect();
-      const rootStyles = getComputedStyle(document.documentElement);
+      const rootStyles = getComputedStyle(surface);
       const cellSize = Number.parseFloat(rootStyles.getPropertyValue("--halftone-cell-size")) || 18;
       const baseRadius = Number.parseFloat(rootStyles.getPropertyValue("--halftone-base-radius")) || 0.78;
       const scale = Math.min(window.devicePixelRatio || 1, 1.5);

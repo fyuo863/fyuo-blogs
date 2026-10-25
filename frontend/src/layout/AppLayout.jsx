@@ -27,6 +27,22 @@ function pluginForPath(pathname) {
   return { "/travel": "travel" }[path] || null;
 }
 
+function PlaygroundPlugin({ slug, pageProps }) {
+  const [container, setContainer] = useState(null);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!container) return undefined;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) { setReady(true); observer.disconnect(); }
+    }, { root: container.closest('.plugin-shell__reader'), rootMargin: '200px' });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [container]);
+  return <div className="studio-plugin-container" ref={setContainer}>
+    {container && ready && <PluginPage slug={slug} {...pageProps} showDrawer={false} portalTarget={container} />}
+  </div>;
+}
+
 export default function AppLayout({
   user,
   showSignIn,
@@ -97,8 +113,8 @@ export default function AppLayout({
         <section ref={readerRef} key={path} className={`single-page-reader plugin-shell__reader ${isBlog ? 'studio-blog' : ''}`}>
           {isHome ? (user && new URLSearchParams(location.search).get('desk') === 'home' ? <Home {...pageProps} /> : <StudioHome />) :
             isBlog ? <Blog {...pageProps} showDrawer={Boolean(user)} portalTarget={document.getElementById("root")} /> :
-            isCatalog ? <div className="studio-catalog"><h1>PLAY<br />GROUND</h1><p>一些想法，打开就能玩。</p>
-              {catalog.loading ? <p role="status">正在加载插件…</p> : catalog.error ? <><p role="alert">{catalog.error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>重试</button></> : catalog.plugins.length ? <div className="studio-plugin-list">{catalog.plugins.map((plugin, index) => <Link to={`/p/${encodeURIComponent(plugin.slug)}`} key={plugin.slug}><span>{String(index + 1).padStart(2, '0')}</span><strong>{plugin.name || plugin.slug}</strong><span>打开 ↗</span></Link>)}</div> : <p role="status">暂未发布插件。首页与博客仍然可以正常访问。</p>}
+            isCatalog ? <div className="studio-catalog"><header className="studio-catalog__heading"><h1>PLAY<br />GROUND</h1><span className="studio-catalog__flash">快闪</span></header>
+              {catalog.loading ? <p role="status">正在加载插件…</p> : catalog.error ? <><p role="alert">{catalog.error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>重试</button></> : catalog.plugins.length ? <div className="studio-plugin-gallery">{catalog.plugins.map(plugin => <article className="studio-plugin-card" key={`${plugin.slug}-${plugin.active_version || ''}`} aria-label={plugin.name || plugin.slug}><h2>{plugin.name || plugin.slug}</h2><PlaygroundPlugin slug={plugin.slug} pageProps={pageProps} /></article>)}</div> : <p role="status">暂未发布插件。首页与博客仍然可以正常访问。</p>}
               {user?.role === 'admin' && <button type="button" onClick={onOpenAdmin}>打开插件管理</button>}
             </div> :
             isDesk ? <ContentDesk plugins={catalog.plugins} user={user} onOpenSignIn={onOpenSignIn} /> :

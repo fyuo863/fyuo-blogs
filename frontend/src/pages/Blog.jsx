@@ -1,4 +1,5 @@
 import { createViewTracker } from "../view-events.js";
+import { ArrowRight } from 'lucide-react';
 import { useState, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -623,14 +624,13 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
               title?.style.setProperty("--journal-refraction-y", "0px");
             }}
           >
-            <p className="blog-eyebrow">journal / field notes</p>
             <h1
               className="blog-title blog-title--oil"
               ref={journalTitleRef}
             >
               <span className="blog-title__ink" data-title="The Journal.">The Journal.</span>
             </h1>
-            <p className="blog-lede">个人博客</p>
+            <p className="blog-lede">最新内容</p>
           </header>
         </div>
       </PhysicsItem>
@@ -686,7 +686,7 @@ function Blog({ user, onOpenSignIn, onLogout, onNotify, drawerItems, showDrawer 
                 disabled={backendOffline}
                 className="blog-search-button px-7 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                search.
+                search.<span className="studio-button__icon" aria-hidden="true"><ArrowRight size={24} strokeWidth={4} /></span>
               </button>
             </div>
           </div>

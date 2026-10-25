@@ -19,13 +19,14 @@ function safeLink(url) {
 
 function Poster({ project, index, compact = false }) {
   const [failed, setFailed] = useState(false);
-  const href = safeLink(project.linkUrl);
+  const repositoryURL = /^[\w.-]+\/[\w.-]+$/.test(project.repository || '') ? `https://github.com/${project.repository}` : '';
+  const href = safeLink(project.linkUrl || project.link_url) || safeLink(repositoryURL) || safeLink(fallback.find(item => item.title === project.title?.replace(/\.$/, ''))?.linkUrl);
   const title = project.title?.replace(/\.$/, '') || 'Untitled';
   const contents = <>
     <div className="studio-poster__art">
-      {project.image && !failed ? <img src={project.image} alt="" loading="lazy" draggable="false" onError={() => setFailed(true)} /> : <div className="studio-poster__graphic" aria-hidden="true"><b>{title.split('-')[0]}<br />{title.split('-').slice(1).join('-') || 'project'}</b><i>↗</i></div>}
+      {project.image && !failed ? <img src={project.image} alt="" loading="lazy" draggable="false" onError={() => setFailed(true)} /> : <div className="studio-poster__graphic" aria-hidden="true"><b>{title.split('-')[0]}<br />{title.split('-').slice(1).join('-') || 'project'}</b></div>}
     </div>
-    <div className="studio-poster__caption"><h3>{title}</h3><span aria-hidden="true">↗</span></div>
+    <div className="studio-poster__caption"><h3>{title}</h3></div>
     {!compact && <p>{project.description}</p>}
   </>;
   return href ? <a className="studio-poster" data-tone={index % 4} href={href} target="_blank" rel="noreferrer">{contents}</a> : <article className="studio-poster" data-tone={index % 4}>{contents}</article>;
@@ -76,7 +77,7 @@ export default function StudioHome() {
             onDragStart={event => event.preventDefault()}
           >{projects.slice(0, 6).map((project, index) => <Poster key={project.id || `${project.title}-${index}`} project={project} index={index} compact />)}</div>
           <div className="studio-rail-scroll"><input type="range" min="0" max="1000" step="1" value={railProgress} disabled={!railScrollable} aria-label="横向浏览精选项目" onChange={event => { const progress = Number(event.target.value); setRailProgress(progress); const element = rail.current; if (element) element.scrollTo({ left: progress / 1000 * (element.scrollWidth - element.clientWidth), behavior: 'instant' }); }} /></div>
-          <div className="studio-rail-controls"><a className="studio-all-works" href="#works">ALL WORKS<span aria-hidden="true">→</span></a></div>
+          <div className="studio-rail-controls"><a className="studio-all-works" href="#works">ALL WORKS<span aria-hidden="true"><svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" focusable="false"><path d="M4 12h15M13 5l7 7-7 7" /></svg></span></a></div>
         </> : <p className="studio-empty">暂未添加展示项目。<Link to="/blog">先读一篇博客 ↗</Link></p>}
       </div>
     </section>

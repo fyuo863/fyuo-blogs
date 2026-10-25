@@ -177,3 +177,85 @@
 .studio-blog .journal-entry__thumbnail { border: 0; border-radius: .75rem; }
 .studio-blog .journal-entry__content h2 button:hover { color: var(--studio-green); }
 @media (max-width: 600px) { .studio-blog .blog-search-form > div { flex-basis: 10rem; } .studio-blog .blog-search-button { padding-inline: 1.25rem; } }
+
+/* Review: matched hero columns, inline playground and selection-free covers. */
+.studio-all-works svg { display: block; }
+.studio-hero { min-height: 0; align-items: stretch; }
+.studio-keyvisual { min-height: 0; }
+.studio-latest { min-height: 0; padding-block: 2rem; }
+.studio-catalog__heading { display: flex; align-items: stretch; justify-content: space-between; gap: 1rem; margin-bottom: 2rem; }
+.studio-catalog__heading h1 { margin: 0; min-width: 0; font-size: clamp(2rem, 9vw, 10rem); }
+.studio-catalog__flash { display: flex; align-items: center; justify-content: flex-end; align-self: stretch; margin-left: auto; color: var(--studio-red); writing-mode: horizontal-tb; white-space: nowrap; font-family: var(--studio-display); font-weight: 900; font-size: clamp(3.4rem, 15.3vw, 17rem); line-height: 1; letter-spacing: 0; text-align: right; }
+.studio-plugin-list a[aria-current='true'] { color: var(--studio-green); }
+.studio-plugin-container { position: relative; isolation: isolate; width: 100%; min-height: min(70vh, 45rem); overflow: clip; border-radius: 1.25rem; background: var(--studio-panel); }
+.studio-plugin-container > iframe { display: block; width: 100%; min-height: min(70vh, 45rem); border: 0; }
+.studio-work .cover-flow__stage, .studio-work .cover-flow__front { user-select: none; -webkit-user-select: none; }
+.studio-work .cover-flow__front img { -webkit-user-drag: none; }
+.studio-work .cover-flow__back-content { user-select: text; -webkit-user-select: text; }
+@media (max-width: 600px) {
+  .studio-keyvisual { min-height: 22rem; }
+  .studio-latest { min-height: 0; padding-block: 2.5rem; }
+  .studio-catalog__heading { gap: .5rem; }
+  .studio-plugin-container { min-height: 28rem; border-radius: .85rem; }
+  .studio-plugin-container > iframe { min-height: 28rem; }
+}
+
+/* Shared card silhouette: small upper corners, generous lower corners. */
+.studio-nav,
+.studio-poster__art,
+.studio-work .cover-flow__stage,
+.studio-work .cover-flow__front,
+.studio-work .cover-flow__back,
+.studio-blog .journal-entry,
+.studio-blog .journal-entry__thumbnail,
+.studio-plugin-container { border-radius: var(--studio-card-radius); }
+
+/* Square cover tiles use equal corners; album sleeves retain square edges. */
+.studio-poster__art { border-radius: .75rem; }
+.studio-work .cover-flow__front,
+.studio-work .cover-flow__back { border-radius: 0; }
+.studio-plugin-gallery { display: grid; gap: 3rem; margin-block: 3rem; }
+.studio-plugin-card { min-width: 0; }
+.studio-plugin-card > h2 { margin: 0 0 1rem; color: var(--studio-ink); font-family: var(--studio-body); font-size: clamp(1.25rem, 2.5vw, 2rem); font-weight: 800; overflow-wrap: anywhere; }
+
+/* Review: warm reverse faces, rounded arrow and matching login panel. */
+.studio-work .cover-flow__back { --color-paper: var(--studio-ink); --color-ink: var(--studio-paper); --color-ink-2: var(--studio-panel); --color-paper-2: color-mix(in srgb, var(--studio-ink) 90%, var(--studio-paper)); background: var(--studio-ink); color: var(--studio-paper); }
+.studio-poster__caption h3 { font-family: var(--studio-display); }
+.studio-footer { background: var(--studio-red); color: var(--studio-paper); }
+#root:has(> .studio-shell) > .sign-in-modal { --color-paper: var(--studio-ink); --color-paper-2: color-mix(in srgb, var(--studio-ink) 92%, var(--studio-paper)); --color-paper-3: color-mix(in srgb, var(--studio-ink) 80%, var(--studio-paper)); --color-ink: var(--studio-paper); --color-ink-2: var(--studio-panel); --color-muted: var(--studio-rule); --color-cobalt: var(--studio-red); --color-accent: var(--studio-red); --color-accent-ink: var(--studio-paper); --color-focus: var(--studio-red); --font-body: var(--studio-body); }
+#root:has(> .studio-shell) .sign-in-modal__panel { border: 0; border-radius: var(--studio-card-radius); box-shadow: none; color: var(--studio-paper); font-family: var(--studio-body); }
+#root:has(> .studio-shell) .sign-in-modal__header h2 { font-family: var(--studio-display); }
+#root:has(> .studio-shell) .sign-in-modal__input-wrap input { font-family: var(--studio-body); }
+#root:has(> .studio-shell) .sign-in-modal__submit { border: 0; border-radius: .35rem .35rem 1.25rem 1.25rem; font-family: var(--studio-display); font-weight: 800; }
+#root:has(> .studio-shell) .sign-in-modal__close { border: 0; border-radius: 50%; }
+#root:has(> .studio-shell) .sign-in-modal__visibility:hover { background: var(--studio-paper); color: var(--studio-ink); }
+#root:has(> .studio-shell) .sign-in-modal__submit:hover:not(:disabled) { background: var(--studio-paper); color: var(--studio-ink); }
+
+/* Article portals inherit the public theme even outside the shell DOM tree. */
+#root:has(> .studio-shell) > .article-sheet {
+  --color-paper: var(--studio-paper); --color-paper-2: var(--studio-panel); --color-paper-3: var(--studio-rule);
+  --color-ink: var(--studio-ink); --color-ink-2: var(--studio-ink); --color-muted: var(--studio-muted); --color-rule: var(--studio-rule);
+  --color-cobalt: var(--studio-green); --color-accent: var(--studio-red); --color-accent-ink: var(--studio-paper); --color-focus: var(--studio-green);
+  --font-body: var(--studio-body); --font-display: var(--studio-display);
+  font-family: var(--studio-body); scrollbar-color: var(--studio-rule) var(--studio-paper);
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader button:hover { color: var(--studio-green); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body a { color: var(--studio-green); text-underline-offset: .2em; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body strong { color: var(--studio-ink); }
+#root:has(> .studio-shell) > .article-sheet .markdown-block--code { border: 1px solid var(--studio-rule); border-radius: var(--studio-card-radius) !important; }
+#root:has(> .studio-shell) > .article-sheet .markdown-block--quote { border-left-color: var(--studio-red) !important; }
+#root:has(> .studio-shell) > .article-sheet .article-reader > .mt-6 > span { border-radius: .4rem; border-color: var(--studio-rule); background: var(--studio-panel) !important; color: var(--studio-muted); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body img { border-color: var(--studio-rule); border-radius: .5rem; }
+
+/* Shared capsule action: pale body with a dark rounded arrow inset. */
+.studio-blog .blog-search-button,
+#root:has(> .studio-shell) > .article-sheet .article-reader .article-reader__back {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 1.15rem;
+  min-height: 3.25rem; padding: .45rem .5rem .45rem 1.4rem; border: 0; border-radius: 4rem;
+  background: var(--studio-ink); color: var(--studio-paper) !important;
+  font-family: var(--studio-display); font-size: .8rem !important; font-weight: 900; line-height: 1; letter-spacing: .02em;
+}
+.studio-button__icon { display: grid; place-items: center; flex: 0 0 auto; min-width: 3rem; height: 2.35rem; padding-inline: .5rem; border-radius: 3rem; background: var(--studio-paper, var(--color-ink)); color: var(--studio-ink, var(--color-paper)); }
+.studio-button__icon svg { display: block; }
+.studio-blog .blog-search-button:hover:not(:disabled),
+#root:has(> .studio-shell) > .article-sheet .article-reader .article-reader__back:hover { background: var(--studio-green); color: var(--studio-paper) !important; }

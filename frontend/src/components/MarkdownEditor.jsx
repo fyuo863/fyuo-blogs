@@ -3,6 +3,31 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import parseBlocks from "../utils/parseBlocks";
 import Callout from "./Callout";
+import { Copy, Check, AlertCircle } from 'lucide-react';
+
+function CodeBlock({ lang, code }) {
+  const [status, setStatus] = useState('idle');
+  const resetTimer = useRef(null);
+  useEffect(() => () => clearTimeout(resetTimer.current), []);
+  const copy = async () => {
+    clearTimeout(resetTimer.current);
+    setStatus('copying');
+    try {
+      await navigator.clipboard.writeText(code);
+      setStatus('copied');
+    } catch {
+      setStatus('failed');
+    }
+    resetTimer.current = setTimeout(() => setStatus('idle'), 2000);
+  };
+  const label = status === 'copied' ? '已复制' : status === 'failed' ? '复制失败，点击重试' : '复制代码';
+  return <pre className="markdown-block markdown-block--code bg-white/5 border border-zinc-800 rounded-lg p-5 overflow-x-auto" onCopy={event => event.stopPropagation()}>
+    <div className="markdown-code__header"><span className="text-xs text-zinc-500 uppercase tracking-wider">{lang}</span><button className="markdown-code__copy" type="button" onClick={copy} disabled={status === 'copying'} aria-label={label} title={label}>
+      {status === 'copied' ? <Check size={17} /> : status === 'failed' ? <AlertCircle size={17} /> : <Copy size={17} />}<span role="status" className="sr-only">{status === 'copied' ? '已复制' : status === 'failed' ? '复制失败' : ''}</span>
+    </button></div>
+    <code className="text-sm text-zinc-300 font-mono leading-relaxed whitespace-pre">{code}</code>
+  </pre>;
+}
 
 // ── 工具 ──
 function parseFrontmatter(raw) {
@@ -96,18 +121,7 @@ function BlockView({ block }) {
     case "fenced-code": {
       const lang = content.split("\n")[0].replace(/```\s*/, "");
       const code = content.split("\n").slice(1, -1).join("\n");
-      return (
-        <pre className="markdown-block markdown-block--code bg-white/5 border border-zinc-800 rounded-lg p-5 overflow-x-auto">
-          {lang && (
-            <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wider">
-              {lang}
-            </div>
-          )}
-          <code className="text-sm text-zinc-300 font-mono leading-relaxed whitespace-pre">
-            {code}
-          </code>
-        </pre>
-      );
+      return <CodeBlock lang={lang} code={code} />;
     }
 
     case "table":

@@ -1,5 +1,5 @@
 /* Hallmark · studied-DNA: user screenshots / STUDIO TRIGGER · scoped to public shell */
-.studio-shell {
+.studio-shell, #root:has(> .studio-shell) > .sign-in-modal, #root:has(> .studio-shell) > .article-sheet {
   --studio-paper: #1e2020;
   --studio-panel: #313332;
   --studio-ink: #eff5d9;
@@ -15,4 +15,5 @@
   --studio-body: 'Bricolage Grotesque', 'Microsoft YaHei', sans-serif;
   --studio-mono: var(--font-outlier);
   --studio-gutter: clamp(1.25rem, 5vw, 6rem);
+  --studio-card-radius: .35rem .35rem 1.5rem 1.5rem;
 }
