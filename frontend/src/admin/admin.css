@@ -43,3 +43,21 @@
   .secure-content .article-reader { padding:16px !important; }
   .secure-content__form fieldset { padding:16px; }
 }
+
+/* The management origin uses the same panel and sign-in components as the host. */
+.secure-admin--login { display:flex; flex-direction:column; }
+.secure-admin__login { flex:1; display:grid; place-items:center; min-height:0; padding:24px 0 48px; }
+.secure-admin__login .sign-in-modal--embedded { position:relative; inset:auto; z-index:auto; width:100%; padding:0; background:none; backdrop-filter:none; }
+.secure-admin__login .sign-in-modal__panel { max-width:960px; margin:auto; }
+.secure-admin:not(.secure-admin--login) .admin-panel__surface { height:calc(100dvh - 160px); min-height:480px; }
+@media(max-width:600px) {
+  .secure-admin__login { padding:8px 0 24px; }
+  .secure-admin:not(.secure-admin--login) .admin-panel__surface { height:calc(100dvh - 140px); }
+}
+.secure-admin .admin-panel__mobile-nav-item { color:var(--color-ink); border-color:var(--color-rule); }
+.secure-admin .admin-panel__mobile-nav-item.is-active { background:var(--color-cobalt); color:var(--color-paper); }
+@media(max-width:600px) {
+  .secure-admin .admin-panel__page { padding:8px; }
+  .secure-admin .admin-panel__mobile-nav > div:last-child { flex-wrap:nowrap; overflow-x:auto; padding-bottom:8px; }
+  .secure-admin .admin-panel__mobile-nav-item { flex-shrink:0; white-space:nowrap; }
+}

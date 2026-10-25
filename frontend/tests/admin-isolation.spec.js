@@ -36,7 +36,7 @@ test('admin origin never requests plugin assets or previews, and edits content t
   await page.goto('https://www.fyuoblog.top/p/travel?__plugin_preview=1');
   await expect(page.getByRole('heading',{name:'fyuo-control.',exact:true})).toBeVisible();
   await expect(page.locator('iframe')).toHaveCount(0);
-  await page.getByRole('button',{name:'内容编辑',exact:true}).click();
+  await page.getByRole('button',{name:'content.',exact:true}).click();
   await page.getByRole('button',{name:'旅行记录',exact:true}).click();
   await page.getByRole('button',{name:'新建',exact:true}).click();
   await page.getByLabel('地点',{exact:true}).fill('Kyoto');
@@ -59,7 +59,7 @@ for (const width of [1440, 390]) {
       if (request.method() === 'PUT' && request.url().endsWith('/articles/42')) writes.push(request.postDataJSON());
     });
     await page.goto('https://www.fyuoblog.top/');
-    await page.getByRole('button', { name: '内容编辑', exact: true }).click();
+    await page.getByRole('button', { name: 'content.', exact: true }).click();
     const row = page.getByRole('button', { name: /Migration fixture/ });
     await expect(row).toBeVisible();
     const bounds = await row.boundingBox();
@@ -83,5 +83,30 @@ for (const width of [1440, 390]) {
     expect(await page.locator('.secure-admin').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.getByRole('button', { name: '首页内容', exact: true }).click();
     await expect(page.getByLabel('封面简介', { exact: true })).toBeVisible();
+  });
+}
+
+for (const width of [390, 1440]) {
+  test(`production login is a complete page and opens shared management at ${width}px`, async ({ page }, info) => {
+    await page.setViewportSize({ width, height: 900 });
+    await productionOrigins(page);
+    await page.goto('https://www.fyuoblog.top/');
+    await expect(page.getByRole('region', { name: '管理中心登录' })).toBeVisible();
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(page.getByText('请登录管理中心。', { exact: true })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'content.', exact: true })).toHaveCount(0);
+    await page.screenshot({ path: info.outputPath('production-login.png'), fullPage: true });
+    await page.getByPlaceholder('name-plz').fill('migration-test');
+    await page.getByPlaceholder('and-psw').fill('fixture-password');
+    await page.getByRole('button', { name: 'UNLOCK THE DESK', exact: true }).click();
+    await expect(page.getByRole('dialog', { name: 'Admin control panel' })).toBeVisible();
+    await page.getByRole('button', { name: 'content.', exact: true }).click();
+    await expect(page.getByRole('region', { name: '内容编辑' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Migration fixture/ })).toBeVisible();
+    await page.screenshot({ path: info.outputPath('production-management.png'), fullPage: true });
+    expect(await page.locator('.secure-admin').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
+    await page.getByRole('button', { name: '退出登录', exact: true }).click();
+    await expect(page.getByRole('region', { name: '管理中心登录' })).toBeVisible();
+    expect(await page.evaluate(() => sessionStorage.getItem('user'))).toBe(null);
   });
 }

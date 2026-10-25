@@ -48,7 +48,7 @@ function LoginHalftoneField() {
   return <canvas ref={canvasRef} className="sign-in-modal__halftone" aria-hidden="true" />;
 }
 
-function SignInModal({ open, onClose, onLogin, onNotify }) {
+function SignInModal({ open, onClose, onLogin, onNotify, embedded = false }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -90,17 +90,17 @@ function SignInModal({ open, onClose, onLogin, onNotify }) {
   };
 
   return (
-    <div className="sign-in-modal" onClick={handleOverlayClick}>
-      <div className="sign-in-modal__panel" role="dialog" aria-modal="true" aria-labelledby="sign-in-title">
+    <div className={`sign-in-modal${embedded ? " sign-in-modal--embedded" : ""}`} onClick={embedded ? undefined : handleOverlayClick}>
+      <div className="sign-in-modal__panel" role={embedded ? "region" : "dialog"} aria-modal={embedded ? undefined : true} aria-labelledby="sign-in-title">
         <aside className="sign-in-modal__masthead" aria-hidden="true">
           <LoginHalftoneField />
         </aside>
         <div className="sign-in-modal__body">
           <header className="sign-in-modal__header">
             <h2 id="sign-in-title">log-in.</h2>
-            <button type="button" onClick={onClose} className="sign-in-modal__close" aria-label="关闭登录窗口">
+            {!embedded && <button type="button" onClick={onClose} className="sign-in-modal__close" aria-label="关闭登录窗口">
               <X size={19} strokeWidth={2.5} />
-            </button>
+            </button>}
           </header>
 
           <form onSubmit={handleSubmit} className="sign-in-modal__form">
