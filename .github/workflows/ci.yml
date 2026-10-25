@@ -78,6 +78,9 @@ jobs:
           cd frontend
           npm run build
 
+      - name: Verify host-only Docker build context
+        run: docker build --target builder --tag blog-frontend-ci ./frontend
+
       - name: Build optional plugin ZIPs (test only, never bundled with host)
         run: |
           cd frontend

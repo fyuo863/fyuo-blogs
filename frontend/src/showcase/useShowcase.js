@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { parseFeatured, parseShowcase, showcaseURL } from './catalog';
 import { resolveReadmeCovers } from './readme';
-import defaultConfig from '../../plugins/index/showcase.config.json';
+import defaultConfig from './showcase.config.json';
 
 export function useShowcase(config = defaultConfig) {
   const [albums,setAlbums] = useState(null);
