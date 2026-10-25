@@ -370,7 +370,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .admin-panel__nav-item, .admin-panel__mobile-nav-item { display: flex; width: 100%; min-height: 3.25rem; align-items: center; justify-content: space-between; gap: var(--space-sm); padding: var(--space-sm); border: var(--rule-hair) solid var(--color-paper); background: transparent; color: var(--color-paper); cursor: pointer; font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: .06em; text-align: left; text-transform: uppercase; transition: background-color var(--dur-short) var(--ease-out), color var(--dur-short) var(--ease-out), transform var(--dur-short) var(--ease-out); }
 .admin-panel__nav-item.is-active, .admin-panel__mobile-nav-item.is-active { background: var(--color-paper); color: var(--color-ink); }
 .admin-panel__identity { padding-top: var(--space-md); border-top: var(--rule-hair) solid var(--color-paper); }
-.admin-panel__content { display: flex; min-width: 0; flex-direction: column; background: var(--color-paper); }
+.admin-panel__content { display: flex; min-width: 0; min-height: 0; overflow: hidden; flex-direction: column; background: var(--color-paper); }
+.admin-panel__surface { grid-template-rows: minmax(0, 1fr); }
+.admin-panel__heading, .admin-panel__mobile-nav { flex-shrink: 0; }
+.admin-panel__page { flex: 1; min-height: 0; min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.admin-panel__table-scroll { max-height: 45dvh; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; }
+.admin-panel__table-scroll thead { position: sticky; top: 0; z-index: 1; background: var(--color-paper-2); }
+.admin-panel__content > .plugin-manager { overscroll-behavior: contain; scrollbar-gutter: stable; }
 .admin-panel__heading, .admin-panel__mobile-nav { padding: var(--space-md) clamp(var(--space-md), 4vw, var(--space-xl)); border-bottom: var(--rule-hair) solid var(--color-ink); }
 .admin-panel__heading h2 { margin: var(--space-2xs) 0 0; color: var(--color-ink); font-family: var(--font-display); font-size: clamp(2rem, 4vw, 3.5rem); font-style: normal; line-height: .9; }
 .admin-panel__heading .text-zinc-500, .admin-panel__mobile-nav .text-zinc-500 { color: var(--color-cobalt); font-family: var(--font-outlier); font-size: var(--text-xs); letter-spacing: .06em; }

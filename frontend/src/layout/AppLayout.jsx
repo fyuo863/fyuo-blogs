@@ -1,10 +1,12 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { listPlugins } from "../plugins/pluginApi";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, Navigate, useLocation } from "react-router-dom";
 
 import "./plugin-shell.css";
 import "./studio.css";
+import './route-ring.css';
+import LiveRingTransition from './LiveRingTransition';
 import StudioHome from "../pages/StudioHome";
 import Home from "../pages/Home";
 import Blog from "../pages/Blog";
@@ -13,7 +15,6 @@ import SignInModal from "../components/SignInModal";
 import InfoModal from "../components/InfoModal";
 import AdminPanel from "../components/AdminPanel";
 
-import ContentDesk from "../pages/ContentDesk";
 import PluginPage from "../components/PluginPage";
 import GithubIcon from "../module/GithubIcon";
 import { UserRound, Settings, LogOut } from 'lucide-react';
@@ -58,7 +59,6 @@ export default function AppLayout({
   setInfo,
 }) {
   const location = useLocation();
-  const readerRef = useRef(null);
   const [catalog, setCatalog] = useState({ plugins: [], loading: true, error: '' });
   const [retry, setRetry] = useState(0);
   useEffect(() => {
@@ -92,7 +92,6 @@ export default function AppLayout({
   const isHome = path === "/";
   const isBlog = path === "/blog";
   const isCatalog = path === "/plugins";
-  useEffect(() => { readerRef.current?.scrollTo({ top: 0 }); }, [location.pathname]);
 
   return (
     <div className="plugin-shell studio-shell">
@@ -110,15 +109,16 @@ export default function AppLayout({
         </div>
       </header>
       <main className="plugin-shell__canvas" id="plugin-canvas">
-        <section ref={readerRef} key={path} className={`single-page-reader plugin-shell__reader ${isBlog ? 'studio-blog' : ''}`}>
+        <LiveRingTransition location={location}>
+        <section key={path} className={`single-page-reader plugin-shell__reader ${isBlog ? 'studio-blog' : ''}`}>
           {isHome ? (user && new URLSearchParams(location.search).get('desk') === 'home' ? <Home {...pageProps} /> : <StudioHome />) :
-            isBlog ? <Blog {...pageProps} showDrawer={Boolean(user)} portalTarget={document.getElementById("root")} /> :
+            isBlog ? <Blog {...pageProps} showDrawer={false} portalTarget={document.getElementById("root")} /> :
             isCatalog ? <div className="studio-catalog"><header className="studio-catalog__heading"><h1>PLAY<br />GROUND</h1><span className="studio-catalog__flash">快闪</span></header>
               {catalog.loading ? <p role="status">正在加载插件…</p> : catalog.error ? <><p role="alert">{catalog.error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>重试</button></> : catalog.plugins.length ? <div className="studio-plugin-gallery">{catalog.plugins.map(plugin => <article className="studio-plugin-card" key={`${plugin.slug}-${plugin.active_version || ''}`} aria-label={plugin.name || plugin.slug}><h2>{plugin.name || plugin.slug}</h2><PlaygroundPlugin slug={plugin.slug} pageProps={pageProps} /></article>)}</div> : <p role="status">暂未发布插件。首页与博客仍然可以正常访问。</p>}
               {user?.role === 'admin' && <button type="button" onClick={onOpenAdmin}>打开插件管理</button>}
             </div> :
-            isDesk ? <ContentDesk plugins={catalog.plugins} user={user} onOpenSignIn={onOpenSignIn} /> :
-            slug ? <PluginPage slug={slug} {...pageProps} showDrawer={Boolean(user)} portalTarget={document.getElementById("root")} /> :
+            isDesk ? <Navigate to="/blog" replace /> :
+            slug ? <PluginPage slug={slug} {...pageProps} showDrawer={false} portalTarget={document.getElementById("root")} /> :
             <div className="plugin-shell__empty">
               {catalog.loading ? <p role="status">正在加载页面列表…</p> : catalog.error ? <><p role="alert">{catalog.error}</p><button type="button" onClick={() => setRetry(value => value + 1)}>重试</button></> : <>
                 <h1>{location.pathname === '/' ? '还没有已发布的页面' : '页面不存在'}</h1>
@@ -127,6 +127,7 @@ export default function AppLayout({
               {user?.role === 'admin' ? <button type="button" onClick={onOpenAdmin}>打开插件管理</button> : !user && <button type="button" onClick={onOpenSignIn}>管理员登录</button>}
             </div>}
         </section>
+        </LiveRingTransition>
       </main>
 
       {createPortal(<>

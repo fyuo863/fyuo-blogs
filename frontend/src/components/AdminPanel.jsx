@@ -1,3 +1,5 @@
+import ContentManager from "../admin/ContentManager";
+import "../admin/admin.css";
 import PluginManager from "./PluginManager";
 import { useCallback, useEffect, useState } from "react";
 import { ChevronRight, Eye, KeyRound, Package, Shield, X } from "lucide-react";
@@ -12,6 +14,7 @@ import {
 } from "../api";
 
 const NAV_ITEMS = [
+  { key: "content", label: "content.", icon: Package, title: "content management.", description: "管理首页内容、文章与旅行记录。" },
   { key: "plugins", label: "plugins.", icon: Package, title: "plugin management.", description: "上传页面插件、管理版本与调整栏目顺序。" },
   {
     key: "visits",
@@ -77,7 +80,7 @@ function VisitRecordPage({ open, token, onNotify, active }) {
   if (!active) return null;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="admin-panel__page">
       <div className="border-b border-zinc-800 px-8 py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
@@ -117,8 +120,8 @@ function VisitRecordPage({ open, token, onNotify, active }) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-8 pb-8">
-        <div className="overflow-hidden border border-zinc-800 bg-black/60">
+      <div className="px-8 pb-8">
+        <div className="admin-panel__table-scroll border border-zinc-800 bg-black/60">
           <table className="min-w-full divide-y divide-zinc-800 text-left">
             <thead className="bg-white/[0.03]">
               <tr className="text-xs uppercase tracking-[0.25em] text-zinc-500">
@@ -313,7 +316,7 @@ function ApiKeyPage({ open, token, onNotify, active }) {
   if (!active) return null;
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="admin-panel__page">
       <div className="grid grid-cols-1 gap-6 border-b border-zinc-800 px-8 py-6 xl:grid-cols-[420px_minmax(0,1fr)]">
         <form onSubmit={handleCreate} className="border border-zinc-800 bg-white/[0.03] p-5">
           <div className="flex items-center gap-3 text-white">
@@ -362,8 +365,8 @@ function ApiKeyPage({ open, token, onNotify, active }) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        <div className="overflow-hidden border border-zinc-800 bg-black/60">
+      <div className="px-8 py-6">
+        <div className="admin-panel__table-scroll border border-zinc-800 bg-black/60">
           <table className="min-w-full divide-y divide-zinc-800 text-left">
             <thead className="bg-white/[0.03]">
               <tr className="text-xs uppercase tracking-[0.25em] text-zinc-500">
@@ -538,6 +541,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
             </h2>
           </div>
 
+          {activeKey === "content" && <div className="admin-panel__page p-6"><ContentManager token={user?.token} /></div>}
           {activeKey === "plugins" && <PluginManager key={user?.token} token={user?.token} />}
           <VisitRecordPage
             open={open}

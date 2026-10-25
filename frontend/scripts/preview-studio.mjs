@@ -23,13 +23,28 @@ const server = await createServer({
           return;
         }
         if (!url.pathname.startsWith('/api/')) return next();
+        if (url.pathname === '/api/v1/signin' && request.method === 'POST') {
+          let body = '';
+          request.on('data', chunk => { body += chunk; if (body.length > 2048) request.destroy(); });
+          request.on('end', () => {
+            try {
+              const input = JSON.parse(body);
+              if (input.name !== 'demo' || input.password !== 'demo') return json({ error: '演示账号和密码均为 demo。' }, 401);
+              return json({ data: { id: 99999, name: 'demo', role: 'admin', token: 'local-preview-only-not-a-real-token' } });
+            } catch { return json({ error: '请求格式错误' }, 400); }
+          });
+          return;
+        }
+        if (url.pathname === '/api/v1/signout' && request.method === 'POST') return json({ message: '已退出演示' });
         if (request.method !== 'GET') {
           if (url.pathname.endsWith('/view')) return json({ view_count: 0, like_count: 0 });
-          return json({ error: '本地演示不连接数据库，登录和写入已禁用。' }, 503);
+          return json({ error: '本地演示不连接数据库，写入已禁用。' }, 503);
         }
         if (url.pathname === '/api/v1/home-content') return json({ data: null });
         if (url.pathname === '/api/v1/plugins') return json({ data: [{ slug: manifest.id, name: manifest.name }] });
         if (url.pathname === '/api/v1/plugins/local-demo/manifest') return json({ data: manifest });
+        if (url.pathname === '/api/v1/admin/plugins') return json({ data: [{ id: 999, slug: manifest.id, name: manifest.name, status: 'published', active_version: manifest.version, versions: [{ version: manifest.version, status: 'published' }] }] });
+        if (['/api/v1/visit-records', '/api/v1/admin/api-keys', '/api/v1/admin/publisher-users', '/api/v1/travel-places'].includes(url.pathname)) return json({ data: [] });
         if (url.pathname === '/api/v1/articles') return json({ data: articles });
         if (url.pathname === '/api/v1/articles/search') return json({ data: articles.filter(article => `${article.title} ${article.content}`.includes(url.searchParams.get('q') || '')) });
         const article = articles.find(item => url.pathname === `/api/v1/articles/${item.id}`);

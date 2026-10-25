@@ -1,0 +1,16 @@
+@property --route-live-radius {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
+}
+.route-pages { position: relative; width: 100%; height: 100%; min-height: 0; isolation: isolate; }
+.route-live-layer { position: absolute; inset: 0; min-width: 0; background: var(--studio-paper); }
+.route-live-layer.is-outgoing { z-index: 0; pointer-events: none; }
+.route-live-layer.is-current { z-index: 2; }
+.route-pages[data-running='true'] { animation: route-live-expand 760ms cubic-bezier(.65, 0, .2, 1) both; }
+.route-pages[data-running='true'] .route-live-layer.is-current { clip-path: circle(var(--route-live-radius) at 50% 50%); }
+.route-live-ring { position: absolute; inset: 0; z-index: 1; background: #111111; clip-path: circle(calc(var(--route-live-radius) + 28px) at 50% 50%); pointer-events: none; }
+@keyframes route-live-expand { from { --route-live-radius: 0px; } to { --route-live-radius: 100vmax; } }
+@media (prefers-reduced-motion: reduce) {
+  .route-pages[data-running='true'] { animation-duration: 1ms; }
+}
