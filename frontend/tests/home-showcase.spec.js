@@ -14,7 +14,10 @@ async function setup(page,showcase){
  await page.goto('/p/index');
 }
 for(const width of [1440,390])test(`album flip and navigation ${width}`,async({page},info)=>{
- await page.setViewportSize({width,height:900});await setup(page);
+ await page.setViewportSize({width,height:900});await setup(page,{version:1,albums:[
+  {id:'blogs',title:'fyuo-blogs.',cover:'./covers/blogs.svg',url:'https://github.com/fyuo863/fyuo-blogs'},
+  {id:'fetch',title:'go-file-fetch',cover:'./covers/fetch.svg',url:'https://github.com/fyuo863/go-file-fetch'},
+ ]});
  await expect(page.getByText('fyuo / independent work / issue 01',{exact:true})).toHaveCount(0);
  await expect(page.locator('.project-postcard')).toHaveCount(0);
  const cover=page.getByRole('button',{name:'查看 fyuo-blogs.',exact:true});

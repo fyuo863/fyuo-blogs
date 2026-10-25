@@ -16,6 +16,7 @@ test('configured showcase never exposes legacy projects during loading or failur
 });
 for (const width of [320,375,414,768,1440]) {
  test(`studio home fits ${width}px and navigation works`,async({page},info)=>{
+  await page.route('https://example.com/cover.svg',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="320" height="320"><rect width="320" height="320" fill="lime"/></svg>'}));
   await mockBusinessAPI(page);await page.route('https://raw.githubusercontent.com/**',r=>r.fulfill({json:{version:1,albums:Array.from({length:6},(_,i)=>({id:'project-'+i,title:'Project '+i,cover:'https://example.com/cover.svg'}))}}));
   await page.setViewportSize({width,height:900});await page.goto('/');
   await expect(page.locator('#studio-title')).toBeVisible();
