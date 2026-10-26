@@ -56,7 +56,7 @@ for (const production of [false, true]) test(`${production ? 'production modal' 
   await manager.getByRole('button', { name: '上移 加载动画测试' }).click();
   await manager.getByRole('button', { name: '保存顺序' }).click();
   await expect(manager.locator('.plugin-manager__message')).toContainText('顺序已保存');
-  expect(await page.locator('.studio-plugin-gallery > .studio-plugin-card > h2').allTextContents()).toEqual(['index', 'journal', '加载动画测试', 'travel']);
+  await expect(page.locator('.studio-plugin-gallery > .studio-plugin-card > .studio-plugin-card__heading > h2')).toHaveText(['index', 'journal', '加载动画测试', 'travel']);
   await manager.getByRole('button', { name: '刷新列表' }).click();
   await expect(manager.locator('li').nth(2)).toContainText('加载动画测试');
   await row.getByRole('button', { name: '下线', exact: true }).click();

@@ -95,7 +95,7 @@ jobs:
         run: node --test services/ai-coding-sync/sync.test.mjs
 
       - name: Install browser for plugin compatibility checks
-        run: cd frontend && npx playwright install --with-deps chromium
+        run: cd frontend && npx playwright install --with-deps chromium webkit
 
       - name: Verify historical plugins and empty host compatibility
         run: cd frontend && npm run test:e2e

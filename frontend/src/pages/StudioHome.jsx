@@ -4,6 +4,7 @@ import { getHomeContent } from '../api';
 import { useShowcase } from '../showcase/useShowcase';
 import ProjectGrid from '../module/ProjectGrid';
 import HalftoneTitle from '../components/HalftoneTitle';
+import CachedCover from '../showcase/CachedCover';
 
 const fallback = [
   { title: 'fyuobot-ts', description: '事件驱动的轻量化 Agent 框架。', linkUrl: 'https://github.com/fyuo863/fyuobot-ts', tag: 'AGENT FRAMEWORK' },
@@ -24,7 +25,7 @@ function Poster({ project, index, compact = false }) {
   const title = project.title?.replace(/\.$/, '') || 'Untitled';
   const contents = <>
     <div className="studio-poster__art">
-      {project.image && !failed ? <img src={project.image} alt="" loading="lazy" draggable="false" onError={() => setFailed(true)} /> : <div className="studio-poster__graphic" aria-hidden="true"><b>{title.split('-')[0]}<br />{title.split('-').slice(1).join('-') || 'project'}</b></div>}
+      {project.image && !failed ? <CachedCover src={project.image} alt="" loading="lazy" draggable="false" onError={() => setFailed(true)} /> : <div className="studio-poster__graphic" aria-hidden="true"><b>{title.split('-')[0]}<br />{title.split('-').slice(1).join('-') || 'project'}</b></div>}
     </div>
     <div className="studio-poster__caption"><h3>{title}</h3></div>
     {!compact && <p>{project.description}</p>}

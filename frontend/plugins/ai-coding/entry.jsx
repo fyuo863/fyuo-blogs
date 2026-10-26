@@ -46,7 +46,8 @@ export default function AICoding() {
   }, [refresh]);
   const stale = data && (state === 'offline' || now - Date.parse(data.updatedAt) > 10 * 60 * 1000);
   const byDate = new Map((data?.daily || []).map(row => [row.date, row.tokens]));
-  const timeZone = data?.timeZone || 'Asia/Shanghai';
+  let timeZone = data?.timeZone || 'Asia/Shanghai';
+  try { new Intl.DateTimeFormat('en', {timeZone}); } catch { timeZone = 'Asia/Shanghai'; }
   const calendarDate = new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(data?.updatedAt ? new Date(data.updatedAt) : new Date(now));
   const anchor = new Date(`${calendarDate}T12:00:00Z`);
   const days = Array.from({ length: 364 }, (_, index) => {
@@ -58,14 +59,12 @@ export default function AICoding() {
   const max = Math.max(1, ...visible.map(day => day.tokens || 0));
   const yearMax = Math.max(1, ...days.map(day => day.tokens || 0));
   return <main className="aic-page">
-    <header className="aic-masthead"><span>{config.name}</span><a href="https://github.com/fyuo863" target="_blank" rel="noreferrer">GitHub ↗</a></header>
-    <section className="aic-intro"><h1>AI Coding</h1></section>
-    <div className="aic-status" role="status"><span><i data-ready={Boolean(data && !stale)} />{state === 'loading' ? '正在读取用量' : !data ? '等待首次同步' : stale ? '同步暂未更新 · 保留最近记录' : '已同步'}{data && <time dateTime={data.updatedAt}> / {new Date(data.updatedAt).toLocaleString('zh-CN', { hour12: false })}</time>}</span><button onClick={() => { setState('loading'); setRefresh(value => value + 1); }} disabled={state === 'loading'}>刷新 ↗</button></div>
+    <header className="aic-masthead"><h1>AI<br /><span>CODING</span></h1><a href="https://github.com/fyuo863" target="_blank" rel="noreferrer">GitHub ↗</a></header>
+    <div className="aic-status" role="status"><span><i data-ready={Boolean(data && !stale)} />{state === 'loading' ? '正在读取用量' : !data ? '等待首次同步' : stale ? '同步暂未更新 · 保留最近记录' : '已同步'}{data && <time dateTime={data.updatedAt}>记录截至 {new Date(data.updatedAt).toLocaleDateString('zh-CN')}</time>}</span><button onClick={() => { setState('loading'); setRefresh(value => value + 1); }} disabled={state === 'loading'}>刷新 ↗</button></div>
 
-    <section className="aic-totals" aria-label="Token 用量概览">{[['today', '今日 TOKENS'], ['month', '本月 TOKENS'], ['allTime', '累计 TOKENS']].map(([key, label]) => <div key={key}><p>{label}</p><strong title={data?.totals[key].toLocaleString()}>{fmt(data?.totals[key])}</strong></div>)}</section>
+    <section className="aic-totals" aria-label="Token 用量概览">{[['allTime', '累计 TOKENS'], ['today', '当日 TOKENS'], ['month', '当月 TOKENS']].map(([key, label]) => <div key={key}><p>{label}</p><strong title={data?.totals[key].toLocaleString()}>{fmt(data?.totals[key])}</strong></div>)}</section>
     <section className="aic-trend"><div className="aic-section-head"><div><h2>用量趋势</h2></div><div className="aic-period" aria-label="趋势时间范围">{[7, 30, 90].map(value => <button key={value} aria-pressed={period === value} onClick={() => setPeriod(value)}>{value} 天</button>)}</div></div><div className="aic-chart" role="img" aria-label={`最近 ${period} 天用量，最高 ${fmt(max === 1 ? 0 : max)} tokens`}><span className="aic-chart-scale">{data ? fmt(max === 1 ? 0 : max) : '—'} TOKENS</span><div className="aic-bars">{visible.map(day => <div key={day.date} title={`${day.date} · ${day.tokens == null ? '无记录' : day.tokens.toLocaleString() + ' tokens'}`}><span style={{ height: `${(day.tokens || 0) / max * 100}%` }} /></div>)}</div>{!data && <p className="aic-chart-empty">暂无数据</p>}</div><div className="aic-axis"><span>{visible[0].date}</span><span>{visible.at(-1).date}</span></div></section>
-    <section className="aic-activity"><div className="aic-section-head"><div><h2>活跃记录</h2></div><p className="aic-muted">最近 52 周</p></div><div className="aic-heatmap" role="img" aria-label="过去 364 天的 Token 用量热力图">{days.map(day => <span key={day.date} data-level={day.tokens == null ? 'missing' : day.tokens === 0 ? 0 : Math.min(4, Math.ceil(day.tokens / yearMax * 4))} title={`${day.date} · ${day.tokens == null ? '无记录' : day.tokens.toLocaleString() + ' tokens'}`} />)}</div><p className="aic-legend">浅 → 深 · 用量由少到多 · 空心为无记录</p></section>
+    <section className="aic-activity"><div className="aic-section-head"><div><h2>活跃记录</h2></div><p className="aic-muted">最近 52 周</p></div><div className="aic-heatmap" role="img" aria-label="过去 364 天的 Token 用量热力图">{days.map(day => <span key={day.date} data-level={day.tokens == null ? 'missing' : day.tokens === 0 ? 0 : Math.min(4, Math.ceil(day.tokens / yearMax * 4))} title={`${day.date} · ${day.tokens == null ? '无记录' : day.tokens.toLocaleString() + ' tokens'}`} />)}</div><p className="aic-legend" aria-label="热力图图例">少 <span data-level="1" /><span data-level="2" /><span data-level="3" /><span data-level="4" /> 多 · 空心为无记录</p></section>
     <section className="aic-breakdown"><div><h2>用量分布</h2><p className="aic-muted">累计 Tokens</p></div><Ranking title="工具" rows={data?.tools} /><Ranking title="模型" rows={data?.models} /></section>
-    <footer className="aic-footer"><span>{config.name}</span><span>Token Monitor</span></footer>
   </main>;
 }

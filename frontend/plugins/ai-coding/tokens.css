@@ -1,0 +1,11 @@
+.aic-page {
+  --aic-paper: var(--studio-paper, #1e2020);
+  --aic-panel: var(--studio-panel, #313332);
+  --aic-ink: var(--studio-ink, #eff5d9);
+  --aic-muted: var(--studio-muted, #b1b5a7);
+  --aic-green: var(--studio-green, #acfa64);
+  --aic-pink: var(--studio-red, #ff3455);
+  --aic-font: var(--studio-body, 'Bricolage Grotesque', 'Microsoft YaHei', sans-serif);
+  --aic-display: var(--studio-display, 'Arial Black', Arial, sans-serif);
+  --aic-space: clamp(20px, 4vw, 48px);
+}

@@ -32,8 +32,8 @@ test('ai coding renders public summaries, responsive layout and stale data hones
     expect(await page.locator('.aic-page').evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await page.locator('.aic-masthead').scrollIntoViewIfNeeded();
     await page.screenshot({ path: `test-results/ai-coding-${width}.png` });
-    await page.locator('.aic-footer').scrollIntoViewIfNeeded();
-    await expect(page.locator('.aic-footer')).toBeInViewport();
+    await page.locator('.aic-breakdown').scrollIntoViewIfNeeded();
+    await expect(page.locator('.aic-breakdown')).toBeInViewport();
     await page.screenshot({ path: `test-results/ai-coding-${width}-bottom.png` });
   }
   await page.getByRole('button', { name: '7 天', exact: true }).click();
@@ -45,6 +45,16 @@ test('ai coding renders public summaries, responsive layout and stale data hones
   await expect(page.locator('.aic-totals')).toContainText('1.2M');
   await expect(page.locator('.plugin-sidebar__preview iframe')).toHaveCount(0);
   await expect(page.locator('.plugin-sidebar')).toHaveCount(0);
+  await page.emulateMedia({reducedMotion:'reduce'});await page.mouse.move(0,0);
+  const appearance=()=>page.locator('.aic-masthead h1,.aic-masthead h1 span,.aic-status button').evaluateAll(elements=>elements.map(el=>{
+    const style=getComputedStyle(el);return {color:style.color,background:style.backgroundColor,font:style.fontSize,radius:style.borderRadius};
+  }));
+  const standalone=await appearance();
+  failed=false;
+  await page.goto('/plugins');
+  await expect(page.locator('.aic-totals')).toContainText('1.2M');
+  await expect(page.locator('.aic-status button')).toBeEnabled();
+  expect(await appearance()).toEqual(standalone);
   expect(errors).toEqual([]);
 });
 

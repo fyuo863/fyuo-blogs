@@ -42,7 +42,10 @@ func (r *PluginRepository) Active(slug string) (model.Plugin, model.PluginVersio
 }
 func (r *PluginRepository) ListPublished() ([]model.Plugin, error) {
 	var p []model.Plugin
-	err := r.db.Where("status = ?", "published").Order("sort_order ASC, id ASC").Find(&p).Error
+	err := r.db.Model(&model.Plugin{}).
+		Select("plugins.*, active.published_at AS published_at").
+		Joins("LEFT JOIN plugin_versions AS active ON active.plugin_id = plugins.id AND active.version = plugins.active_version").
+		Where("plugins.status = ?", "published").Order("plugins.sort_order ASC, plugins.id ASC").Find(&p).Error
 	return p, err
 }
 func (r *PluginRepository) Publish(slug, version string) error {

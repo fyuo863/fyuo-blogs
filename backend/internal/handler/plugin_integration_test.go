@@ -89,6 +89,36 @@ func pluginZip(t *testing.T, manifest service.PluginManifest, missingStyles bool
 	return name
 }
 
+func TestPublicPluginDateUsesActivePublishedVersion(t *testing.T) {
+	db := pluginTestDB(t)
+	if db.Migrator().HasColumn("plugins", "published_at") {
+		t.Fatal("publication date must not introduce a second persisted column")
+	}
+	created := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
+	old := time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)
+	current := time.Date(2026, 10, 26, 3, 0, 0, 0, time.UTC)
+	p := model.Plugin{Slug: "date-test", Name: "Date test", Type: "module", Status: "published", ActiveVersion: "2.0.0", CreatedAt: created}
+	if err := db.Create(&p).Error; err != nil {
+		t.Fatal(err)
+	}
+	for _, version := range []model.PluginVersion{
+		{PluginID: p.ID, Version: "1.0.0", ManifestJSON: "{}", Status: "published", PublishedAt: &old},
+		{PluginID: p.ID, Version: "2.0.0", ManifestJSON: "{}", Status: "published", PublishedAt: &current},
+		{PluginID: p.ID, Version: "3.0.0", ManifestJSON: "{}", Status: "draft"},
+	} {
+		if err := db.Create(&version).Error; err != nil {
+			t.Fatal(err)
+		}
+	}
+	list, err := repository.NewPluginRepository(db).ListPublished()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(list) != 1 || list[0].PublishedAt == nil || !list[0].PublishedAt.Equal(current) {
+		t.Fatalf("expected active version publication date %v, got %+v", current, list)
+	}
+}
+
 func TestPluginLifecycleIntegration(t *testing.T) {
 	db := pluginTestDB(t)
 	repo := repository.NewPluginRepository(db)

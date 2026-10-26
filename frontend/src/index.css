@@ -133,14 +133,16 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .section-note { max-width: 32ch; margin: 0; color: var(--color-muted); line-height: 1.45; }
 .project-grid { padding-block: var(--space-xl); border-top: var(--rule-hair) solid var(--color-ink); }
 .cover-flow { display: grid; gap: var(--space-lg); border-top:0; }
-.cover-flow__stage { position: relative; height: clamp(31.5rem, 69vw, 52.5rem); overflow: clip; isolation: isolate; background: var(--color-paper-2); perspective: 93rem; touch-action: pan-y; transform-style: preserve-3d; outline: 0; cursor: grab; }
+.cover-flow__stage { position: relative; height: clamp(31.5rem, 69vw, 52.5rem); overflow: clip; isolation: isolate; background: var(--color-paper-2); touch-action: pan-y; outline: 0; cursor: grab; }
+/* Keep clipping/isolation outside the 3D scene: WebKit flattens grouped layers. */
+.cover-flow__scene { position:absolute; inset:0; perspective:93rem; -webkit-perspective:93rem; transform-style:preserve-3d; -webkit-transform-style:preserve-3d; }
 .cover-flow__wood-grain { position: absolute; z-index: 0; inset: 0; display: block; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
 .cover-flow__wood-grain-line { fill: none; stroke: var(--color-ink-2); stroke-linecap: round; vector-effect: non-scaling-stroke; }
 .cover-flow__stage.is-dragging { cursor: grabbing; }
 .cover-flow__stage:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: -0.18rem; }
 .cover-flow__item { position: absolute; top: 50%; left: 50%; display: grid; width: clamp(14.25rem, 31.5vw, 24rem); aspect-ratio: 1; place-items: center; padding: 0; border: var(--rule-hair) solid var(--color-ink); background: var(--color-paper-2); cursor: pointer; transform-style: preserve-3d; transition: transform calc(var(--dur-medium) + 120ms) var(--ease-out); will-change: transform; }
 .cover-flow__item:focus-visible, .cover-flow__button:focus-visible { outline: 0.18rem solid var(--color-focus); outline-offset: 0.18rem; }
-.cover-flow__item:active { filter: contrast(0.96); }
+.cover-flow__item:active { cursor:grabbing; }
 .cover-flow__item:nth-child(4n + 2) { background: var(--color-cobalt); }
 .cover-flow__item:nth-child(4n) { background: var(--color-paper-3); }
 .cover-flow__item[aria-pressed="true"] { background: var(--color-paper); }
@@ -460,6 +462,13 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__sleeve { position:relative; width:100%; height:100%; transform-style:preserve-3d; transition:transform 560ms var(--ease-out); }
 .cover-flow__item[data-flipped=true] .cover-flow__sleeve { transform:rotateY(180deg); }
 .cover-flow__front,.cover-flow__back { position:absolute; inset:0; width:100%; height:100%; border:var(--rule-hair) solid var(--color-ink); background:var(--color-paper); color:var(--color-ink); backface-visibility:hidden; -webkit-backface-visibility:hidden; }
+/* WebKit can paint a rotated back through its clipped 3D parent. Switch faces
+   at the midpoint as well, retaining perspective and the full flip animation. */
+.cover-flow__front,.cover-flow__back { transition:visibility 0s linear 280ms; }
+.cover-flow__item:not([data-flipped=true]) .cover-flow__back,
+.cover-flow__item[data-flipped=true] .cover-flow__front { visibility:hidden; }
+.cover-flow__item:not([data-flipped=true]) .cover-flow__front,
+.cover-flow__item[data-flipped=true] .cover-flow__back { visibility:visible; transition-delay:0s; }
 .cover-flow__front { padding:0; cursor:pointer; }
 .cover-flow__front img { display:block; width:100%; height:100%; object-fit:cover; pointer-events:none; }
 .cover-flow__back { transform:rotateY(180deg); display:flex; flex-direction:column; align-items:stretch; padding:clamp(16px,2vw,28px); text-align:left; cursor:auto; }
@@ -480,7 +489,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .cover-flow__navigation { display:flex; align-items:center; justify-content:space-between; gap:16px; }
 .cover-flow__navigation p { margin:0; font-size:var(--text-md); }
 .home-showcase-status { margin:0; padding:12px 0; font-size:var(--text-sm); color:var(--color-muted); }
-@media(prefers-reduced-motion:reduce) { .cover-flow__sleeve { transition:none; } }
+@media(prefers-reduced-motion:reduce) { .cover-flow__sleeve,.cover-flow__front,.cover-flow__back { transition:none; } }
 .home-cover { grid-template-rows:auto minmax(0,1fr) auto; }
 
 /* Darken each opaque reflected face without adding intersecting overlay planes. */

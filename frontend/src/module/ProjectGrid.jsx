@@ -1,4 +1,5 @@
 import ReactMarkdown from "react-markdown";
+import CachedCover from '../showcase/CachedCover';
 import { useEffect, useId, useRef, useState } from "react";
 
 const clamp = (value, minimum, maximum) => Math.min(Math.max(value, minimum), maximum);
@@ -180,6 +181,7 @@ function ProjectGrid({ projects = [], showHeading = true, showNavigation = true 
       <div className={`cover-flow__stage${isDragging ? " is-dragging" : ""}`} role="region" aria-roledescription="Cover flow" aria-label="Project covers. Drag horizontally to browse quickly, or use left and right arrow keys." tabIndex="0" onKeyDown={onStageKeyDown} onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={finishDrag} onPointerCancel={(event) => finishDrag(event, true)}>
         <WoodGrainField />
         {showHeading && <h2 className="section-title cover-flow__heading" id="projects-title"><span className="section-title__selected">Selected work.</span></h2>}
+        <div className="cover-flow__scene">
         {projects.map((project, index) => {
           const offset = index - activeIndex;
           const distance = Math.abs(offset);
@@ -199,7 +201,7 @@ function ProjectGrid({ projects = [], showHeading = true, showNavigation = true 
                     if (index !== activeIndex) selectProject(index);
                     else setFlippedKey(key);
                   }}>
-                  {project.image ? <img src={project.image} alt={project.title} draggable="false" onError={event => { event.currentTarget.hidden=true; event.currentTarget.nextElementSibling.hidden=false; }} /> : null}
+                  {project.image ? <CachedCover src={project.image} alt={project.title} draggable="false" onError={event => { event.currentTarget.hidden=true; event.currentTarget.nextElementSibling.hidden=false; }} /> : null}
                   <span className="cover-flow__fallback" hidden={Boolean(project.image)}>{project.title}</span>
                 </button>
                 <section className="cover-flow__back" aria-label={`${project.title} 详情`} aria-hidden={!flipped} inert={!flipped}>
@@ -224,6 +226,7 @@ function ProjectGrid({ projects = [], showHeading = true, showNavigation = true 
             </article>
           );
         })}
+        </div>
       </div>
 
       {showNavigation && <div className="cover-flow__navigation">

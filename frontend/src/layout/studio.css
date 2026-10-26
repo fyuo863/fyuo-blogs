@@ -70,14 +70,14 @@
 .studio-footer > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; font: .6rem var(--studio-mono); border-top: 1px solid currentColor; padding-top: 1.5rem; }
 .studio-footer a { color: inherit; text-decoration: none; white-space: nowrap; }
 .studio-catalog { padding: 4rem var(--studio-gutter); min-height: 100%; }
-.studio-catalog h1 { margin: 0 0 2rem; font: 900 clamp(3.7rem, 13vw, 12rem)/.85 var(--studio-display); letter-spacing: -.065em; color: var(--studio-green); }
-.studio-catalog h1 span { color: var(--studio-red); }
+.studio-catalog__heading h1 { margin: 0 0 2rem; font: 900 clamp(3.7rem, 13vw, 12rem)/.85 var(--studio-display); letter-spacing: -.065em; color: var(--studio-green); }
+.studio-catalog__heading h1 span { color: var(--studio-red); }
 .studio-catalog > p { color: var(--studio-muted); }
 .studio-plugin-list { margin-block: 3rem; }
 .studio-plugin-list a { display: flex; gap: 2rem; align-items: baseline; padding: 1.5rem 0; border-bottom: 1px solid var(--studio-rule); color: var(--studio-ink); text-decoration: none; }
 .studio-plugin-list strong { flex: 1; overflow-wrap: anywhere; font-size: clamp(1.2rem, 3vw, 2rem); }
 .studio-plugin-list a:hover { color: var(--studio-green); }
-.studio-catalog button { background: var(--studio-green); color: var(--studio-paper); border: 0; padding: .75rem 1rem; cursor: pointer; }
+.studio-catalog > button { background: var(--studio-green); color: var(--studio-paper); border: 0; padding: .75rem 1rem; cursor: pointer; }
 .studio-blog { background: var(--color-paper); color: var(--color-ink); }
 .studio-blog .construction-notice { display: none; }
 .studio-empty { padding: 2rem; }
@@ -216,7 +216,7 @@
 .studio-work .cover-flow__back { border-radius: 0; }
 .studio-plugin-gallery { display: grid; gap: 3rem; margin-block: 3rem; }
 .studio-plugin-card { min-width: 0; }
-.studio-plugin-card > h2 { margin: 0 0 1rem; color: var(--studio-ink); font-family: var(--studio-body); font-size: clamp(1.25rem, 2.5vw, 2rem); font-weight: 800; overflow-wrap: anywhere; }
+.studio-plugin-card__heading h2 { margin: 0 0 1rem; color: var(--studio-ink); font-family: var(--studio-body); font-size: clamp(1.25rem, 2.5vw, 2rem); font-weight: 800; overflow-wrap: anywhere; }
 
 /* Review: warm reverse faces, rounded arrow and matching login panel. */
 .studio-work .cover-flow__back { --color-paper: var(--studio-ink); --color-ink: var(--studio-paper); --color-ink-2: var(--studio-panel); --color-paper-2: color-mix(in srgb, var(--studio-ink) 90%, var(--studio-paper)); background: var(--studio-ink); color: var(--studio-paper); }
@@ -292,3 +292,7 @@
 #root:has(> .studio-shell) .plugin-manager h4 { color: var(--studio-ink); }
 #root:has(> .studio-shell) .admin-panel__heading h2 { color: var(--studio-ink) !important; }
 #root:has(> .studio-shell) .admin-panel .plugin-manager__error { border-color: var(--studio-red); }
+
+.studio-plugin-card__heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:.5rem 1rem; margin-bottom:1rem; }
+.studio-plugin-card__heading h2 { margin:0; }
+.studio-plugin-card__heading time { color:var(--studio-muted); font-size:.875rem; white-space:nowrap; }

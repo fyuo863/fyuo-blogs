@@ -19,7 +19,7 @@ test('repository content refreshes and survives invalid updates',async({page})=>
  await page.clock.install();
  await page.goto('/showcase-test');
  await expect(page.getByRole('button',{name:'查看 测试专辑'})).toBeVisible();
- await expect(page.locator('.cover-flow__item > .cover-flow__sleeve .cover-flow__front img')).toHaveAttribute('src','https://raw.githubusercontent.com/example/showcase/main/covers/first.svg');
+ await expect(page.locator('.cover-flow__item > .cover-flow__sleeve .cover-flow__front img')).toHaveAttribute('data-cover-source','https://raw.githubusercontent.com/example/showcase/main/covers/first.svg');
  await page.getByRole('button',{name:'查看 测试专辑'}).click();
  await expect(page.getByRole('heading',{name:'背面正文'})).toBeVisible();
  await expect(page.getByRole('link',{name:'说明'})).toHaveAttribute('href','https://raw.githubusercontent.com/example/showcase/main/guide.md');

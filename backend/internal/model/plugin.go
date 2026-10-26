@@ -14,6 +14,7 @@ type Plugin struct {
 	ManagedByAdmin bool            `gorm:"not null;default:false" json:"managed_by_admin"`
 	CreatedAt      time.Time       `json:"created_at"`
 	UpdatedAt      time.Time       `json:"updated_at"`
+	PublishedAt    *time.Time      `gorm:"->;-:migration" json:"published_at,omitempty"`
 	Versions       []PluginVersion `json:"versions,omitempty"`
 }
 
