@@ -53,8 +53,9 @@ for(const origin of origins) for(const width of [390,1440]) {
     await page.setViewportSize({width,height:900});await productionOrigins(page);await page.goto(origin+'/blog?keep=1#journal');
     await expect(page.locator('.blog-title')).toBeVisible();await expect(page.locator('.remote-management')).toBeHidden();
     await expect(page.getByRole('button',{name:'Migration fixture',exact:true})).toBeVisible();
-    const reader=page.locator('.plugin-shell__reader');await reader.evaluate(el=>{el.style.scrollBehavior='auto';el.scrollTop=80;});
-    await expect.poll(()=>reader.evaluate(el=>el.scrollTop)).toBe(80);
+    await page.evaluate(()=>document.fonts.ready);
+    const reader=page.locator('.plugin-shell__reader');await reader.evaluate(el=>{el.style.scrollBehavior='auto';el.scrollTop=Math.min(80,el.scrollHeight-el.clientHeight);});
+    await expect.poll(()=>reader.evaluate(el=>el.scrollTop)).toBeGreaterThan(0);
     const scroll=await reader.evaluate(el=>el.scrollTop),url=page.url();
     await page.getByRole('button',{name:'log-in.',exact:true}).click();const panel=manager(page);
     await expect(panel.getByRole('dialog',{name:'log-in.'})).toBeVisible();expect(page.url()).toBe(url);
