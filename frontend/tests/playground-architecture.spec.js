@@ -24,7 +24,8 @@ test('real architecture package loads in host, responds to touch/keyboard and sh
   const nav=await page.locator('.studio-nav').evaluate(el=>({color:getComputedStyle(el).color,background:getComputedStyle(el).backgroundColor}));
   for(const width of [320,375,414,768,1440]){
     await page.setViewportSize({width,height:1000});
-    expect(await page.locator('.par-page').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
+    // Viewport changes can resolve before responsive layout and fonts settle in CI.
+    await expect.poll(()=>page.locator('.par-page').evaluate(el=>el.scrollWidth<=el.clientWidth)).toBe(true);
     await page.getByRole('button',{name:'插件',exact:false}).filter({has:page.locator('strong')}).click();
     await expect(page.locator('.par-detail')).toContainText('沙箱 iframe');
     await page.getByRole('button',{name:/发布 ZIP/}).focus();await page.keyboard.press('Enter');
