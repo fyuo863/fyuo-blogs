@@ -41,6 +41,7 @@ function PlaygroundPlugin({ slug, pageProps }) {
 
 export default function AppLayout({
   user,
+  navigationUser = user,
   showSignIn,
   showAdmin,
   onOpenAdmin,
@@ -89,7 +90,7 @@ export default function AppLayout({
   const isCatalog = path === "/plugins";
 
   return (
-    <StudioFrame {...{ user, showSignIn, showAdmin, onOpenAdmin, onCloseAdmin,
+    <StudioFrame user={navigationUser} {...{ showSignIn, showAdmin, onOpenAdmin, onCloseAdmin,
       onOpenSignIn, onCloseSignIn, onLogin, onLogout, onNotify, info, setInfo }}>
       <main className="plugin-shell__canvas" id="plugin-canvas">
         <LiveRingTransition location={location}>

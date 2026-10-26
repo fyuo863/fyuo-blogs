@@ -1,6 +1,7 @@
 import { Component, useEffect, useState } from "react";
 import { getPluginManifest } from "../plugins/pluginApi";
 import { loadPluginComponent, pluginAssetURL } from "../plugins/pluginLoader";
+import { isAdminOrigin, PUBLIC_ORIGIN } from '../services/origins';
 
 class PluginBoundary extends Component {
   state = { failed: false };
@@ -29,5 +30,13 @@ function PluginContent({ slug, ...props }) {
 }
 
 export default function PluginPage({ slug, ...props }) {
+  // The www shell shares the public routes, but uploaded code still runs only
+  // on the unprivileged public origin, never beside the management session.
+  if (isAdminOrigin) {
+    const url = new URL(`${PUBLIC_ORIGIN}/p/${encodeURIComponent(slug)}${window.location.search}${window.location.hash}`);
+    url.searchParams.set('__plugin_embed', '1');
+    url.searchParams.delete('__plugin_preview');
+    return <iframe className="public-plugin-frame" title={`插件 ${slug}`} src={url.href} sandbox="allow-scripts allow-same-origin" allow="microphone; display-capture" />;
+  }
   return <PluginBoundary key={slug}><PluginContent slug={slug} {...props} /></PluginBoundary>;
 }

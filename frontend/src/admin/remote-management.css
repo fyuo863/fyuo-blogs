@@ -1,0 +1,9 @@
+.remote-management { position: fixed; z-index: 200; inset: 0; background: rgb(30 32 32 / .8); backdrop-filter: blur(.45rem); }
+.remote-management[hidden] { display: none; }
+.remote-management > iframe { display: block; width: 100%; height: 100%; border: 0; background: transparent; }
+.remote-management__status { position: absolute; inset: 0; display: grid; place-content: center; gap: 1rem; color: #eff5d9; background: #1e2020; text-align: center; }
+.remote-management__status button { padding: .75rem 1rem; border-radius: 2rem; background: #eff5d9; color: #1e2020; }
+html.management-document, .management-document body, .management-document #root { background: transparent; }
+.management-document .management-theme { display: none; }
+.management-document #root > .sign-in-modal, .management-document #root > .admin-panel { background: transparent; backdrop-filter: none; }
+.public-plugin-frame { display: block; width: 100%; height: 100%; min-height: 70vh; border: 0; }

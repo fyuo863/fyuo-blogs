@@ -1,10 +1,11 @@
-import { isPublicOrigin, isAdminOrigin } from "./origins";
+import { isPublicOrigin, isAdminOrigin, isManagementDocument } from "./origins";
 const storage = () => isAdminOrigin ? sessionStorage : localStorage;
 const STORAGE_KEY = "user";
 
 export const authStorage = {
   getUser() {
     if (isPublicOrigin) { try { storage().removeItem(STORAGE_KEY); } catch { /* unavailable storage */ } return null; }
+    if (isAdminOrigin && !isManagementDocument) return null;
     let saved;
     try { saved = storage().getItem(STORAGE_KEY); } catch { return null; }
     if (!saved) return null;
@@ -20,7 +21,7 @@ export const authStorage = {
   },
 
   setUser(user) {
-    if (isPublicOrigin) return;
+    if (isPublicOrigin || (isAdminOrigin && !isManagementDocument)) return;
     try { storage().setItem(STORAGE_KEY, JSON.stringify(user)); } catch { /* sandboxed plugin storage */ }
   },
 

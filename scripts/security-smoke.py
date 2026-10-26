@@ -17,7 +17,7 @@ def check(expected,host,path,**kwargs):
     assert result[0]==expected, f'{path}: expected {expected}, got {result[0]}'
     return result
 _,headers,_=check(200,public,'/');assert 'strict-transport-security' in headers
-_,headers,_=check(200,admin,'/');assert "frame-ancestors 'none'" in headers['content-security-policy']
+_,headers,_=check(200,admin,'/manage');assert "frame-ancestors 'self' https://fyuoblog.top" in headers['content-security-policy']
 check(404,admin,'/plugin-assets/probe/1/entry.js')
 for path in ['/.env','/.git/config']:check(404,public,path)
 check(401,admin,'/api/v1/admin/plugins')
