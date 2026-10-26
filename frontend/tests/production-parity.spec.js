@@ -43,7 +43,8 @@ for (const origin of origins) for (const width of [390,1440]) {
 test('www plugins execute on public origin with full motion, permissions and unchanged state',async({page})=>{
   await productionOrigins(page);
   await page.route('**/api/v1/plugins/probe/manifest',r=>r.fulfill({json:{data:{id:'probe',version:'1',type:'module',apiVersion:1,entry:'entry.js'}}}));
-  await page.route('**/plugin-assets/probe/**',r=>r.fulfill({contentType:'text/javascript',body:`export default function Probe(props){const R=globalThis.__FYUO_PLUGIN_HOST_V1__.react;const [n,setN]=R.useState(0);return R.createElement('button',{onClick:()=>setN(n+1)},JSON.stringify({n,origin:location.origin,preview:new URLSearchParams(location.search).get('__plugin_preview'),keep:new URLSearchParams(location.search).get('keep'),user:props.user,microphone:(document.permissionsPolicy||document.featurePolicy).allowsFeature('microphone')}));}`}));
+  await page.route('**/plugin-assets/probe/**',r=>r.fulfill({contentType:'text/javascript',body:`export default function Probe(props){const R=globalThis.__FYUO_PLUGIN_HOST_V1__.react;const [n,setN]=R.useState(0);return R.createElement('section',null,R.createElement('button',{onClick:()=>setN(n+1)},JSON.stringify({n,origin:location.origin,preview:new URLSearchParams(location.search).get('__plugin_preview'),keep:new URLSearchParams(location.search).get('keep'),user:props.user,microphone:(document.permissionsPolicy||document.featurePolicy).allowsFeature('microphone')})),R.createElement('a',{href:'https://example.com/plugin-link',target:'_blank',rel:'noreferrer'},'Plugin external link'));}`}));
+  await page.context().route('https://example.com/plugin-link',r=>r.fulfill({contentType:'text/html',body:'<h1>Plugin destination</h1>'}));
   await page.goto(origins[1]+'/p/probe?keep=yes#plugin');
   const plugin=page.frameLocator('.public-plugin-frame').getByRole('button',{name:/"microphone"/});
   await expect(plugin).toContainText('"origin":"https://fyuoblog.top"');await expect(plugin).toContainText('"preview":null');await expect(plugin).toContainText('"keep":"yes"');await expect(plugin).toContainText('"user":null');
@@ -52,6 +53,9 @@ test('www plugins execute on public origin with full motion, permissions and unc
   await expect(manager(page).getByRole('dialog',{name:'log-in.'})).toBeVisible();await manager(page).getByPlaceholder('name-plz').focus();await page.keyboard.press('Escape');
   await expect(page.locator('.remote-management')).toBeHidden();await expect(plugin).toContainText('"n":1');
   await expect(page.getByRole('button',{name:'log-in.',exact:true})).toBeFocused();
+  const popupPromise=page.waitForEvent('popup');await page.frameLocator('.public-plugin-frame').getByRole('link',{name:'Plugin external link'}).click();
+  const popup=await popupPromise;await expect(popup.getByRole('heading',{name:'Plugin destination'})).toBeVisible();await popup.close();
+  expect(page.url()).toBe(origins[1]+'/p/probe?keep=yes#plugin');
 });
 
 for (const width of [390,1440]) test(`visitor records and API key lifecycle work inside management at ${width}px`,async({page})=>{

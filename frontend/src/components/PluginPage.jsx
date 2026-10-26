@@ -36,7 +36,7 @@ export default function PluginPage({ slug, ...props }) {
     const url = new URL(`${PUBLIC_ORIGIN}/p/${encodeURIComponent(slug)}${window.location.search}${window.location.hash}`);
     url.searchParams.set('__plugin_embed', '1');
     url.searchParams.delete('__plugin_preview');
-    return <iframe className="public-plugin-frame" title={`插件 ${slug}`} src={url.href} sandbox="allow-scripts allow-same-origin" allow="microphone; display-capture" />;
+    return <iframe className="public-plugin-frame" title={`插件 ${slug}`} src={url.href} sandbox="allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox" allow="microphone; display-capture" />;
   }
   return <PluginBoundary key={slug}><PluginContent slug={slug} {...props} /></PluginBoundary>;
 }
