@@ -33,7 +33,9 @@ test('both album rails reuse persisted data and images; refreshes do not resurre
   await page.reload();await expect(page.locator('.studio-poster,.cover-flow__item')).toHaveCount(0);
 });
 test('WebKit mobile keeps perspective, selecting and flipping albums',async()=>{
-  const browser=await webkit.launch();
+  // Playwright Test also applies the global Chromium launch arguments here.
+  // Linux WebKit rejects --enable-unsafe-swiftshader; use its own defaults.
+  const browser=await webkit.launch({args:[]});
   try {
     const context=await browser.newContext({viewport:{width:375,height:900},isMobile:true,hasTouch:true});
     const page=await context.newPage();await setup(page);
