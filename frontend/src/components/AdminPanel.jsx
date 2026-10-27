@@ -466,19 +466,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
 
         <aside className="admin-panel__rail">
           <div>
-            <div className="flex items-center gap-3 text-white">
-              <div className="flex h-11 w-11 items-center justify-center border border-zinc-700 bg-white/5">
-                <Shield size={20} />
-              </div>
-              <div>
-                <div className="text-xs uppercase tracking-[0.35em] text-zinc-500">
-                  admin center
-                </div>
-                <div className="mt-1 text-2xl font-bold tracking-tight">
-                  fyuo-control.
-                </div>
-              </div>
-            </div>
+            <div className="admin-panel__brand">FYUOcontrol</div>
 
             <div className="admin-panel__nav-list">
               {NAV_ITEMS.map((item) => {
@@ -504,10 +492,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
           </div>
 
           <div className="admin-panel__identity">
-            <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
-              signed in
-            </div>
-            <div className="mt-3 text-lg font-semibold text-white">
+            <div className="text-lg font-semibold text-white">
               {user?.name || "unknown"}
             </div>
             <div className="mt-1 text-sm text-zinc-500">{user?.role || "-"}</div>
@@ -516,9 +501,7 @@ function AdminPanel({ open, onClose, user, onNotify }) {
 
         <div className="admin-panel__content">
           <div className="admin-panel__mobile-nav">
-            <div className="text-xs uppercase tracking-[0.35em] text-zinc-500">
-              admin center
-            </div>
+            <div className="admin-panel__brand">FYUOcontrol</div>
             <div className="mt-2 flex flex-wrap gap-2">
               {NAV_ITEMS.map((item) => (
                 <button

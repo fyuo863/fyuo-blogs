@@ -6,7 +6,7 @@ import { zipSync, unzipSync } from 'fflate';
 
 const frontend = fileURLToPath(new URL('../', import.meta.url));
 const id = 'plugin-architecture';
-const version = process.argv[2] || '1.0.0';
+const version = process.argv[2] || '1.0.2';
 if (process.argv.length > 3 || !/^[a-z0-9][a-z0-9._-]{0,79}$/.test(version) || version.includes('..')) {
   throw new Error('Usage: npm run build:plugin-architecture -- <version>, e.g. 1.0.1');
 }

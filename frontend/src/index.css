@@ -516,3 +516,7 @@ a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visib
 .markdown-code__copy:hover { color: var(--color-cobalt); border-color: var(--color-cobalt); }
 .markdown-code__copy:disabled { cursor: wait; opacity: .6; }
 .markdown-code__copy:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 3px; }
+
+/* The management wordmark replaces the icon and secondary rail labels. */
+.admin-panel__brand { color:var(--color-ink); font-family:var(--font-display); font-size:clamp(24px,2.4vw,32px); font-weight:900; letter-spacing:-.065em; line-height:1.1; white-space:nowrap; }
+.admin-panel .admin-panel__identity { padding-top:0; border-top:0; }

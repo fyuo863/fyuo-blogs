@@ -41,7 +41,7 @@ test('ai coding renders public summaries, responsive layout and stale data hones
   await expect(page.locator('.plugin-sidebar')).toHaveCount(0);
   failed = true;
   await page.locator('.aic-status button').click();
-  await expect(page.locator('.aic-status')).toContainText('保留最近记录');
+  await expect(page.locator('.aic-status')).toContainText('用量读取失败 · 显示最近记录');
   await expect(page.locator('.aic-totals')).toContainText('1.2M');
   await expect(page.locator('.plugin-sidebar__preview iframe')).toHaveCount(0);
   await expect(page.locator('.plugin-sidebar')).toHaveCount(0);
@@ -54,6 +54,9 @@ test('ai coding renders public summaries, responsive layout and stale data hones
   await page.goto('/plugins');
   await expect(page.locator('.aic-totals')).toContainText('1.2M');
   await expect(page.locator('.aic-status button')).toBeEnabled();
+  await expect(page.locator('.aic-page')).toHaveCSS('border-radius','0px');
+  expect(await page.locator('.aic-page').evaluate(el=>getComputedStyle(el).backgroundColor!==getComputedStyle(el.closest('.studio-shell')).backgroundColor)).toBe(true);
+  expect(await page.locator('.studio-plugin-container').evaluate(el=>parseFloat(getComputedStyle(el).borderRadius))).toBeGreaterThan(0);
   expect(await appearance()).toEqual(standalone);
   expect(errors).toEqual([]);
 });
@@ -63,7 +66,7 @@ test('ai coding unavailable or malformed feed does not invent usage', async ({ p
   await page.route('**/api/v1/showcase/ai-coding', route => route.fulfill({ json: { invalid: true } }));
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/p/ai-coding');
-  await expect(page.locator('.aic-status')).toContainText('等待首次同步');
+  await expect(page.locator('.aic-status')).toContainText('暂时无法读取用量');
   await expect(page.locator('.aic-totals strong')).toHaveText(['—', '—', '—']);
   await page.screenshot({ path: 'test-results/ai-coding-empty.png', fullPage: true });
 });

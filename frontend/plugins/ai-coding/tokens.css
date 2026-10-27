@@ -1,6 +1,7 @@
 .aic-page {
-  --aic-paper: var(--studio-paper, #1e2020);
-  --aic-panel: var(--studio-panel, #313332);
+  --aic-paper: color-mix(in srgb, var(--studio-paper, #1e2020) 88%, var(--studio-ink, #eff5d9));
+  --aic-panel: var(--studio-paper, #1e2020);
+  --aic-accent-ink: var(--studio-paper, #1e2020);
   --aic-ink: var(--studio-ink, #eff5d9);
   --aic-muted: var(--studio-muted, #b1b5a7);
   --aic-green: var(--studio-green, #acfa64);

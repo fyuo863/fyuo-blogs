@@ -1,13 +1,13 @@
 @import './tokens.css';
 /* Hallmark · macrostructure: Stat-Led · genre: editorial · theme: existing STUDIO
  * nav/footer: inherited host · enrichment: real usage charts
- * pre-emit critique: P5 H5 E4 S5 R5 V4 · no decorative rules or duplicate masthead */
-.aic-page { box-sizing:border-box; width:100%; min-width:0; padding:var(--aic-space); background:var(--aic-paper); color:var(--aic-ink); font-family:var(--aic-font); border-radius:24px; font-variant-numeric:tabular-nums; }
+ * pre-emit critique: P5 H5 E4 S5 R5 V4 · contrast: pass (40–41) · no decorative rules or duplicate masthead */
+.aic-page { box-sizing:border-box; width:100%; min-width:0; padding:var(--aic-space); background:var(--aic-paper); color:var(--aic-ink); font-family:var(--aic-font); border-radius:0; font-variant-numeric:tabular-nums; }
 .aic-page *, .aic-page *::before, .aic-page *::after { box-sizing:border-box; }
 .aic-page h1, .aic-page h2, .aic-page h3, .aic-page p { margin:0; font-style:normal; }
 .aic-page h1, .aic-page h2, .aic-page h3 { color:inherit; font-family:var(--aic-font); font-weight:800; letter-spacing:-.04em; overflow-wrap:anywhere; }
 .aic-masthead { display:flex; justify-content:space-between; align-items:flex-start; gap:16px; }
-.aic-masthead h1 { font-family:var(--aic-display); font-size:clamp(44px,8vw,112px); font-weight:900; line-height:.9; letter-spacing:-.065em; }
+.aic-masthead h1 { font-family:var(--aic-display); font-size:clamp(44px,8vw,112px); font-weight:900; line-height:1.15; letter-spacing:-.065em; }
 .aic-masthead h1 span { color:var(--aic-green); }
 .aic-masthead a { color:var(--aic-ink); text-decoration:none; padding:12px 0; white-space:nowrap; font-weight:700; }
 .aic-status { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px 24px; margin:32px 0; color:var(--aic-muted); font-size:14px; line-height:1.7; }
@@ -16,8 +16,8 @@
 .aic-status i[data-ready=true] { background:var(--aic-green); }
 .aic-status time { display:block; }
 .aic-page button { border:0; min-height:44px; padding:8px 16px; border-radius:32px; background:var(--aic-panel); color:var(--aic-ink); font:700 14px var(--aic-font); cursor:pointer; white-space:nowrap; transition:background-color 160ms,color 160ms; }
-.aic-page button:hover, .aic-page button[aria-pressed=true] { background:var(--aic-green); color:var(--aic-paper); }
-.aic-page button:active { background:var(--aic-pink); color:var(--aic-paper); }
+.aic-page button:hover, .aic-page button[aria-pressed=true] { background:var(--aic-green); color:var(--aic-accent-ink); }
+.aic-page button:active { background:var(--aic-pink); color:var(--aic-accent-ink); }
 .aic-page button:disabled { opacity:.5; cursor:wait; }
 .aic-page button:focus-visible, .aic-page a:focus-visible { outline:3px solid var(--aic-green); outline-offset:4px; }
 .aic-totals { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:24px; margin-bottom:48px; }
@@ -25,7 +25,7 @@
 .aic-totals p { font-size:14px; color:var(--aic-muted); }
 .aic-totals strong { display:block; font-family:var(--aic-display); font-size:clamp(32px,5vw,64px); line-height:1.2; letter-spacing:-.06em; font-weight:900; }
 .aic-totals > div:first-child strong { color:var(--aic-pink); font-size:clamp(72px,13vw,160px); line-height:1; }
-.aic-trend { padding:24px; border-radius:24px; background:var(--aic-panel); }
+.aic-trend { padding:24px; border-radius:0; background:var(--aic-panel); }
 .aic-section-head { display:flex; justify-content:space-between; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
 .aic-section-head h2, .aic-breakdown h2 { font-size:clamp(22px,3vw,32px); line-height:1.2; }
 .aic-period { display:flex; gap:4px; flex-wrap:wrap; }
@@ -63,5 +63,5 @@
 .aic-track span { display:block; height:100%; background:var(--aic-green); border-radius:8px; }
 .aic-ranking:last-child .aic-track span { background:var(--aic-pink); }
 @media(min-width:640px) { .aic-totals { grid-template-columns:minmax(0,1.5fr) repeat(2,minmax(0,1fr)); align-items:end; } .aic-totals > div:first-child { grid-column:auto; } .aic-breakdown { grid-template-columns:repeat(2,minmax(0,1fr)); gap:32px 48px; } }
-@media(max-width:480px) { .aic-trend { padding:16px; } .aic-masthead a { font-size:14px; } .aic-page { border-radius:16px; } .aic-chart { height:180px; } }
+@media(max-width:480px) { .aic-trend { padding:16px; } .aic-masthead a { font-size:14px; } .aic-chart { height:180px; } }
 @media(prefers-reduced-motion:reduce) { .aic-page button { transition:none; } }

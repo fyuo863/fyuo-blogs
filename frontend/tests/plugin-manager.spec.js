@@ -83,6 +83,9 @@ for (const width of [320, 375, 414, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await setup(page);
     const manager = page.locator('.plugin-manager');
+    await expect(page.locator('.admin-panel__brand:visible')).toHaveText('FYUOcontrol');
+    await expect(page.locator('.admin-panel__rail')).not.toContainText('signed in');
+    await expect(page.locator('.admin-panel__identity')).toHaveCSS('border-top-width','0px');
     expect(await manager.evaluate(el => el.scrollWidth <= el.clientWidth)).toBe(true);
     await expect(page.getByRole('button', { name: '上移 travel' })).toBeVisible();
     await page.screenshot({ path: `test-results/plugin-manager-${width}.png` });
