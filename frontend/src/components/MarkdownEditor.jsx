@@ -46,7 +46,7 @@ function FrontmatterCard({ raw }) {
   const keys = Object.keys(props);
   if (!keys.length) return null;
   return (
-    <div className="rounded-lg border border-zinc-800 bg-white/[0.02] px-5 py-4 font-mono text-sm">
+    <div className="markdown-frontmatter rounded-lg border border-zinc-800 bg-white/[0.02] px-5 py-4 font-mono text-sm">
       {keys.map((k) => (
         <div key={k} className="flex gap-4 py-0.5">
           <span className="text-zinc-500 shrink-0">{k}</span>

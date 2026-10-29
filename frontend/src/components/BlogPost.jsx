@@ -113,7 +113,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
   return (
     <div className="article-sheet fixed inset-0 z-50 bg-black overflow-y-auto">
       {(!isEditing && post.cover_image) ? (
-        <div className="relative h-[38vh] min-h-[260px] w-full overflow-hidden border-b border-zinc-800">
+        <div className="article-reader__cover relative h-[38vh] min-h-[260px] w-full overflow-hidden border-b border-zinc-800">
           <img
             src={post.cover_image}
             alt={post.title}
@@ -131,91 +131,94 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           back.<span className="studio-button__icon" aria-hidden="true"><ArrowLeft size={24} strokeWidth={4} /></span>
         </button>
 
-        <div className="article-reader__meta ml-10 flex flex-wrap items-center gap-x-4 gap-y-2">
-          <time className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
-            {formatDate(post.created_at)}
-          </time>
-          <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
-            {formatAuthor(post)}
+        <header className="article-reader__header">
+          <div className="article-reader__meta ml-10 flex flex-wrap items-center gap-x-4 gap-y-2">
+            <time dateTime={post.created_at} className="font-mono text-sm tracking-widest text-zinc-500 uppercase">
+              {formatDate(post.created_at)}
+            </time>
+            <div className="text-xs font-mono tracking-[0.28em] text-zinc-600 uppercase">
+              {formatAuthor(post)}
+            </div>
           </div>
-        </div>
-
-        {isEditing ? (
-          <div
-            className={`relative mt-6 border ${coverDragActive ? "border-white/40" : "border-transparent"}`}
-            onDragEnter={handleCoverDragEnter}
-            onDragOver={handleCoverDragOver}
-            onDragLeave={handleCoverDragLeave}
-            onDrop={handleCoverDrop}
-          >
-            {coverDragActive ? (
-              <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center border border-dashed border-white/30 bg-black/70 text-xs font-mono uppercase tracking-[0.28em] text-white">
-                drop cover image here
-              </div>
-            ) : null}
-            <div className="flex flex-col gap-3 md:flex-row">
-              <input
-                value={editCoverImage}
-                onChange={(e) => setEditCoverImage(e.target.value)}
-                className="w-full bg-white/5 px-3 py-3 text-sm text-zinc-300 border border-zinc-800 focus:border-zinc-600 focus:outline-none placeholder:text-zinc-600"
-                placeholder="Cover image URL..."
-              />
-              <label className="cursor-pointer border border-zinc-800 px-4 py-3 text-xs font-mono uppercase tracking-[0.24em] text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white">
-                {coverUploading ? "uploading..." : "upload cover"}
+  
+          {isEditing ? (
+            <div
+              className={`relative mt-6 border ${coverDragActive ? "border-white/40" : "border-transparent"}`}
+              onDragEnter={handleCoverDragEnter}
+              onDragOver={handleCoverDragOver}
+              onDragLeave={handleCoverDragLeave}
+              onDrop={handleCoverDrop}
+            >
+              {coverDragActive ? (
+                <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center border border-dashed border-white/30 bg-black/70 text-xs font-mono uppercase tracking-[0.28em] text-white">
+                  drop cover image here
+                </div>
+              ) : null}
+              <div className="flex flex-col gap-3 md:flex-row">
                 <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
-                  className="hidden"
-                  onChange={handleCoverFileChange}
-                  disabled={coverUploading}
+                  value={editCoverImage}
+                  onChange={(e) => setEditCoverImage(e.target.value)}
+                  className="w-full bg-white/5 px-3 py-3 text-sm text-zinc-300 border border-zinc-800 focus:border-zinc-600 focus:outline-none placeholder:text-zinc-600"
+                  placeholder="Cover image URL..."
                 />
-              </label>
+                <label className="cursor-pointer border border-zinc-800 px-4 py-3 text-xs font-mono uppercase tracking-[0.24em] text-zinc-300 transition-colors hover:border-zinc-600 hover:text-white">
+                  {coverUploading ? "uploading..." : "upload cover"}
+                  <input
+                    type="file"
+                    accept="image/png,image/jpeg,image/jpg,image/gif,image/webp"
+                    className="hidden"
+                    onChange={handleCoverFileChange}
+                    disabled={coverUploading}
+                  />
+                </label>
+              </div>
             </div>
-          </div>
-        ) : null}
-
-        {isEditing ? (
-          <textarea
-            ref={titleRef}
-            value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
-            rows={1}
-            className="article-reader__title mt-4 w-full text-3xl font-bold tracking-tight text-white sm:text-4xl
-                       bg-transparent border-none focus:outline-none resize-none
-                       overflow-hidden placeholder:text-zinc-600"
-            placeholder="Article title..."
-          />
-        ) : (
-          <h1 className="article-reader__title mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            {post.title}
-          </h1>
-        )}
-
-        {isEditing ? (
-          <div className="mt-6">
-            <input
-              value={editTags}
-              onChange={(e) => setEditTags(e.target.value)}
-              className="w-full bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-400
-                         border border-zinc-800 focus:border-zinc-600 focus:outline-none
-                         placeholder:text-zinc-600"
-              placeholder="tag1, tag2, tag3..."
+          ) : null}
+  
+          {isEditing ? (
+            <textarea
+              ref={titleRef}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              rows={1}
+              className="article-reader__title mt-4 w-full text-3xl font-bold tracking-tight text-white sm:text-4xl
+                         bg-transparent border-none focus:outline-none resize-none
+                         overflow-hidden placeholder:text-zinc-600"
+              placeholder="Article title..."
             />
-          </div>
-        ) : (
-          post.tags && post.tags.length > 0 && (
-            <div className="mt-6 flex flex-wrap gap-2">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-500 border border-zinc-800"
-                >
-                  {tag}
-                </span>
-              ))}
+          ) : (
+            <h1 className="article-reader__title mt-4 text-3xl font-bold tracking-tight text-white sm:text-4xl">
+              {post.title}
+            </h1>
+          )}
+  
+          {isEditing ? (
+            <div className="article-reader__tags mt-6">
+              <input
+                value={editTags}
+                onChange={(e) => setEditTags(e.target.value)}
+                className="w-full bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-400
+                           border border-zinc-800 focus:border-zinc-600 focus:outline-none
+                           placeholder:text-zinc-600"
+                placeholder="tag1, tag2, tag3..."
+              />
             </div>
-          )
-        )}
+          ) : (
+            post.tags && post.tags.length > 0 && (
+              <div className="article-reader__tags mt-6 flex flex-wrap gap-2">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="bg-white/5 px-2.5 py-1 text-xs font-mono text-zinc-500 border border-zinc-800"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )
+          )}
+
+        </header>
 
         <div className="article-reader__rule mt-10 border-t border-zinc-800" />
 
@@ -228,7 +231,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           />
         </div>
 
-        <div className="mt-20 border-t border-zinc-800 pt-8">
+        <footer className="article-reader__footer mt-20 border-t border-zinc-800 pt-8">
           <button
             type="button"
             onClick={onBack}
@@ -236,7 +239,7 @@ export default function BlogPost({ post, isEditing, editRef, onBack, onUploadIma
           >
             back.<span className="studio-button__icon" aria-hidden="true"><ArrowLeft size={24} strokeWidth={4} /></span>
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

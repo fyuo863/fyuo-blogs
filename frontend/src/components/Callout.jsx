@@ -27,7 +27,8 @@ export default function Callout({ type, title, children }) {
 
   return (
     <div
-      className={`my-6 border-l-4 ${v.border} ${v.bg} rounded-r-lg px-5 py-4`}
+      className={`markdown-callout my-6 border-l-4 ${v.border} ${v.bg} rounded-r-lg px-5 py-4`}
+      data-type={type}
     >
       <div className={`text-sm font-bold tracking-wide uppercase mb-2 ${v.text}`}>
         {title || label}

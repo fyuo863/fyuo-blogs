@@ -296,3 +296,104 @@
 .studio-plugin-card__heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:.5rem 1rem; margin-bottom:1rem; }
 .studio-plugin-card__heading h2 { margin:0; }
 .studio-plugin-card__heading time { color:var(--studio-muted); font-size:.875rem; white-space:nowrap; }
+
+/* Article reader · existing studio theme · aligned header and long-form body. */
+#root:has(> .studio-shell) > .article-sheet .article-reader {
+  --article-measure: 68ch;
+  width: min(100%, 76rem);
+  padding: var(--space-xl) var(--studio-gutter) !important;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__header {
+  margin-block: var(--space-lg) var(--space-xl);
+  padding: clamp(var(--space-md), 4vw, var(--space-xl));
+  border-radius: var(--studio-card-radius);
+  background: var(--studio-panel);
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__meta {
+  max-width: none;
+  margin: 0 !important;
+  gap: var(--space-xs) var(--space-md);
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__meta :is(time, div) {
+  font-family: var(--studio-body);
+  font-size: var(--text-sm);
+  letter-spacing: normal;
+  text-transform: none;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__title {
+  max-width: none !important;
+  margin: var(--space-md) 0 0 !important;
+  font-family: var(--studio-display);
+  font-size: clamp(2rem, 5.5cqi, 4.5rem) !important;
+  line-height: 1.15;
+  letter-spacing: -.04em;
+  text-align: left;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__tags { margin-top: var(--space-lg); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__tags > span {
+  padding: var(--space-2xs) var(--space-sm);
+  border: 0;
+  border-radius: 3rem;
+  background: var(--studio-green) !important;
+  color: var(--studio-paper) !important;
+  font: 700 var(--text-sm)/1.25 var(--studio-body);
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__rule { display: none; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body {
+  min-width: 0;
+  max-width: var(--article-measure);
+  margin: var(--space-xl) auto 0;
+  overflow-wrap: anywhere;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-renderer {
+  gap: var(--space-md) !important;
+  line-height: 1.85;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-block {
+  min-width: 0;
+  line-height: 1.85 !important;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-block--heading {
+  margin-top: var(--space-md);
+  letter-spacing: -.025em;
+  line-height: 1.3 !important;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body :is(a, button, input, textarea):focus-visible {
+  outline: 3px solid var(--studio-green);
+  outline-offset: 4px;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body :not(pre) > code {
+  padding: .15em .4em;
+  border-radius: .35rem;
+  background: var(--studio-panel);
+  color: var(--studio-green);
+  font-family: var(--studio-mono);
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body :is(.markdown-block--code, .markdown-block--table, .markdown-frontmatter, .markdown-block--quote, .markdown-callout) {
+  max-width: 100%;
+  padding: var(--space-md);
+  border: 0;
+  border-radius: var(--studio-card-radius) !important;
+  background: var(--studio-panel) !important;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-block--table th {
+  background: var(--studio-green) !important;
+  color: var(--studio-paper) !important;
+}
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-block--table table { min-width: 100%; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-block--table :is(th, td) { min-width: 8rem; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-callout { --callout-color: var(--studio-blue); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-callout[data-type='warning'] { --callout-color: var(--studio-yellow); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-callout:is([data-type='danger'], [data-type='failure'], [data-type='bug']) { --callout-color: var(--studio-red); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-callout:is([data-type='tip'], [data-type='success']) { --callout-color: var(--studio-green); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body .markdown-callout > :first-child { color: var(--callout-color); letter-spacing: normal; text-transform: none; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__body img { border: 0; border-radius: var(--studio-card-radius); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__cover { width: min(100%, 76rem); margin-inline: auto; border: 0; border-radius: var(--studio-card-radius); }
+#root:has(> .studio-shell) > .article-sheet .article-reader__cover > div { display: none; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__footer { margin-top: var(--space-xl); padding-top: var(--space-md); border: 0; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__back { margin-bottom: 0 !important; }
+#root:has(> .studio-shell) > .article-sheet .article-reader__back:focus-visible { outline: 3px solid var(--studio-green); outline-offset: 4px; }
+@media (max-width: 600px) {
+  #root:has(> .studio-shell) > .article-sheet .article-reader { padding-block: var(--space-md) !important; }
+  #root:has(> .studio-shell) > .article-sheet .article-reader__header { padding: var(--space-md); }
+}
