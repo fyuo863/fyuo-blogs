@@ -1,4 +1,5 @@
 import ContentManager from "../admin/ContentManager";
+import VisitRecordPage from "../admin/VisitRecords";
 import "../admin/admin.css";
 import PluginManager from "./PluginManager";
 import { useCallback, useEffect, useState } from "react";
@@ -8,7 +9,6 @@ import {
   deleteApiKey,
   listApiKeys,
   listPublisherUsers,
-  listVisitRecords,
   rotateApiKey,
   updateApiKey,
 } from "../api";
@@ -20,8 +20,8 @@ const NAV_ITEMS = [
     key: "visits",
     label: "visitor-records.",
     icon: Eye,
-    title: "visitor records.",
-    description: "记录时间、文章、访客、IP 与城市。",
+    title: "文章访问记录",
+    description: "按日期、文章和浏览器标识查询访问记录。",
   },
   {
     key: "mcp-keys",
@@ -41,139 +41,6 @@ function formatDateTime(value) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function VisitRecordPage({ open, token, onNotify, active }) {
-  const [records, setRecords] = useState([]);
-  const [sort, setSort] = useState("latest");
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!open || !token || !active) return;
-    let cancelled = false;
-    const timer = window.setTimeout(() => {
-      setLoading(true);
-      listVisitRecords(token, { sort })
-        .then((res) => {
-          if (!cancelled) setRecords(res.data?.data ?? []);
-        })
-        .catch((err) => {
-          if (!cancelled) {
-            onNotify?.({
-              variant: "error",
-              title: "visit-load-failed.",
-              message: err.response?.data?.error || err.response?.data?.message || err.message || "访客记录加载失败。",
-            });
-          }
-        })
-        .finally(() => {
-          if (!cancelled) setLoading(false);
-        });
-    }, 0);
-
-    return () => {
-      cancelled = true;
-      window.clearTimeout(timer);
-    };
-  }, [open, token, sort, onNotify, active]);
-
-  if (!active) return null;
-
-  return (
-    <div className="admin-panel__page">
-      <div className="border-b border-zinc-800 px-8 py-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h3 className="text-2xl font-bold tracking-tight text-white">
-              visitor records.
-            </h3>
-            <p className="mt-2 text-sm text-zinc-400">
-              只记录访问时间、文章名、文章 ID、访客、访客 IP 与对应城市。
-            </p>
-          </div>
-          <label className="flex flex-col gap-1 text-xs uppercase tracking-[0.3em] text-zinc-500">
-            sort
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="min-w-40 border border-zinc-800 bg-black px-3 py-2 text-sm text-white focus:border-zinc-600 focus:outline-none"
-            >
-              <option value="latest">latest</option>
-              <option value="oldest">oldest</option>
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 px-8 py-6 md:grid-cols-2">
-        <div className="border border-zinc-800 bg-white/[0.03] p-5">
-          <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
-            total records
-          </div>
-          <div className="mt-3 text-3xl font-bold text-white">{records.length}</div>
-        </div>
-        <div className="border border-zinc-800 bg-white/[0.03] p-5">
-          <div className="text-xs uppercase tracking-[0.3em] text-zinc-500">
-            active sort
-          </div>
-          <div className="mt-3 text-3xl font-bold text-white">{sort}</div>
-        </div>
-      </div>
-
-      <div className="px-8 pb-8">
-        <div className="admin-panel__table-scroll border border-zinc-800 bg-black/60">
-          <table className="min-w-full divide-y divide-zinc-800 text-left">
-            <thead className="bg-white/[0.03]">
-              <tr className="text-xs uppercase tracking-[0.25em] text-zinc-500">
-                <th className="px-5 py-4 font-medium">time</th>
-                <th className="px-5 py-4 font-medium">article</th>
-                <th className="px-5 py-4 font-medium">article id</th>
-                <th className="px-5 py-4 font-medium">ip</th>
-                <th className="px-5 py-4 font-medium">city</th>
-                <th className="px-5 py-4 font-medium">visitor</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-zinc-900">
-              {loading ? (
-                <tr>
-                  <td className="px-5 py-6 text-sm text-zinc-500" colSpan={6}>
-                    loading...
-                  </td>
-                </tr>
-              ) : records.length === 0 ? (
-                <tr>
-                  <td className="px-5 py-6 text-sm text-zinc-500" colSpan={6}>
-                    no records.
-                  </td>
-                </tr>
-              ) : (
-                records.map((record) => (
-                  <tr key={record.id} className="text-sm text-zinc-300">
-                    <td className="px-5 py-4 font-mono text-xs text-zinc-500">
-                      {formatDateTime(record.created_at)}
-                    </td>
-                    <td className="px-5 py-4 text-white">{record.content_title}</td>
-                    <td className="px-5 py-4 font-mono text-xs text-zinc-500">
-                      {record.article_id}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-xs text-zinc-500">
-                      {record.ip_address}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-xs text-zinc-500">
-                      {record.city}
-                    </td>
-                    <td className="px-5 py-4 font-mono text-xs text-zinc-500">
-                      {record.visitor_id}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
 }
 
 function ApiKeyPage({ open, token, onNotify, active }) {

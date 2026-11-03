@@ -8,9 +8,11 @@ import (
 	"myblog/internal/model"
 	"myblog/internal/repository"
 	"strings"
+	"unicode/utf8"
 )
 
 var ErrAdminOnly = errors.New("admin only")
+var ErrInvalidVisitFilter = errors.New("invalid visit filter")
 
 type VisitRecordService struct {
 	records  *repository.VisitRecordRepository
@@ -24,9 +26,7 @@ type VisitRecordInput struct {
 	UserAgent string
 }
 
-type VisitRecordListResult struct {
-	Data []model.VisitRecord `json:"data"`
-}
+type VisitRecordListResult = repository.VisitRecordPage
 
 func NewVisitRecordService(records *repository.VisitRecordRepository, articles *repository.ArticleRepository) *VisitRecordService {
 	return &VisitRecordService{
@@ -52,19 +52,36 @@ func (s *VisitRecordService) RecordArticleVisit(ctx context.Context, input Visit
 	return s.records.Create(&record)
 }
 
-func (s *VisitRecordService) List(ctx context.Context, role, sort string) (VisitRecordListResult, error) {
-	_ = ctx
+func (s *VisitRecordService) List(ctx context.Context, role string, filter repository.VisitRecordFilter) (VisitRecordListResult, error) {
 	if role != "admin" {
 		return VisitRecordListResult{}, ErrAdminOnly
 	}
 
-	records, err := s.records.List(repository.VisitRecordFilter{
-		Sort: sort,
-	})
-	if err != nil {
+	if err := NormalizeVisitFilter(&filter); err != nil {
 		return VisitRecordListResult{}, err
 	}
-	return VisitRecordListResult{Data: records}, nil
+	return s.records.List(ctx, filter)
+}
+
+func NormalizeVisitFilter(filter *repository.VisitRecordFilter) error {
+	filter.Sort = strings.ToLower(strings.TrimSpace(filter.Sort))
+	filter.Search = strings.TrimSpace(filter.Search)
+	if filter.Sort == "" {
+		filter.Sort = "latest"
+	}
+	if filter.Page == 0 {
+		filter.Page = 1
+	}
+	if filter.PageSize == 0 {
+		filter.PageSize = 50
+	}
+	if (filter.Sort != "latest" && filter.Sort != "oldest") || filter.Page < 1 || filter.Page > 1000000 || filter.PageSize < 1 || filter.PageSize > 200 || utf8.RuneCountInString(filter.Search) > 120 {
+		return ErrInvalidVisitFilter
+	}
+	if !filter.From.IsZero() && !filter.Until.IsZero() && !filter.From.Before(filter.Until) {
+		return ErrInvalidVisitFilter
+	}
+	return nil
 }
 
 func normalizeVisitorID(visitorID, ipAddress, userAgent string) string {

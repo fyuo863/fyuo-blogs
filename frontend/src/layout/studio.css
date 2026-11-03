@@ -268,18 +268,18 @@
   --font-body: var(--studio-body); --font-display: var(--studio-display);
   background: color-mix(in srgb, var(--studio-paper) 80%, transparent); font-family: var(--studio-body); color: var(--studio-ink);
 }
-#root:has(> .studio-shell) .admin-panel__surface { border: 1px solid var(--studio-rule); border-radius: var(--studio-card-radius); box-shadow: none; }
-#root:has(> .studio-shell) .admin-panel__rail { background: var(--studio-panel); color: var(--studio-ink); border-color: var(--studio-rule); }
+#root:has(> .studio-shell) .admin-panel__surface { border: 0; border-radius: var(--studio-card-radius); box-shadow: none; }
+#root:has(> .studio-shell) .admin-panel__rail { background: var(--studio-panel); color: var(--studio-ink); border: 0; }
 #root:has(> .studio-shell) .admin-panel__rail > div:first-child > div:first-child { color: var(--studio-ink); }
 #root:has(> .studio-shell) .admin-panel__rail .text-zinc-500,
 #root:has(> .studio-shell) .admin-panel__rail .text-zinc-400 { color: var(--studio-muted); }
 #root:has(> .studio-shell) .admin-panel__nav-item,
-#root:has(> .studio-shell) .admin-panel__mobile-nav-item { width: auto; border-color: var(--studio-rule); border-radius: 2rem; background: transparent; color: var(--studio-ink); font-family: var(--studio-display); font-weight: 800; }
+#root:has(> .studio-shell) .admin-panel__mobile-nav-item { width: auto; border: 0; border-radius: 2rem; background: transparent; color: var(--studio-ink); font-family: var(--studio-display); font-weight: 800; }
 #root:has(> .studio-shell) .admin-panel__nav-item.is-active,
 #root:has(> .studio-shell) .admin-panel__mobile-nav-item.is-active { background: var(--studio-green); color: var(--studio-paper); border-color: var(--studio-green); }
 #root:has(> .studio-shell) .admin-panel__identity,
 #root:has(> .studio-shell) .admin-panel__heading,
-#root:has(> .studio-shell) .admin-panel__mobile-nav { border-color: var(--studio-rule); }
+#root:has(> .studio-shell) .admin-panel__mobile-nav { border: 0; }
 #root:has(> .studio-shell) .admin-panel__close { border: 0; border-radius: 50%; background: var(--studio-ink); color: var(--studio-paper); }
 #root:has(> .studio-shell) .admin-panel button:not(.admin-panel__close):not(.admin-panel__nav-item):not(.admin-panel__mobile-nav-item):not(.secure-content__item-button):not([aria-pressed=true]) { border: 0; border-radius: 2rem; background: var(--studio-ink) !important; color: var(--studio-paper) !important; font-family: var(--studio-body); font-weight: 700; }
 #root:has(> .studio-shell) .admin-panel button:hover:not(:disabled):not(.admin-panel__nav-item):not(.admin-panel__mobile-nav-item):not(.secure-content__item-button) { background: var(--studio-green) !important; }
@@ -288,14 +288,18 @@
 #root:has(> .studio-shell) .secure-content__item-button:hover:not(:disabled) { background: color-mix(in srgb, var(--studio-panel) 90%, var(--studio-green)); }
 #root:has(> .studio-shell) .secure-content__item-button:focus-visible { outline-color: var(--studio-green); }
 #root:has(> .studio-shell) .admin-panel button.border-red-900 { background: var(--studio-red) !important; }
-#root:has(> .studio-shell) .admin-panel :is(input, select, textarea) { border-radius: .65rem; padding: .75rem; }
+#root:has(> .studio-shell) .admin-panel :is(input, select, textarea) { border: 0 !important; border-radius: .65rem; padding: .75rem; }
 #root:has(> .studio-shell) .admin-panel input[type=file]::file-selector-button { margin-right: .75rem; padding: .4rem .75rem; border: 0; border-radius: 2rem; background: var(--studio-ink); color: var(--studio-paper); cursor: pointer; }
 #root:has(> .studio-shell) .plugin-manager__list { display: grid; gap: 1rem; }
-#root:has(> .studio-shell) .plugin-manager__row { padding: 1.25rem; border: 1px solid var(--studio-rule); border-radius: var(--studio-card-radius); background: var(--studio-panel); }
+#root:has(> .studio-shell) .plugin-manager__row { padding: 1.25rem; border: 0; border-radius: var(--studio-card-radius); background: var(--studio-panel); }
 #root:has(> .studio-shell) .plugin-manager h3,
 #root:has(> .studio-shell) .plugin-manager h4 { color: var(--studio-ink); }
 #root:has(> .studio-shell) .admin-panel__heading h2 { color: var(--studio-ink) !important; }
 #root:has(> .studio-shell) .admin-panel .plugin-manager__error { border-color: var(--studio-red); }
+/* Admin surfaces use fill and spacing; keyboard focus remains an explicit outline. */
+#root:has(> .studio-shell) .admin-panel :is([class~="border"], [class*="border-"], table, th, td, fieldset, hr),
+#root:has(> .studio-shell) .admin-panel :is(.secure-content__tabs, .secure-content__item-button, .secure-content__form > footer, .secure-content__form fieldset > div, .secure-content .article-sheet, .secure-content [role=alert], .plugin-manager__upload, .plugin-manager__toolbar, .plugin-manager__error) { border: 0 !important; }
+#root:has(> .studio-shell) .admin-panel :is(a, button, input, select, textarea, [tabindex]):focus-visible { outline: 3px solid var(--studio-green); outline-offset: 3px; }
 
 .studio-plugin-card__heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:.5rem 1rem; margin-bottom:1rem; }
 .studio-plugin-card__heading h2 { margin:0; }

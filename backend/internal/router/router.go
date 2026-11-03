@@ -3,6 +3,8 @@ package router
 import (
 	"myblog/internal/handler"
 	"myblog/internal/middleware"
+	"os"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -25,7 +27,9 @@ type Dependencies struct {
 
 func NewRouter(deps Dependencies) *gin.Engine {
 	r := gin.New()
-	_ = r.SetTrustedProxies(nil)
+	if err := configureTrustedProxies(r); err != nil {
+		panic("invalid TRUSTED_PROXY_CIDRS: " + err.Error())
+	}
 	r.Use(
 		gin.Logger(),
 		gin.Recovery(),
@@ -97,4 +101,17 @@ func NewRouter(deps Dependencies) *gin.Engine {
 	}
 
 	return r
+}
+
+func configureTrustedProxies(r *gin.Engine) error {
+	// The edge proxy overwrites X-Real-IP. Ignore client-supplied XFF chains.
+	// Standalone/local servers trust no forwarding headers by default.
+	r.RemoteIPHeaders = []string{"X-Real-IP"}
+	var proxies []string
+	for _, cidr := range strings.Split(os.Getenv("TRUSTED_PROXY_CIDRS"), ",") {
+		if cidr = strings.TrimSpace(cidr); cidr != "" {
+			proxies = append(proxies, cidr)
+		}
+	}
+	return r.SetTrustedProxies(proxies)
 }
