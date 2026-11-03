@@ -65,7 +65,7 @@ for (const width of [390,1440]) test(`visitor records and API key lifecycle work
   await page.route('**/api/v1/visit-records?**',route=>{
     expect(route.request().headers().authorization).toBe(`Bearer ${user.token}`);
     sorts.push(new URL(route.request().url()).searchParams.get('sort'));
-    return route.fulfill({json:{data:[{id:1,content_title:'Recorded article',article_id:42,visitor_id:'test-visitor',ip_address:'127.0.0.1',city:'Local fixture',created_at:'2026-10-01T00:00:00Z'}]}});
+    return route.fulfill({json:{data:[{id:1,content_title:'Recorded article',article_id:42,visitor_id:'test-visitor',ip_address:'127.0.0.1',city:'Local fixture',created_at:'2026-10-01T00:00:00Z'}],total:1,browser_count:1,article_count:1,page:1,page_size:25,total_pages:1}});
   });
   await page.route('**/api/v1/admin/publisher-users',r=>r.fulfill({json:{data:[{id:2,name:'publisher-fixture',role:'publisher'}]}}));
   await page.route('**/api/v1/admin/api-keys**',async route=>{
@@ -78,8 +78,8 @@ for (const width of [390,1440]) test(`visitor records and API key lifecycle work
     return route.fulfill({json:{data:{key:request.url().endsWith('/rotate')?'rotated-fixture-secret':'new-fixture-secret'}}});
   });
   await page.goto(origins[0]+'/blog');await page.getByRole('button',{name:'管理后台',exact:true}).click();const panel=manager(page);
-  await panel.getByRole('button',{name:'visitor-records.',exact:true}).click();await expect(panel.getByRole('cell',{name:'Recorded article',exact:true})).toBeVisible();
-  await panel.getByRole('combobox').selectOption('oldest');await expect.poll(()=>sorts.at(-1)).toBe('oldest');
+  await panel.getByRole('button',{name:'visitor-records.',exact:true}).click();await expect(panel.getByRole('cell').filter({hasText:'Recorded article'})).toBeVisible();
+  await panel.getByRole('combobox',{name:'时间排序',exact:true}).selectOption('oldest');await expect.poll(()=>sorts.at(-1)).toBe('oldest');
   await panel.getByRole('button',{name:'mcp-dispatch.',exact:true}).click();await panel.getByPlaceholder('agent-main').fill('Agent fixture');
   await panel.getByRole('combobox').selectOption('2');await panel.getByRole('button',{name:'create key',exact:true}).click();
   await expect(panel.getByText('new-fixture-secret',{exact:true})).toBeVisible();expect(writes[0].body).toEqual({name:'Agent fixture',user_id:2});
