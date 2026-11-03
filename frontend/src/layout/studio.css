@@ -281,8 +281,12 @@
 #root:has(> .studio-shell) .admin-panel__heading,
 #root:has(> .studio-shell) .admin-panel__mobile-nav { border-color: var(--studio-rule); }
 #root:has(> .studio-shell) .admin-panel__close { border: 0; border-radius: 50%; background: var(--studio-ink); color: var(--studio-paper); }
-#root:has(> .studio-shell) .admin-panel button:not(.admin-panel__close):not(.admin-panel__nav-item):not(.admin-panel__mobile-nav-item) { border: 0; border-radius: 2rem; background: var(--studio-ink) !important; color: var(--studio-paper) !important; font-family: var(--studio-body); font-weight: 700; }
-#root:has(> .studio-shell) .admin-panel button:hover:not(:disabled):not(.admin-panel__nav-item):not(.admin-panel__mobile-nav-item) { background: var(--studio-green) !important; }
+#root:has(> .studio-shell) .admin-panel button:not(.admin-panel__close):not(.admin-panel__nav-item):not(.admin-panel__mobile-nav-item):not(.secure-content__item-button):not([aria-pressed=true]) { border: 0; border-radius: 2rem; background: var(--studio-ink) !important; color: var(--studio-paper) !important; font-family: var(--studio-body); font-weight: 700; }
+#root:has(> .studio-shell) .admin-panel button:hover:not(:disabled):not(.admin-panel__nav-item):not(.admin-panel__mobile-nav-item):not(.secure-content__item-button) { background: var(--studio-green) !important; }
+#root:has(> .studio-shell) .secure-content__tabs button[aria-pressed=true] { border: 0; border-radius: 2rem; background: var(--studio-green) !important; color: var(--studio-paper); font-family: var(--studio-body); font-weight: 700; }
+#root:has(> .studio-shell) .secure-content__item-button { background: var(--studio-panel); color: var(--studio-ink); border-color: transparent; font-family: var(--studio-body); }
+#root:has(> .studio-shell) .secure-content__item-button:hover:not(:disabled) { background: color-mix(in srgb, var(--studio-panel) 90%, var(--studio-green)); }
+#root:has(> .studio-shell) .secure-content__item-button:focus-visible { outline-color: var(--studio-green); }
 #root:has(> .studio-shell) .admin-panel button.border-red-900 { background: var(--studio-red) !important; }
 #root:has(> .studio-shell) .admin-panel :is(input, select, textarea) { border-radius: .65rem; padding: .75rem; }
 #root:has(> .studio-shell) .admin-panel input[type=file]::file-selector-button { margin-right: .75rem; padding: .4rem .75rem; border: 0; border-radius: 2rem; background: var(--studio-ink); color: var(--studio-paper); cursor: pointer; }
